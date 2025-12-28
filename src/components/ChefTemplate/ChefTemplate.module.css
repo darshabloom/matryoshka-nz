@@ -1,0 +1,123 @@
+.wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 36px 18px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.title {
+    font-size: 34px;
+    line-height: 1.1;
+    margin: 0 0 10px 0;
+}
+
+.tagline {
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    opacity: 0.9;
+}
+
+.desc {
+    margin: 0;
+    opacity: 0.82;
+}
+
+.badges {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.badge {
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.meta {
+    margin-top: 14px;
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+    opacity: 0.9;
+}
+
+.meta a {
+    text-decoration: underline;
+}
+
+.about {
+    margin-top: 22px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 18px;
+}
+
+.h2 {
+    font-size: 18px;
+    margin: 0 0 10px 0;
+}
+
+.aboutP {
+    margin: 0 0 14px 0;
+    opacity: 0.85;
+}
+
+.menuSection {
+    margin-top: 18px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 18px;
+}
+
+.menuHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.orderNote {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.menu {
+    display: grid;
+    gap: 12px;
+}
+
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.cardTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+}
+
+.itemName {
+    margin: 0;
+    font-size: 16px;
+}
+
+.price {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.itemDesc {
+    margin: 8px 0 0 0;
+    opacity: 0.75;
+}
