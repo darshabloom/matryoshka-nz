@@ -21,5 +21,13 @@ export function t(lang: Lang) {
         comingSoon: lang === "ru" ? "Заказы скоро откроются." : "Ordering coming soon.",
         pickup: lang === "ru" ? "самовывоз" : "pickup",
         delivery: lang === "ru" ? "доставка" : "delivery",
+
+        // Filters
+        searchPlaceholder: lang === "ru" ? "Поиск (кухня, блюдо...)" : "Search (chef, dish...)",
+        filterArea: lang === "ru" ? "Район" : "Area",
+        filterCuisine: lang === "ru" ? "Кухня" : "Cuisine",
+        all: lang === "ru" ? "Все" : "All",
+        noResults: lang === "ru" ? "Ничего не найдено." : "No results found.",
+
     };
 }

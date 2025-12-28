@@ -1,8 +1,9 @@
-import { chefs } from "@/data/chefs";
+import { getChefBySlug, listChefs } from "@/lib/data/chefs";
 import ChefTemplate from "@/components/ChefTemplate/ChefTemplate";
 
-export function generateStaticParams() {
-    return chefs.map((chef) => ({ slug: chef.slug }));
+export async function generateStaticParams() {
+    const all = await listChefs({ lang: "en", q: "", area: "all", cuisine: "all" });
+    return all.map((chef) => ({ slug: chef.slug }));
 }
 
 export default async function ChefPage({
@@ -12,9 +13,10 @@ export default async function ChefPage({
 }) {
     const { slug } = await params;
 
-    const chef = chefs.find((c) => c.slug === slug);
+    const chef = await getChefBySlug(slug);
 
     if (!chef) {
+        const known = await listChefs({ lang: "en", q: "", area: "all", cuisine: "all" });
         return (
             <main style={{ padding: 24 }}>
                 <h1>Chef not found</h1>
@@ -22,7 +24,7 @@ export default async function ChefPage({
                     <b>slug:</b> {slug}
                 </p>
                 <p>
-                    <b>known slugs:</b> {chefs.map((c) => c.slug).join(", ")}
+                    <b>known slugs:</b> {known.map((c) => c.slug).join(", ")}
                 </p>
             </main>
         );

@@ -1,15 +1,16 @@
 "use client";
 
 import styles from "./ChefTemplate.module.css";
-import type { Chef, MenuItem } from "@/data/chefs";
+import type { Vendor, MenuItem } from "@/lib/types";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { t } from "@/components/i18n/t";
+import { sitePriceFromBaseCents } from "@/lib/pricing";
 
 function Badge({ text }: { text: string }) {
     return <span className={styles.badge}>{text}</span>;
 }
 
-export default function ChefTemplate(chef: Chef) {
+export default function ChefTemplate(chef: Vendor) {
     const { lang } = useLanguage();
     const ui = t(lang);
 
@@ -87,7 +88,7 @@ export default function ChefTemplate(chef: Chef) {
                         <article key={item.id} className={styles.card}>
                             <div className={styles.cardTop}>
                                 <h3 className={styles.itemName}>{lang === "ru" ? item.name.ru : item.name.en}</h3>
-                                <div className={styles.price}>${item.price.toFixed(2)}</div>
+                                <div className={styles.price}>${sitePriceFromBaseCents(item.price_cents)}</div>
                             </div>
 
                             {item.description ? (
