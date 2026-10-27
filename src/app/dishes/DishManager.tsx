@@ -8,7 +8,7 @@ type Chef={id:string;display_name:string};
 type Dish={id:string;vendor_id:string;price_cents:number;approval_status:string;review_note:string|null;menu_item_translations:{lang:string;name:string;description:string|null}[]};
 type Event={id:string;title_en:string;title_ru:string|null;starts_at:string};
 type Inclusion={event_id:string;menu_item_id:string};
-export default function DishManager({isAdmin,vendors,dishes:initial,events,inclusions:initialInclusions,initialError}:{isAdmin:boolean;vendors:Chef[];dishes:Dish[];events:Event[];inclusions:Inclusion[];initialError:string}){
+export default function DishManager({isAdmin,vendors,dishes:initial,events,inclusions:initialInclusions,initialError,embedded=false}:{isAdmin:boolean;embedded?:boolean;vendors:Chef[];dishes:Dish[];events:Event[];inclusions:Inclusion[];initialError:string}){
  const {lang}=useLanguage(),ru=lang==="ru";const searchParams=useSearchParams();
  const t=(en:string,r:string)=>ru?r:en;
  const [dishes,setDishes]=useState(initial),[inclusions,setInclusions]=useState(initialInclusions);
@@ -50,9 +50,9 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
   const ok=await request("/api/dishes/events",{event_id:event,ids:selected,action});
   if(ok){setInclusions(rows=>action==="include"?[...rows.filter(x=>!(x.event_id===event&&selected.includes(x.menu_item_id))),...selected.map(id=>({event_id:event,menu_item_id:id}))]:rows.filter(x=>!(x.event_id===event&&selected.includes(x.menu_item_id))));setSelected([]);setSelection(false);setNotice(action==="include"?t("Dishes included in event.","Блюда добавлены к событию."):t("Dishes removed from event.","Блюда убраны из события."))}
  }
- return <main className={styles.page}><div className={styles.wrap}>
- <Link href={isAdmin?"/admin":"/chef-dashboard"} className={styles.back}>← {t("Back to dashboard","Назад в кабинет")}</Link>
- <div className={styles.hero}><div><span className={styles.eyebrow}>MATRYOSHKA · {isAdmin?"ADMIN":"CHEF"}</span><h1>{isAdmin?t("Food & Menus","Блюда и меню"):t("My Dishes","Мои блюда")}</h1><p>{t("Create dishes once, then choose which events to include them in.","Создавайте блюда один раз и выбирайте, на каких событиях их предлагать.")}</p></div><button className={styles.mainButton} onClick={beginNew}>＋ {t("Add a dish","Добавить блюдо")}</button></div>
+ return <main className={embedded?styles.embedded:styles.page}><div className={styles.wrap}>
+ {!embedded&&<Link href={isAdmin?"/admin":"/chef-dashboard"} className={styles.back}>← {t("Back to dashboard","Назад в кабинет")}</Link>}
+ <div className={styles.hero}><div>{!embedded&&<span className={styles.eyebrow}>MATRYOSHKA · {isAdmin?"ADMIN":"CHEF"}</span>}{!embedded&&<h1>{isAdmin?t("Food & Menus","Блюда и меню"):t("My Dishes","Мои блюда")}</h1>}<p>{t("Create dishes once, then choose which events to include them in.","Создавайте блюда один раз и выбирайте, на каких событиях их предлагать.")}</p></div><button className={styles.mainButton} onClick={beginNew}>＋ {t("Add a dish","Добавить блюдо")}</button></div>
  <div className={styles.toolbar}>{isAdmin&&<label>{t("Chef","Повар")}<select value={vendor} onChange={e=>{setVendor(e.target.value);setSelected([])}}>{vendors.map(c=><option key={c.id} value={c.id}>{c.display_name}</option>)}</select></label>}
  <label>{t("Viewing event","Событие")}<select value={event} onChange={e=>{setEvent(e.target.value);setSelected([])}}><option value="">{t("All dishes","Все блюда")}</option>{events.map(ev=><option key={ev.id} value={ev.id}>{ru?(ev.title_ru||ev.title_en):ev.title_en}</option>)}</select></label>
  <button className={selection?styles.cancelButton:styles.selectButton} onClick={()=>{setSelection(v=>!v);setSelected([])}}>{selection?t("Cancel selection","Отмена"):t("◯ Select dishes","◯ Выбрать блюда")}</button></div>
