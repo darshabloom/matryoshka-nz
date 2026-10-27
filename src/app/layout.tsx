@@ -39,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/#chefs">Our Chefs</Link>
                 <Link href="/#how-it-works">How It Works</Link>
                 <Link href="/#contact">Contact</Link>
+                <Link href="/account" style={{color:"#a52625",fontWeight:700}}>Sign in / Войти</Link>
                 <LanguageToggle />
               </div>
             </nav>
