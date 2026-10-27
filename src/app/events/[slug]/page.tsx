@@ -1,49 +1,34 @@
 "use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useLanguage } from "@/components/i18n/LanguageProvider";
-
-type Dish = { menu_item_id:string; price_cents:number; title_en:string; title_ru:string|null; description_en:string|null; description_ru:string|null; vendor_name:string };
-type EventDetails = { title_en:string;title_ru:string|null; description_en:string|null; description_ru:string|null; starts_at:string; location_text:string|null };
-export default function EventFoodPage() {
- const { lang } = useLanguage();
- const params = useParams<{slug:string}>();
- const slug = params?.slug;
- const [event,setEvent] = useState<EventDetails|null>(null);
- const [dishes,setDishes] = useState<Dish[]>([]);
- const [loading,setLoading] = useState(true);
- const [error,setError] = useState(false);
- useEffect(()=>{
-  if (!slug) return;
-  const controller = new AbortController();
-  fetch(`/api/events/${encodeURIComponent(slug)}/dishes`,{signal:controller.signal})
-   .then(async res=>{if(!res.ok)throw Error("Not available");return res.json();})
-   .then(data=>{if(!controller.signal.aborted){setEvent(data.event);setDishes(data.dishes??[]);}})
-   .catch(()=>{if(!controller.signal.aborted)setError(true);})
-   .finally(()=>{if(!controller.signal.aborted)setLoading(false);});
+import {useEffect,useMemo,useState} from "react";
+import {useParams} from "next/navigation";
+import {useLanguage} from "@/components/i18n/LanguageProvider";
+import {useBasket} from "@/components/cart/BasketProvider";
+import type {EventMenuData,CustomerDish} from "@/lib/customer-types";
+import {dollars,label} from "@/lib/customer-types";
+import styles from "./shop.module.css";
+export default function EventFoodPage(){
+ const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
+ const {slug}=useParams<{slug:string}>(),{count,items}=useBasket();
+ const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
+ const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
+ useEffect(()=>{const controller=new AbortController();if(!slug)return;
+  setBusy(true);fetch(`/api/events/${encodeURIComponent(slug)}/dishes`,{signal:controller.signal}).then(async r=>{const x=await r.json();if(!r.ok)throw Error(x.error||"Cannot load menu");return x}).then(x=>setData(x)).catch(e=>{if(!controller.signal.aborted)setError(e.message)}).finally(()=>{if(!controller.signal.aborted)setBusy(false)});
   return ()=>controller.abort();
  },[slug]);
- const pick=(en:string|null,ru:string|null)=>lang==="ru"?(ru||en||""):(en||ru||"");
- return <main style={{maxWidth:1000,margin:"0 auto",padding:"44px 18px"}}>
-  <Link href="/events">{lang==="ru"?"← События":"← Events"}</Link>
-  {loading&&<p role="status">{lang==="ru"?"Загрузка…":"Loading…"}</p>}
-  {error&&<p role="alert">{lang==="ru"?"Событие недоступно.":"Event unavailable."}</p>}
-  {event&&<><h1 style={{margin:"24px 0 8px"}}>{pick(event.title_en,event.title_ru)}</h1>
-   {event.description_en||event.description_ru?<p>{pick(event.description_en,event.description_ru)}</p>:null}
-   {event.location_text&&<p>{event.location_text}</p>}
-   <h2 style={{marginTop:32}}>{lang==="ru"?"Меню мероприятия":"Event menu"}</h2>
-   {dishes.length===0&&<p>{lang==="ru"?"Пока нет доступных блюд.":"No dishes available yet."}</p>}
-   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:16,marginTop:18}}>
-    {dishes.map(d=><article key={d.menu_item_id} style={{padding:18,border:"1px solid #ddd",borderRadius:12}}>
-     <h3>{pick(d.title_en,d.title_ru)}</h3>
-     <p>{d.vendor_name}</p>
-     <p>{pick(d.description_en,d.description_ru)}</p>
-     <strong>{new Intl.NumberFormat(lang==="ru"?"ru-NZ":"en-NZ",{style:"currency",currency:"NZD"}).format(d.price_cents/100)}</strong>
-    </article>)}
-   </div>
-   <p style={{marginTop:30,opacity:.75}}>{lang==="ru"?"Онлайн-заказы скоро откроются.":"Online ordering coming soon."}</p>
-  </>}
- </main>;
+ const chefs=useMemo(()=>[...new Set(data?.dishes.map(d=>d.vendor_name)??[])].sort(),[data]);
+ const categories=useMemo(()=>Array.from(new Map((data?.dishes??[]).flatMap(d=>d.categories).map(c=>[c.slug,c])).values()),[data]);
+ const dishes=useMemo(()=>data?.dishes.filter(d=>(chef==="all"||d.vendor_name===chef)&&(category==="all"||d.categories.some(c=>c.slug===category))&&[d.title_en,d.title_ru,d.vendor_name,d.description_en,d.description_ru].join(" ").toLowerCase().includes(search.toLowerCase().trim()))??[],[data,chef,category,search]);
+ const e=data?.event,open=e?.ordering_open??false;
+ const inEvent=items[0]?.eventId===e?.id;
+ return <main className={styles.page}><div className={styles.wrap}>
+ <Link className={styles.back} href="/events">← {t("All events","Все события")}</Link>
+ {busy&&<p role="status">{t("Loading event food…","Загружаем меню…")}</p>}{error&&<p role="alert" className={styles.alert}>{error}</p>}
+ {e&&<><section className={styles.heading}><span className={styles.eyebrow}>MATRYOSHKA · {t("EVENT MENU","МЕНЮ СОБЫТИЯ")}</span><h1>{label(e.title_en,e.title_ru,ru)}</h1><p>{label(e.description_en,e.description_ru,ru)}</p><div className={styles.eventFacts}><span>📅 {new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{dateStyle:"full",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span>{e.location_text&&<span>⌖ {e.location_text}</span>}<span>🍽️ {t("Food provided at event","Еда на мероприятии")}</span></div>
+ <div className={styles.notice}>{open?<><strong>{t("Food ordering is open","Приём заказов открыт")}</strong><p>{e.ordering_closes_at?t("Order by ","Заказать до ")+new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{dateStyle:"medium",timeStyle:"short",timeZone:"Pacific/Auckland"}).format(new Date(e.ordering_closes_at)):t("Choose your favourites below.","Выберите блюда ниже.")}{e.ticket_required?" · "+t("Valid event ticket required at checkout","Для оплаты нужен билет"):""}</p></>:<><strong>{t("Ordering is not open yet","Заказы сейчас закрыты")}</strong><p>{t("You can browse the menu, but adding items is unavailable until ordering opens.","Меню можно просматривать. Заказ будет доступен после открытия продаж.")}</p></>}</div></section>
+ <section className={styles.shop}><div className={styles.sectionHead}><div><span className={styles.eyebrow}>✿ HOMEMADE WITH LOVE</span><h2>{t("Explore the menu","Выберите блюда")}</h2><p>{t("Choose dishes from one or more local chefs.","Выбирайте блюда от разных поваров в одном заказе.")}</p></div>{inEvent&&count>0&&<Link className={styles.basketButton} href="/basket">🛒 {t("View basket","Корзина")} ({count}) →</Link>}</div>
+ <div className={styles.filters}><label>{t("Search food","Поиск блюд")}<input type="search" value={search} onChange={x=>setSearch(x.target.value)} placeholder={t("Dish or chef…","Блюдо или повар…")}/></label><label>{t("Category","Категория")}<select value={category} onChange={x=>setCategory(x.target.value)}><option value="all">{t("All categories","Все категории")}</option>{categories.map(c=><option key={c.slug} value={c.slug}>{label(c.label_en,c.label_ru,ru)}</option>)}</select></label><label>{t("Chef","Повар")}<select value={chef} onChange={x=>setChef(x.target.value)}><option value="all">{t("All chefs","Все повара")}</option>{chefs.map(c=><option key={c} value={c}>{c}</option>)}</select></label></div>
+ {dishes.length===0?<div className={styles.empty}>{data.dishes.length?t("No dishes match those filters.","По вашему запросу блюд не найдено."):t("The chefs are preparing this menu. Check back later.","Повара готовят меню. Загляните позже.")}</div>:<div className={styles.grid}>{dishes.map((d:CustomerDish)=><Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} key={d.menu_item_id} className={styles.card}><div className={styles.image}>{d.images[0]?<img src={d.images[0]} alt={label(d.title_en,d.title_ru,ru)}/>:<span>✿</span>}</div><div className={styles.cardBody}><span className={styles.chef}>{d.vendor_name}</span><h3>{label(d.title_en,d.title_ru,ru)}</h3><p>{label(d.description_en,d.description_ru,ru)}</p><div className={styles.cardBottom}><strong>{t("From ","От ")}{dollars(d.price_cents)}</strong><span>{t("View dish","Подробнее")} →</span></div></div></Link>)}</div>}
+ </section></>}
+ </div></main>
 }
