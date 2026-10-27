@@ -3,6 +3,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(req:Request){
  const {searchParams,origin}=new URL(req.url);
  const code=searchParams.get("code");
- if(code){const supabase=await createSupabaseServerClient();const {error}=await supabase.auth.exchangeCodeForSession(code);if(!error)return NextResponse.redirect(new URL("/account",origin));}
- return NextResponse.redirect(new URL("/sign-in?error=auth",origin));
+ if(!code)return NextResponse.redirect(new URL("/sign-in?error=auth",origin));
+ const db=await createSupabaseServerClient();
+ const {error}=await db.auth.exchangeCodeForSession(code);
+ if(error)return NextResponse.redirect(new URL("/sign-in?error=auth",origin));
+ return NextResponse.redirect(new URL("/auth/role-redirect",origin));
 }
