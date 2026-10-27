@@ -18,3 +18,5 @@ export default async function ChefDashboard(){
  <p style={{color:"#76695d"}}>Apply to events and follow your application status.</p>
  <ApplicationForm vendorId={vendorId} availableEvents={(events.data??[]) as any} initialApplications={(applications.data??[]) as any}/>
  </div></main>;
+
+}
