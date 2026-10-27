@@ -61,3 +61,5 @@ export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boo
  {canEdit?<div className={styles.editActions}><button disabled={busy||!name.trim()} onClick={()=>void save()}>{busy?t("Saving…","Сохранение…"):t("Save changes","Сохранить изменения")}</button></div>:<p className={styles.hint}>{t("Approved dishes are protected. Material edits will use a reviewable version.","Одобренные блюда защищены. Изменения будут проходить проверку.")}</p>}
  {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
  </section></div><section className={styles.description}><div className={styles.tabs}><strong>{t("Description","Описание")}</strong><span>{t("Ingredients","Ингредиенты")}</span></div><p>{description||t("Your description will appear here.","Здесь появится ваше описание.")}</p><div className={styles.floral}>✿ ❀</div></section></div></main>;
+
+}
