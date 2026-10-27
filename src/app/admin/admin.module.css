@@ -18,3 +18,28 @@
 .optionGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0 22px}
 .optionChoice{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #e6d7ca;border-radius:9px;padding:14px;cursor:pointer;font-size:13px}
 .optionChoice input{accent-color:#a32b26;width:17px;height:17px;flex-shrink:0}
+
+.embedded{background:transparent;padding:0;color:#2b2924}
+.embedded .top{margin-bottom:24px}
+.dashboardShell{min-height:85vh;background:#faf6ef;padding:52px 18px 95px;color:#302820}
+.dashboardInner{max-width:1120px;margin:auto}
+.dashboardHeading h1{font:700 clamp(39px,5vw,55px) Georgia,serif;color:#982b27;margin:16px 0 10px}
+.dashboardHeading p{color:#7a6d62;font-size:16px;margin:0 0 30px}
+.dashboardTabs{display:flex;flex-wrap:wrap;gap:10px;padding-bottom:18px;border-bottom:1px solid #e0d0c1;margin-bottom:30px}
+.dashboardTab,.dashboardTabActive{padding:12px 18px;border:1px solid #dfcfc2;background:white;color:#9b322a;text-decoration:none;border-radius:9px;font-size:13px;font-weight:800}
+.dashboardTabActive{background:#a32c27;color:#fff;border-color:#a32c27}
+.overviewStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:0 0 28px}
+.overviewStats>div{padding:21px 24px;border:1px solid #e7d9cc;border-radius:13px;background:#fff;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 15px #42291008}
+.overviewStats small{font-size:12px;color:#7c6f64}.overviewStats strong{font:700 36px Georgia,serif;color:#9f2a27}
+.overviewGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.dashboardPanel{background:white;border:1px solid #e7d9cc;border-radius:13px;padding:25px;margin:0 0 15px}
+.dashboardPanel h2{font:700 26px Georgia,serif;margin:0 0 16px;color:#3c2d27}
+.dashboardPanel p{font-size:14px;color:#776b61;line-height:1.55}
+.panelButton,.panelButtonSecondary{display:inline-flex;margin:12px 10px 0 0;background:#a42d28;border:1px solid #a42d28;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:750;padding:12px 15px}
+.panelButtonSecondary{background:white;color:#a42d28}
+.activityRow{display:flex;justify-content:space-between;gap:13px;align-items:center;padding:12px 0;border-bottom:1px solid #eee1d6;text-decoration:none;color:#48352d;font-size:13px}
+.activityRow span{color:#97735f;font-size:12px;text-transform:capitalize}
+.chefRows{display:grid;gap:11px}.chefRow{display:flex;align-items:center;gap:15px;background:#fffaf5;border:1px solid #ebd9cd;padding:14px;border-radius:9px}
+.chefRow a{margin-left:auto;color:#a42d28;font-weight:750;font-size:12px}
+.chefCircle{height:39px;width:39px;border-radius:50%;display:grid;place-items:center;background:#ecdacb;color:#a42b26;font:700 20px Georgia,serif}
+@media(max-width:760px){.overviewStats{grid-template-columns:repeat(2,minmax(0,1fr))}.overviewGrid{grid-template-columns:1fr}.dashboardShell{padding:30px 15px 65px}.dashboardTab,.dashboardTabActive{font-size:12px;padding:10px 12px}}
