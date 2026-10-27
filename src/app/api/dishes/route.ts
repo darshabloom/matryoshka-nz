@@ -26,7 +26,7 @@ export async function PATCH(req:Request){
  if(x.action==="submit"){
   if(admin)return NextResponse.json({error:"Admin can approve directly"},{status:400});
   if(item.approval_status==="approved")return NextResponse.json({error:"Already approved"},{status:409});
-  const {error}=await db.from("menu_items").update({approval_status:"pending"}).eq("id",item.id);return error?NextResponse.json({error:"Unable to submit"},{status:500}):NextResponse.json({ok:true});
+  const {error}=await db.rpc("submit_chef_dish_for_review",{p_dish_id:item.id});return error?NextResponse.json({error:"Unable to submit this dish"},{status:400}):NextResponse.json({ok:true});
  }
  if(x.action==="review"){
   if(!admin)return NextResponse.json({error:"Admin only"},{status:403});
