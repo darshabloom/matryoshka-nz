@@ -8,3 +8,13 @@
 .applicationOn{background:#a32926;border:1px solid #a32926;color:#fff}
 .applicationOff{background:#fff;border:1px solid #a32926;color:#a32926}
 .applicationPanel button:disabled{opacity:.5;cursor:not-allowed}
+
+.adminNav{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 27px;padding-bottom:16px;border-bottom:1px solid #e6d9c9}
+.adminTab,.adminTabActive{display:inline-flex;text-decoration:none;align-items:center;gap:8px;border-radius:9px;padding:12px 17px;border:1px solid #dacbbd;font-size:14px;font-weight:750;background:#fff;color:#734c41}
+.adminTabActive{background:#a32b26;color:#fff;border-color:#a32b26}
+.adminTab:hover{border-color:#a32b26;background:#f9ebe3}
+.cardAction{display:inline-flex;align-items:center;justify-content:center;text-decoration:none!important;border:1px solid #d7c3b7!important;border-radius:8px!important;padding:11px 14px!important;color:#94302a!important;background:#fff!important;font-size:12px!important;font-weight:750!important;cursor:pointer}
+.cardAction:hover{background:#f8eae4!important;border-color:#b46d59!important}
+.optionGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0 22px}
+.optionChoice{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #e6d7ca;border-radius:9px;padding:14px;cursor:pointer;font-size:13px}
+.optionChoice input{accent-color:#a32b26;width:17px;height:17px;flex-shrink:0}
