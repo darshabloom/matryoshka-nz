@@ -13,7 +13,7 @@ export default async function Account(){
  <div style={{display:"flex",flexWrap:"wrap",gap:16,marginBottom:24}}>
  {a.data&&<Link href="/admin">Admin dashboard / Администратор →</Link>}
  {!!c.data?.length&&<Link href="/chef-dashboard">Chef dashboard / Кабинет повара →</Link>}
- <Link href="/events">Events / События →</Link></div>
+ <Link href="/events">Events / События →</Link> {!c.data?.length&&<Link href="/chef-onboarding">Become a Chef / Стать поваром →</Link>}</div>
  {!a.data&&!c.data?.length&&<p style={{marginBottom:24}}>Customer account ready. Order history will appear when checkout launches. / Аккаунт покупателя создан.</p>}
  <SignOut/></main>;
 }
