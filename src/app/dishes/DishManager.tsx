@@ -1,5 +1,6 @@
 "use client";
-import {useState} from "react";
+import {useState,useEffect} from "react";
+import {useSearchParams} from "next/navigation";
 import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./dishes.module.css";
@@ -8,16 +9,18 @@ type Dish={id:string;vendor_id:string;price_cents:number;approval_status:string;
 type Event={id:string;title_en:string;title_ru:string|null;starts_at:string};
 type Inclusion={event_id:string;menu_item_id:string};
 export default function DishManager({isAdmin,vendors,dishes:initial,events,inclusions:initialInclusions,initialError}:{isAdmin:boolean;vendors:Chef[];dishes:Dish[];events:Event[];inclusions:Inclusion[];initialError:string}){
- const {lang}=useLanguage(),ru=lang==="ru";
+ const {lang}=useLanguage(),ru=lang==="ru";const searchParams=useSearchParams();
  const t=(en:string,r:string)=>ru?r:en;
  const [dishes,setDishes]=useState(initial),[inclusions,setInclusions]=useState(initialInclusions);
  const [selection,setSelection]=useState(false),[selected,setSelected]=useState<string[]>([]);
- const [event,setEvent]=useState(events[0]?.id??""),[vendor,setVendor]=useState(vendors[0]?.id??"");
+ const [event,setEvent]=useState(searchParams.get("event")??""),[vendor,setVendor]=useState(isAdmin?"":vendors[0]?.id??"");
  const [name,setName]=useState(""),[description,setDescription]=useState(""),[language,setLanguage]=useState<"en"|"ru">(ru?"ru":"en"),[price,setPrice]=useState("");
  const [editing,setEditing]=useState<string|null>(null);const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(initialError),[notice,setNotice]=useState("");
  const displayName=(d:Dish)=>d.menu_item_translations.find(x=>x.lang===lang)?.name||d.menu_item_translations[0]?.name||t("Unnamed dish","Блюдо без названия");
  const included=(id:string)=>inclusions.some(x=>x.menu_item_id===id&&x.event_id===event);
- const visible=isAdmin&&vendor?dishes.filter(d=>d.vendor_id===vendor):dishes;
+ const visible=(isAdmin&&vendor?dishes.filter(d=>d.vendor_id===vendor):dishes).filter(d=>!event||inclusions.some(x=>x.event_id===event&&x.menu_item_id===d.id));
+ const chefName=(id:string)=>vendors.find(v=>v.id===id)?.display_name||"Chef";
+ const eventTags=(id:string)=>events.filter(e=>inclusions.some(x=>x.event_id===e.id&&x.menu_item_id===id));
  async function request(url:string,body:object){
   setBusy(true);setError("");setNotice("");
   try{const response=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const result=await response.json();
@@ -56,8 +59,8 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
  {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.notice}>{notice}</p>}
  {visible.length===0?<div className={styles.empty}><span>✿</span><h2>{t("Your menu starts here","Ваше меню начинается здесь")}</h2><p>{t("Add your first dish to build your reusable food catalogue.","Добавьте первое блюдо в каталог.")}</p><button className={styles.mainButton} onClick={()=>setOpen(true)}>{t("Create a dish","Создать блюдо")}</button></div>:<div className={styles.cards}>{visible.map(d=><article key={d.id} className={styles.dish}>
  <div className={styles.dishTop}><span className={styles.flower}>✿</span>{selection&&<label className={styles.circle}><input aria-label={t("Select dish","Выбрать блюдо")+" "+displayName(d)} type="checkbox" checked={selected.includes(d.id)} onChange={e=>setSelected(old=>e.target.checked?[...old,d.id]:old.filter(x=>x!==d.id))}/></label>}</div>
- <div className={styles.dishBody}><div className={styles.labels}>{event&&<span className={included(d.id)?styles.included:styles.notIncluded}>{included(d.id)?t("✓ Included in event","✓ Включено в событие"):t("Not included","Не включено")}</span>}<span className={d.approval_status==="approved"?styles.approved:styles.pending}>{d.approval_status==="approved"?t("Approved for sale","Одобрено к продаже"):d.approval_status==="pending"?t("Awaiting approval","Ожидает одобрения"):d.approval_status==="changes_requested"?t("Changes requested","Нужны изменения"):t("Draft","Черновик")}</span></div>
- <h3>{displayName(d)}</h3><p className={styles.price}>NZ$ {(d.price_cents/100).toFixed(2)}</p>
+ <div className={styles.dishBody}><div className={styles.labels}>{eventTags(d.id).map(ev=><span key={ev.id} className={styles.included}>✿ {ru?(ev.title_ru||ev.title_en):ev.title_en}</span>)}{event&&<span className={included(d.id)?styles.included:styles.notIncluded}>{included(d.id)?t("✓ Included in event","✓ Включено в событие"):t("Not included","Не включено")}</span>}<span className={d.approval_status==="approved"?styles.approved:styles.pending}>{d.approval_status==="approved"?t("Approved for sale","Одобрено к продаже"):d.approval_status==="pending"?t("Awaiting approval","Ожидает одобрения"):d.approval_status==="changes_requested"?t("Changes requested","Нужны изменения"):t("Draft","Черновик")}</span></div>
+ {isAdmin&&<p className={styles.chefLabel}><span className={styles.chefAvatar}>{chefName(d.vendor_id).slice(0,1).toUpperCase()}</span>{chefName(d.vendor_id)}</p>}<h3>{displayName(d)}</h3><p className={styles.price}>NZ$ {(d.price_cents/100).toFixed(2)}</p>
  <p className={styles.description}>{d.menu_item_translations.find(x=>x.lang===lang)?.description||d.menu_item_translations[0]?.description}</p>
  <div className={styles.actions}>{(isAdmin||["draft","changes_requested"].includes(d.approval_status))&&<button disabled={busy} onClick={()=>edit(d)}>{t("Edit dish","Редактировать")}</button>}{isAdmin&&d.approval_status!=="approved"?<><button disabled={busy} onClick={()=>void review(d,"approved")}>{t("Approve","Одобрить")}</button><button disabled={busy} onClick={()=>void review(d,"changes_requested")}>{t("Request changes","Запросить изменения")}</button></>:!isAdmin&&["draft","changes_requested"].includes(d.approval_status)?<button disabled={busy} onClick={()=>void submit(d)}>{t("Submit for approval","Отправить на одобрение")}</button>:null}</div>
  </div></article>)}</div>}
