@@ -43,7 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Matryoshka NZ
               </Link>
 
-              <LanguageToggle />
+              <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                <Link href="/events" style={{ textDecoration: "none", color: "inherit" }}>Events / События</Link>
+                <LanguageToggle />
+              </div>
             </nav>
           </header>
 
