@@ -10,7 +10,7 @@ export async function POST(req:Request){
  const name=typeof x.name==="string"?x.name.trim():"";const desc=typeof x.description==="string"?x.description.trim().slice(0,4000):"";
  const lang=x.language==="ru"?"ru":"en";const cents=Math.round(Number(x.price)*100);
  if(!name||name.length>160||!Number.isSafeInteger(cents)||cents<0||cents>10000000)return NextResponse.json({error:"Add a valid dish name and NZD price"},{status:400});
- const {data:item,error}=await db.from("menu_items").insert({vendor_id:x.vendor_id,price_cents:cents,is_active:admin,approval_status:admin?"approved":"draft",approved_by:admin?user.id:null,approved_at:admin?new Date().toISOString():null}).select("id").single();
+ const {data:item,error}=await db.from("menu_items").insert({vendor_id:x.vendor_id,price_cents:cents,is_active:false,approval_status:"draft",approved_by:null,approved_at:null}).select("id").single();
  if(error)return NextResponse.json({error:"Unable to create dish"},{status:500});
  const {error:tr}=await db.from("menu_item_translations").insert({menu_item_id:item.id,lang,name,description:desc});
  if(tr)return NextResponse.json({error:"Dish created, but its description could not be saved",dish_id:item.id},{status:207});
