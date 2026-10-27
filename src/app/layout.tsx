@@ -40,8 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/#chefs">Our Chefs</Link>
                 <Link href="/#how-it-works">How It Works</Link>
                 <Link href="/#contact">Contact</Link>
-                <NavDashboardLink />
                 <LanguageToggle />
+                <NavDashboardLink />
               </div>
             </nav>
           </header>
