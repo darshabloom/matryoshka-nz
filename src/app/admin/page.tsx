@@ -1,25 +1,36 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import {redirect} from "next/navigation";
+import {createSupabaseServerClient} from "@/lib/supabase/server";
 import EventManager from "./EventManager";
 import DishManager from "../dishes/DishManager";
 import ReviewBoard from "./applications/ReviewBoard";
-import Link from "next/link";
+import styles from "./admin.module.css";
 export const dynamic="force-dynamic";
 export default async function AdminPage({searchParams}:{searchParams:Promise<{tab?:string}>}){
- const {tab="events"}=await searchParams;
- const sb=await createSupabaseServerClient();
- const {data:{user}}=await sb.auth.getUser();
- if(!user)redirect("/sign-in");
- const {data:admin,error:permissionError}=await sb.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();
- if(permissionError||!admin)redirect("/account");
- const {data:events,error}=await sb.from("events").select("id,slug,title_en,title_ru,description_en,description_ru,starts_at,ends_at,ordering_opens_at,ordering_closes_at,location_text,external_ticket_url,is_published,chef_applications_open,chef_fulfilment_options").order("starts_at",{ascending:false});
- if(tab==="food"){
- const [v,d,a,inc]=await Promise.all([sb.from("vendors").select("id,display_name").order("display_name"),sb.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,menu_item_translations(lang,name,description)").order("created_at",{ascending:false}),sb.from("chef_event_applications").select("vendor_id,event_id,status").eq("status","approved"),sb.from("event_menu_items").select("event_id,menu_item_id")]);
- return <main style={{background:"#faf6ef",padding:"30px 18px"}}><nav style={{display:"flex",gap:12,flexWrap:"wrap",maxWidth:1120,margin:"auto"}}><Link href="/admin?tab=events">Events</Link><Link href="/admin?tab=food" style={{fontWeight:800}}>Food & Menus</Link><Link href="/admin?tab=applications">Applications</Link></nav><DishManager isAdmin vendors={v.data??[]} dishes={(d.data??[]) as any} events={(events??[]).map(e=>({id:e.id,title_en:e.title_en,title_ru:e.title_ru,starts_at:e.starts_at}))} inclusions={inc.data??[]} initialError={d.error?.message??""}/></main>;
- }
- if(tab==="applications"){
- const {data:rows}=await sb.from("chef_event_applications").select("id,status,message,fulfilment,review_note,created_at,events(title_en,title_ru),vendors(display_name)").order("created_at",{ascending:false});
- return <main style={{background:"#faf6ef",padding:"45px 18px",minHeight:"85vh"}}><div style={{maxWidth:1100,margin:"auto"}}><nav style={{display:"flex",gap:16,marginBottom:35}}><Link href="/admin?tab=events">Events</Link><Link href="/admin?tab=food">Food & Menus</Link><strong>Applications</strong></nav><h1 style={{font:"bold 43px Georgia,serif",color:"#9c2b26"}}>Chef Applications</h1><ReviewBoard initial={(rows??[]) as any}/></div></main>;
- }
- return <EventManager initialEvents={events??[]} email={user.email??""} initialError={error?"Unable to load events":""}/>;
+ const {tab="overview"}=await searchParams;
+ const sb=await createSupabaseServerClient();const {data:{user}}=await sb.auth.getUser();if(!user)redirect("/sign-in");
+ const {data:admin}=await sb.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();if(!admin)redirect("/account");
+ const [eventResult,dishResult,applicationResult,vendorResult,inclusionResult]=await Promise.all([
+ sb.from("events").select("id,slug,title_en,title_ru,description_en,description_ru,starts_at,ends_at,ordering_opens_at,ordering_closes_at,location_text,external_ticket_url,is_published,chef_applications_open,chef_fulfilment_options").order("starts_at",{ascending:false}),
+ sb.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,created_at,menu_item_translations(lang,name,description)").order("created_at",{ascending:false}),
+ sb.from("chef_event_applications").select("id,vendor_id,event_id,status,message,fulfilment,review_note,created_at,events(title_en,title_ru),vendors(display_name)").order("created_at",{ascending:false}),
+ sb.from("vendors").select("id,display_name").order("display_name"),
+ sb.from("event_menu_items").select("event_id,menu_item_id")
+ ]);
+ const events=eventResult.data??[],dishes=dishResult.data??[],apps=applicationResult.data??[],vendors=vendorResult.data??[];
+ const heading=tab==="events"?"Events":tab==="food"?"Food & Menus":tab==="applications"?"Chef Applications":tab==="chefs"?"Chefs":"Admin Dashboard";
+ const subtitle=tab==="events"?"Manage events, chef applications and publication settings.":tab==="food"?"Review and manage every chef's dishes.":tab==="applications"?"Review who wants to participate in your events.":tab==="chefs"?"Meet the kitchens behind Matryoshka.":"Your marketplace activity and next actions.";
+ const approvedCount=dishes.filter(d=>d.approval_status==="approved").length,pendingCount=dishes.filter(d=>d.approval_status==="pending").length,pendingApps=apps.filter(a=>a.status==="pending").length;
+ const links=[["overview","Overview"],["events","Events"],["food","Food & Menus"],["applications","Applications"],["chefs","Chefs"],["orders","Orders"]] as const;
+ return <main className={styles.dashboardShell}><div className={styles.dashboardInner}><span className={styles.kicker}>MATRYOSHKA · ADMIN</span><div className={styles.dashboardHeading}><h1>{heading}</h1><p>{subtitle}</p></div><nav className={styles.dashboardTabs}>{links.map(([key,label])=><Link key={key} href={`/admin?tab=${key}`} className={key===tab?styles.dashboardTabActive:styles.dashboardTab}>{label}</Link>)}</nav>
+ {tab==="events"?<EventManager embedded initialEvents={events} email={user.email??""} initialError={eventResult.error?.message??""}/>:
+ tab==="food"?<DishManager embedded isAdmin vendors={vendors} dishes={dishes as any} events={events.map(e=>({id:e.id,title_en:e.title_en,title_ru:e.title_ru,starts_at:e.starts_at}))} inclusions={inclusionResult.data??[]} initialError={dishResult.error?.message??""}/>:
+ tab==="applications"?<ReviewBoard initial={apps as any}/>:
+ tab==="chefs"?<section className={styles.dashboardPanel}><h2>Our Chefs</h2><p>{vendors.length} kitchens registered</p><div className={styles.chefRows}>{vendors.map(v=><div className={styles.chefRow} key={v.id}><span className={styles.chefCircle}>{v.display_name[0]?.toUpperCase()}</span><strong>{v.display_name}</strong><Link href="/admin/chefs">Manage profile →</Link></div>)}</div>{vendors.length===0&&<p>No kitchens yet.</p>}</section>:
+ tab==="orders"?<section className={styles.dashboardPanel}><h2>Orders</h2><p>Customer and chef orders will appear once checkout is ready. No live orders are available yet.</p></section>:
+ <><div className={styles.overviewStats}><div><small>Events</small><strong>{events.length}</strong></div><div><small>Registered chefs</small><strong>{vendors.length}</strong></div><div><small>Approved dishes</small><strong>{approvedCount}</strong></div><div><small>Dish approvals needed</small><strong>{pendingCount}</strong></div><div><small>Chef applications pending</small><strong>{pendingApps}</strong></div><div><small>Orders</small><strong>—</strong></div></div>
+ <div className={styles.overviewGrid}><section className={styles.dashboardPanel}><h2>Needs your attention</h2>{pendingCount>0?<p>{pendingCount} dish{pendingCount===1?"":"es"} awaiting approval.</p>:null}{pendingApps>0?<p>{pendingApps} chef application{pendingApps===1?"":"s"} awaiting review.</p>:null}{pendingCount===0&&pendingApps===0?<p>No pending approvals right now.</p>:null}<Link href="/admin?tab=applications" className={styles.panelButton}>Review applications →</Link><Link href="/admin?tab=food" className={styles.panelButtonSecondary}>Review dishes →</Link></section>
+ <section className={styles.dashboardPanel}><h2>Upcoming events</h2>{events.filter(e=>new Date(e.ends_at)>new Date()).slice(0,3).map(e=><div className={styles.activityRow} key={e.id}><strong>{e.title_en}</strong><span>{e.is_published?"Published":"Draft"} · {e.chef_applications_open?"Applications open":"Applications closed"}</span></div>)}{events.length===0&&<p>No events yet.</p>}<Link href="/admin?tab=events" className={styles.panelButton}>Manage events →</Link></section>
+ <section className={styles.dashboardPanel}><h2>Recent food listings</h2>{dishes.slice(0,4).map(d=><Link className={styles.activityRow} key={d.id} href={`/dishes/${d.id}`}><strong>{d.menu_item_translations?.[0]?.name||"Untitled dish"}</strong><span>{d.approval_status}</span></Link>)}{dishes.length===0&&<p>No dishes yet.</p>}<Link href="/admin?tab=food" className={styles.panelButton}>Open Food & Menus →</Link></section></div></>}
+ </div></main>;
 }
