@@ -4,7 +4,7 @@ import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./admin.module.css";
 type EventRow={id:string;slug:string;title_en:string;title_ru:string|null;description_en:string|null;description_ru:string|null;starts_at:string;ends_at:string;ordering_opens_at:string|null;ordering_closes_at:string|null;location_text:string|null;external_ticket_url:string|null;is_published:boolean;chef_applications_open:boolean};
-type Field=Omit<EventRow,"id"|"is_published">;
+type Field=Omit<EventRow,"id"|"is_published"|"chef_applications_open">;
 const initial:Field={slug:"",title_en:"",title_ru:"",description_en:"",description_ru:"",starts_at:"",ends_at:"",ordering_opens_at:"",ordering_closes_at:"",location_text:"",external_ticket_url:""};
 const toLocal=(s:string|null)=>{if(!s)return "";const d=new Date(s);if(Number.isNaN(d.getTime()))return "";const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,16);};
 const fromLocal=(s:string)=>s?new Date(s).toISOString():null;
