@@ -23,6 +23,18 @@ export async function PATCH(req:Request){
  const {data:item}=await db.from("menu_items").select("id,vendor_id,approval_status,price_cents,is_active").eq("id",x.id).maybeSingle();
  if(!item)return NextResponse.json({error:"Dish not found"},{status:404});
  if(!admin){const {data:m}=await db.from("vendor_users").select("vendor_id").eq("vendor_id",item.vendor_id).eq("user_id",user.id).maybeSingle();if(!m)return NextResponse.json({error:"Not your dish"},{status:403})}
+ if(x.action==="edit"){
+  const name=typeof x.name==="string"?x.name.trim():"";const description=typeof x.description==="string"?x.description.trim().slice(0,4000):"";const lang=x.language==="ru"?"ru":"en";const cents=Math.round(Number(x.price)*100);
+  if(!name||name.length>160||!Number.isSafeInteger(cents)||cents<0||cents>10000000)return NextResponse.json({error:"Invalid dish details"},{status:400});
+  if(!admin){
+   const {error}=await db.rpc("save_chef_dish_draft",{p_id:item.id,p_name:name,p_description:description,p_lang:lang,p_price_cents:cents});
+   return error?NextResponse.json({error:"Only your unpublished draft may be edited"},{status:403}):NextResponse.json({ok:true});
+  }
+  const {error:up}=await db.from("menu_items").update({price_cents:cents,updated_at:new Date().toISOString()}).eq("id",item.id);
+  if(up)return NextResponse.json({error:"Unable to update dish price"},{status:500});
+  const {error:tr}=await db.from("menu_item_translations").upsert({menu_item_id:item.id,lang,name,description},{onConflict:"menu_item_id,lang"});
+  return tr?NextResponse.json({error:"Price updated, but translation could not be saved"},{status:500}):NextResponse.json({ok:true});
+ }
  if(x.action==="submit"){
   if(admin)return NextResponse.json({error:"Admin can approve directly"},{status:400});
   if(item.approval_status==="approved")return NextResponse.json({error:"Already approved"},{status:409});
