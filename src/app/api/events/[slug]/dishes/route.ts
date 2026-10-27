@@ -4,7 +4,11 @@ export const dynamic="force-dynamic";
 export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>}){
  try{
   const {slug}=await params;const db=await createSupabaseServerClient(),now=new Date().toISOString();
-  const {data:event,error}=await db.from("events").select("id,slug,title_en,title_ru,description_en,description_ru,starts_at,ends_at,location_text,ordering_opens_at,ordering_closes_at,external_ticket_url,ticket_required,fulfilment_mode").eq("slug",slug).eq("is_published",true).gt("ends_at",now).maybeSingle();
+  const {data:{user}}=await db.auth.getUser();
+  const {data:admin}=user?await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle():{data:null};
+  const isAdmin=!!admin;
+  const eventQuery=db.from("events").select("id,slug,is_published,title_en,title_ru,description_en,description_ru,starts_at,ends_at,location_text,ordering_opens_at,ordering_closes_at,external_ticket_url,ticket_required,fulfilment_mode").eq("slug",slug).gt("ends_at",now);
+  const {data:event,error}=await (isAdmin?eventQuery:eventQuery.eq("is_published",true)).maybeSingle();
   if(error)throw error;if(!event)return NextResponse.json({error:"Event unavailable"},{status:404});
   const {data:offers,error:oe}=await db.from("event_menu_items")
    .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors!inner(display_name))")
@@ -37,7 +41,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     }))
    };
   });
-  const orderingOpen=(!event.ordering_opens_at||new Date(event.ordering_opens_at)<=new Date())&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
+  const orderingOpen=event.is_published&&(!event.ordering_opens_at||new Date(event.ordering_opens_at)<=new Date())&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
   return NextResponse.json({event:{...event,ordering_open:orderingOpen},dishes},{headers:{"Cache-Control":"no-store"}});
  }catch(e){console.error("Event menu error",e);return NextResponse.json({error:"Unable to load event menu"},{status:500})}
 }
