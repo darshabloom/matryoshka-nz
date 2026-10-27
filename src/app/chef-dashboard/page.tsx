@@ -9,7 +9,7 @@ export default async function ChefDashboard(){
  if(!membership?.length)redirect("/chef-onboarding");
  const vendorId=membership[0].vendor_id;
  const [events,applications]=await Promise.all([
- db.from("events").select("id,title_en,title_ru,starts_at,chef_application_deadline").eq("is_published",true).eq("chef_applications_open",true).gt("ends_at",new Date().toISOString()).order("starts_at"),
+ db.from("events").select("id,title_en,title_ru,starts_at,chef_application_deadline").eq("chef_applications_open",true).gt("ends_at",new Date().toISOString()).order("starts_at"),
  db.from("chef_event_applications").select("id,event_id,status,review_note,events(title_en,title_ru)").eq("vendor_id",vendorId)
  ]);
  return <main style={{background:"#faf6ef",minHeight:"85vh",padding:"48px 18px"}}><div style={{maxWidth:1000,margin:"auto"}}>
