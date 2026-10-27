@@ -54,7 +54,10 @@ export default function HomePage(){
     <span className={styles.eyebrow}>MATRYOSHKA · HOMEMADE FOOD</span>
     <h1>{ru?"Настоящая домашняя еда":"Authentic Homemade Food"}</h1>
     <p>{ru?"Традиционные рецепты. Настоящие люди. Приготовлено с любовью.":"Traditional recipes. Real people. Made with love."}</p>
-    <a href="#menu" className={styles.button}>{ru?"Смотреть меню":"Explore the menu"} <span aria-hidden="true">→</span></a>
+    <div className={styles.heroActions}>
+     <a href="#events" className={styles.button}>{ru?"Заказать еду к событию":"Order Food for an Event"} <span aria-hidden="true">→</span></a>
+     <a href="#dishes" className={styles.secondaryButton}>{ru?"Посмотреть всю еду":"Explore All Food"}</a>
+    </div>
    </div>
   </section>
   <section className={styles.benefits} aria-label={ru?"Наши ценности":"Our values"}>
@@ -65,13 +68,13 @@ export default function HomePage(){
     ["✿",ru?"Объединяем людей":"Bringing people together",ru?"Еда для любого повода":"Food for every occasion"]
    ].map(([symbol,title,subtitle])=><div className={styles.benefit} key={title}><span className={styles.benefitIcon}>{symbol}</span><strong>{title}</strong><small>{subtitle}</small></div>)}
   </section>
+  <section className={styles.section} id="events">
+   <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"Закажите еду к событию":"Order Food for an Event"}</h2><p>{ru?"Выберите событие, чтобы увидеть доступные блюда.":"Choose your event to see the food available for it."}</p></div>
+   {events.length>0?<div className={styles.eventRow}>{events.map(e=><Link key={e.id} className={styles.eventCard} href={`/events/${e.slug}`}><strong>{ru?(e.title_ru||e.title_en):e.title_en}</strong><span>{new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{day:"numeric",month:"long",year:"numeric",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span><span className={styles.eventAction}>{ru?"Посмотреть меню":"Browse event menu"} →</span></Link>)}</div>:<div className={styles.empty}>{ru?"Новые события скоро появятся.":"Upcoming events will appear here soon."} <Link href="/events">{ru?"Все события":"All events"} →</Link></div>}
+  </section>
   <section className={styles.section} id="menu">
    <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"Наше меню":"Our Menu"}</h2><p>{ru?"Откройте для себя домашние блюда от наших поваров.":"Explore homemade dishes prepared by our talented chefs."}</p></div>
    <div className={styles.categories}>{categories.map(c=><a key={c.key} href="#dishes" className={styles.category}><img src={c.image} alt="" loading="lazy"/><span>{ru?c.ru:c.en}<span aria-hidden="true">→</span></span></a>)}</div>
-  </section>
-  <section className={styles.section} id="events">
-   <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"События":"Events"}</h2><p>{ru?"Закажите блюда к вашему мероприятию.":"Discover food available for your celebration."}</p></div>
-   {events.length>0?<div className={styles.eventRow}>{events.map(e=><Link key={e.id} className={styles.eventCard} href={`/events/${e.slug}`}><strong>{ru?(e.title_ru||e.title_en):e.title_en}</strong><span>{new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{day:"numeric",month:"long",year:"numeric",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span><span className={styles.eventAction}>{ru?"Посмотреть меню":"Browse event menu"} →</span></Link>)}</div>:<div className={styles.empty}>{ru?"Новые события скоро появятся.":"Upcoming events will appear here soon."} <Link href="/events">{ru?"Все события":"All events"} →</Link></div>}
   </section>
   <section className={styles.section} id="dishes">
    <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"Домашние блюда":"Homemade dishes"}</h2><p>{ru?"Выбирайте блюда от наших поваров.":"See what our home chefs are making."}</p></div>
