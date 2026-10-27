@@ -16,7 +16,7 @@ export default async function ChefDashboard(){
  <Link href="/account">← Account / Аккаунт</Link><span style={{display:"block",marginTop:28,color:"#a32c26",letterSpacing:3,fontWeight:700,fontSize:12}}>MATRYOSHKA · CHEFS</span>
  <h1 style={{font:"bold clamp(34px,5vw,52px) Georgia,serif",color:"#982824",margin:"10px 0"}}>Chef dashboard / Кабинет повара</h1>
  <p style={{color:"#76695d"}}>Apply to events and follow your application status.</p>
- <ApplicationForm vendorId={vendorId} availableEvents={(events.data??[]) as any} initialApplications={(applications.data??[]) as any}/>
+ <Link href="/dishes" style={{display:"inline-flex",margin:"22px 0 3px",padding:"13px 20px",borderRadius:9,background:"#a32b27",color:"white",fontWeight:700,textDecoration:"none"}}>✿ My Dishes / Мои блюда →</Link><ApplicationForm vendorId={vendorId} availableEvents={(events.data??[]) as any} initialApplications={(applications.data??[]) as any}/>
  </div></main>;
 
 }
