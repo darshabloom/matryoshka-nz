@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import LanguageToggle from "@/components/LanguageToggle/LanguageToggle";
+import NavDashboardLink from "@/components/NavDashboardLink";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
 
 
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/#chefs">Our Chefs</Link>
                 <Link href="/#how-it-works">How It Works</Link>
                 <Link href="/#contact">Contact</Link>
-                <Link href="/account" style={{color:"#a52625",fontWeight:700}}>Sign in / Войти</Link>
+                <NavDashboardLink />
                 <LanguageToggle />
               </div>
             </nav>
