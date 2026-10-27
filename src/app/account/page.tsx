@@ -7,7 +7,7 @@ export const dynamic="force-dynamic";
 export default async function Account({searchParams}:{searchParams:Promise<{tab?:string}>}){
  const {tab="overview"}=await searchParams;
  const db=await createSupabaseServerClient();const {data:{user}}=await db.auth.getUser();if(!user)redirect("/sign-in");
- const [a,c]=await Promise.all([db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle(),db.from("vendor_users").select("vendor_id").eq("user_id",user.id).limit(1)]);
+ const [a,c,orderResult]=await Promise.all([db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle(),db.from("vendor_users").select("vendor_id").eq("user_id",user.id).limit(1),db.from("food_orders").select("id,event_id,status,payment_status,subtotal_cents,created_at,paid_at,events(title_en,title_ru)").eq("user_id",user.id).order("created_at",{ascending:false}).limit(15)]);
  return <main className={styles.page}><div className={styles.inner}>
  <span className={styles.eyebrow}>MATRYOSHKA · YOUR SPACE</span>
  <div className={styles.heading}><div><h1>Welcome to Matryoshka</h1><p>Your customer dashboard · Личный кабинет покупателя</p></div><span className={styles.avatar}>{(user.email??"M")[0].toUpperCase()}</span></div>
@@ -20,6 +20,6 @@ export default async function Account({searchParams}:{searchParams:Promise<{tab?
  {a.data&&<Link href="/admin" className={styles.card}><span className={styles.symbol}>✧</span><h3>Admin dashboard</h3><p>Manage events, applications and the marketplace.</p><strong>Open admin →</strong></Link>}
  </div>
  </>}{tab==="events"&&<section className={styles.orders}><div><h2>Explore events</h2><p>Find celebrations and homemade food from local chefs.</p><Link href="/events" style={{color:"#a32b27",fontWeight:750}}>Browse upcoming events →</Link></div></section>}
- <section className={styles.orders}><div><h2>My orders</h2><p>Your past orders and updates will appear here once ordering launches.</p></div><span className={styles.coming}>COMING SOON</span></section>
+ {(tab==="orders"||tab==="overview")&&<section className={styles.orders} style={{display:"block"}}><h2>My orders</h2>{!orderResult.data?.length?<p>You haven't placed an order yet. When checkout launches, your purchases will appear here.</p>:<div style={{display:"grid",gap:11,marginTop:18}}>{orderResult.data.map((o:any)=><article key={o.id} style={{display:"flex",justifyContent:"space-between",gap:14,flexWrap:"wrap",padding:"15px 0",borderBottom:"1px solid #eddfd4"}}><div><strong>{o.events?.title_en||"Food order"}</strong><p>Order #{o.id.slice(0,8).toUpperCase()} · {new Intl.DateTimeFormat("en-NZ",{dateStyle:"medium",timeZone:"Pacific/Auckland"}).format(new Date(o.created_at))}</p></div><div><strong>NZ$ {(o.subtotal_cents/100).toFixed(2)}</strong><p>{o.payment_status==="paid"?"Confirmed":"Payment "+o.payment_status}</p></div></article>)}</div>}</section>}
  </div></main>;
 }
