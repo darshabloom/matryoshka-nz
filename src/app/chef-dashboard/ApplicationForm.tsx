@@ -15,6 +15,7 @@ export default function ApplicationForm({vendorId,availableEvents,initialApplica
  return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))",gap:22,marginTop:30}}>
  <section style={{background:"white",padding:25,borderRadius:14,border:"1px solid #eadbcc"}}>
  <h2 style={{font:"bold 28px Georgia,serif"}}>{ru?"Подать заявку":"Apply to an event"}</h2>
+ {active.length===0&&<p role="status" style={{padding:13,borderRadius:9,background:"#faf0e5",color:"#7a5141",lineHeight:1.6}}>{ru?"Пока нет событий с открытым приёмом заявок. Организатор скоро откроет регистрацию.":"No events are accepting chef applications yet. Please check back when the organiser opens applications."}</p>}
  {done?<p role="status" style={{color:"#246d43"}}>{ru?"Заявка отправлена.":"Application submitted."}</p>:<form onSubmit={apply} style={{display:"grid",gap:16,marginTop:18}}>
  <label>{ru?"Событие":"Event"}<select required value={selected} onChange={e=>setSelected(e.target.value)} style={{display:"block",width:"100%",padding:12,marginTop:6}}><option value="">{ru?"Выберите событие":"Choose an event"}</option>{active.filter(e=>!applied.has(e.id)||["changes_requested","withdrawn"].includes(applied.get(e.id)!.status)).map(e=><option key={e.id} value={e.id}>{ru?(e.title_ru||e.title_en):e.title_en}</option>)}</select></label>
  <label>{ru?"Сообщение организатору (необязательно)":"Message to organiser (optional)"}<textarea rows={4} value={message} onChange={e=>setMessage(e.target.value)} style={{display:"block",width:"100%",padding:12,marginTop:6}}/></label>
