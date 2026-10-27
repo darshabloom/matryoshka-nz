@@ -29,6 +29,11 @@ export async function POST(req:Request){
   }else if(["checkout.session.expired","checkout.session.async_payment_failed"].includes(type)){
    const {error}=await db.from("food_orders").update({status:"payment_failed",payment_status:"failed",updated_at:new Date().toISOString()}).eq("stripe_session_id",session.id).eq("payment_status","pending");
    if(error)throw error;
+  }else if(type==="refund.updated"&&session.status==="succeeded"&&typeof session.payment_intent==="string"){
+   const {data:order}=await db.from("food_orders").select("id,subtotal_cents,payment_status").eq("stripe_payment_intent_id",session.payment_intent).maybeSingle();
+   if(order&&order.payment_status==="paid"&&session.amount===order.subtotal_cents){
+    const {error}=await db.from("food_orders").update({status:"cancelled",payment_status:"refunded",updated_at:new Date().toISOString()}).eq("id",order.id).eq("payment_status","paid");if(error)throw error;
+   }
   }else if(type==="charge.refunded"&&session.payment_intent&&session.refunded===true){
    const {error}=await db.from("food_orders").update({status:"cancelled",payment_status:"refunded",updated_at:new Date().toISOString()}).eq("stripe_payment_intent_id",session.payment_intent).eq("payment_status","paid");
    if(error)throw error;
