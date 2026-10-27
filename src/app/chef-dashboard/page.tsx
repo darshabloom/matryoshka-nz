@@ -16,3 +16,5 @@ export default async function ChefDashboard(){
  <Link href="/dishes" className={styles.card}><span className={styles.symbol}>♨</span><h3>My Dishes</h3><p>Create, edit and organise your dishes. Choose which events to include them in.</p><strong>Manage my dishes →</strong></Link>
  <Link href="/chef-dashboard/events" className={styles.card}><span className={styles.symbol}>✿</span><h3>My Events</h3><p>See accepted events, track applications and discover events welcoming chefs.</p><strong>View my events →</strong></Link>
  <div className={styles.card}><span className={styles.symbol}>▧</span><h3>My Orders</h3><p>Customer orders and preparation lists will appear here when ordering launches.</p><span className={styles.soon}>COMING SOON</span></div></div></div></main>;
+
+}
