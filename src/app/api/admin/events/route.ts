@@ -39,7 +39,11 @@ export async function PATCH(req:Request){
  const clean=validate({...old,...raw});
  if(!clean)return NextResponse.json({error:"Check event details and dates."},{status:400});
  const publication=typeof raw.is_published==="boolean"?raw.is_published:old.is_published;
- const {data:updated,error}=await db.from("events").update({...clean,is_published:publication,updated_at:new Date().toISOString()}).eq("id",raw.id).select("id,slug,is_published").single();
+ const appOpen=typeof raw.chef_applications_open==="boolean"?raw.chef_applications_open:old.chef_applications_open;
+ const deadline=raw.chef_application_deadline===null?null:
+  typeof raw.chef_application_deadline==="string"&&Number.isFinite(Date.parse(raw.chef_application_deadline))
+   ?raw.chef_application_deadline:old.chef_application_deadline;
+ const {data:updated,error}=await db.from("events").update({...clean,is_published:publication,chef_applications_open:appOpen,chef_application_deadline:deadline,updated_at:new Date().toISOString()}).eq("id",raw.id).select("id,slug,is_published").single();
  if(error)return NextResponse.json({error:error.code==="23505"?"Slug already exists.":"Unable to update event."},{status:error.code==="23505"?409:500});
  return NextResponse.json({event:updated});
 }
