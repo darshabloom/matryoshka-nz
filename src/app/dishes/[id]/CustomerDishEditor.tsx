@@ -12,12 +12,23 @@ export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boo
  const [name,setName]=useState(original?.name||""),[description,setDescription]=useState(original?.description||""),[language,setLanguage]=useState<"en"|"ru">(original?.lang==="ru"?"ru":"en"),[price,setPrice]=useState((dish.price_cents/100).toFixed(2));
  const [photos,setPhotos]=useState([...dish.menu_item_images].sort((a,b)=>a.sort_order-b.sort_order));
  const [active,setActive]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
- const canEdit=isAdmin||["draft","changes_requested"].includes(dish.approval_status);
+ const [status,setStatus]=useState(dish.approval_status);
+ const canEdit=isAdmin||["draft","changes_requested"].includes(status);
  async function save(){
   setBusy(true);setError("");setNotice("");
   try{const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price})});const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to save");
    setNotice(t("Changes saved.","Изменения сохранены."));router.refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to save")}finally{setBusy(false)}
+ }
+ async function submitForApproval(){
+  setBusy(true);setError("");setNotice("");
+  try{
+   const saved=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price})});
+   const sr=await saved.json();if(!saved.ok)throw Error(sr.error||"Could not save your changes");
+   const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"submit"})});
+   const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to submit");
+   setStatus("pending");setNotice(t("Submitted! Marina can now review your dish.","Отправлено! Марина может рассмотреть блюдо."));router.refresh();
+  }catch(e){setError(e instanceof Error?e.message:"Unable to submit")}finally{setBusy(false)}
  }
  async function upload(files:FileList|null){
   if(!files?.length)return;
@@ -52,13 +63,13 @@ export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boo
  return <main className={styles.page}><div className={styles.wrap}>
  <div className={styles.top}><Link href="/dishes">← {t("My Dishes","Мои блюда")}</Link><span>{t("Customer page · Editing mode","Страница покупателя · Редактирование")}</span><button type="button" onClick={()=>router.back()}>{t("Done","Готово")}</button></div>
  <div className={styles.product}><section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} alt={name}/>:<div className={styles.placeholder}>✿<small>{t("Add a photograph of your dish","Добавьте фотографию блюда")}</small></div>}</div><div className={styles.thumbs}>{photos.map((photo,i)=><div key={photo.id} className={styles.thumb}><button onClick={()=>setActive(i)} className={styles.thumbPhoto}><img src={photo.image_url} alt={`Photo ${i+1}`}/></button>{canEdit&&<button className={styles.remove} disabled={busy} onClick={()=>void removePhoto(photo.id)} aria-label="Remove photo">×</button>}</div>)}{canEdit&&photos.length<3&&<label className={styles.addPhoto}>＋<small>{t("Add photo","Добавить фото")}</small><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{void upload(e.target.files);e.target.value=""}} hidden disabled={busy}/></label>}</div><p className={styles.hint}>{t("Up to 3 photos · JPG, PNG or WebP · Maximum 5 MB each","До 3 фотографий · JPG, PNG или WebP · Не более 5 МБ")}</p></section>
- <section className={styles.details}><div className={styles.chef}><span className={styles.avatar}>{(dish.vendors?.display_name||"C")[0].toUpperCase()}</span><strong>{dish.vendors?.display_name||"Chef"}</strong></div><span className={styles.status}>{dish.approval_status==="approved"?t("Approved","Одобрено"):dish.approval_status==="pending"?t("Awaiting approval","На рассмотрении"):t("Draft · Not public","Черновик · Не опубликовано")}</span>
+ <section className={styles.details}><div className={styles.chef}><span className={styles.avatar}>{(dish.vendors?.display_name||"C")[0].toUpperCase()}</span><strong>{dish.vendors?.display_name||"Chef"}</strong></div><span className={styles.status}>{status==="approved"?t("Approved","Одобрено"):status==="pending"?t("Awaiting approval","На рассмотрении"):t("Draft · Not public","Черновик · Не опубликовано")}</span>
  <label className={styles.nameLabel}>{t("Dish name","Название блюда")}<input disabled={!canEdit} className={styles.name} value={name} onChange={e=>setName(e.target.value)}/></label>
  <label className={styles.inputLabel}>{t("Writing language","Язык описания")}<select disabled={!canEdit} value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label>
  <label className={styles.inputLabel}>{t("Description","Описание")}<textarea disabled={!canEdit} rows={4} value={description} onChange={e=>setDescription(e.target.value)}/></label>
  <h2>{t("Choose an option","Выберите вариант")}</h2><div className={styles.option}><span>◉ {t("Standard serving","Стандартная порция")}</span><label>NZ$ <input disabled={!canEdit} type="number" min="0" step=".01" value={price} onChange={e=>setPrice(e.target.value)}/></label></div>
  <div className={styles.mockCheckout}><span>− &nbsp; 1 &nbsp; ＋</span><button disabled>{t("Add to Cart · Customer preview","В корзину · Предпросмотр")}</button></div>
- {canEdit?<div className={styles.editActions}><button disabled={busy||!name.trim()} onClick={()=>void save()}>{busy?t("Saving…","Сохранение…"):t("Save changes","Сохранить изменения")}</button></div>:<p className={styles.hint}>{t("Approved dishes are protected. Material edits will use a reviewable version.","Одобренные блюда защищены. Изменения будут проходить проверку.")}</p>}
+ {canEdit?<div className={styles.editActions}><button className={styles.saveDraft} disabled={busy||!name.trim()} onClick={()=>void save()}>{busy?t("Saving…","Сохранение…"):t("Save draft","Сохранить черновик")}</button>{!isAdmin&&<button className={styles.submitApproval} disabled={busy||!name.trim()} onClick={()=>void submitForApproval()}>{t("Submit for approval →","Отправить на одобрение →")}</button>}</div>:<p className={styles.hint}>{t("Approved dishes are protected. Material edits will use a reviewable version.","Одобренные блюда защищены. Изменения будут проходить проверку.")}</p>}
  {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
  </section></div><section className={styles.description}><div className={styles.tabs}><strong>{t("Description","Описание")}</strong><span>{t("Ingredients","Ингредиенты")}</span></div><p>{description||t("Your description will appear here.","Здесь появится ваше описание.")}</p><div className={styles.floral}>✿ ❀</div></section></div></main>;
 
