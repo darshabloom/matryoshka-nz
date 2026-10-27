@@ -17,7 +17,7 @@ export default async function ChefDashboard({searchParams}:{searchParams:Promise
  const drafts=dishes?.filter(d=>d.approval_status==="draft"||d.approval_status==="changes_requested").length??0;
  const pendingApps=apps?.filter(a=>a.status==="pending").length??0;
  const [vendors,events,includes,ordersResult]=await Promise.all([db.from("vendors").select("id,display_name").eq("id",vendorId),db.from("events").select("id,title_en,title_ru,starts_at,ends_at,location_text,chef_applications_open,chef_application_deadline,chef_fulfilment_options").gt("ends_at",new Date().toISOString()).order("starts_at"),db.from("event_menu_items").select("event_id,menu_item_id"),db.from("food_order_lines").select("id,dish_name_snapshot,quantity,option_snapshot,order_id,food_orders(status,payment_status,created_at)").eq("vendor_id",vendorId).limit(1000)]);
- const committed=(ordersResult.data??[]).filter((l:any)=>l.food_orders?.payment_status==="paid"&&["confirmed","locked","fulfilled"].includes(l.food_orders?.status));
+ const committed=(ordersResult.data??[]).filter((l:any)=>l.food_orders?.payment_status==="paid"&&["confirmed","locked","fulfilled","cancel_requested"].includes(l.food_orders?.status));
  const production=new Map<string,number>();for(const line of committed){const key=line.dish_name_snapshot+" "+JSON.stringify(line.option_snapshot);production.set(key,(production.get(key)??0)+line.quantity)}
  const eventList=events.data??[],approvedEvents=eventList.filter(e=>apps?.some(a=>a.event_id===e.id&&a.status==="approved"));
  const title=tab==="dishes"?"My Dishes":tab==="events"?"My Events":tab==="orders"?"My Orders":"Welcome to your kitchen";
