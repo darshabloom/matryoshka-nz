@@ -16,7 +16,7 @@ export default function SignInPage() {
    ? await supabase.auth.signUp({email,password,options:{emailRedirectTo:redirectTo}})
    : await supabase.auth.signInWithPassword({email,password});
   if(result.error){setError(result.error.message);} else if(mode==="register"&&!result.data.session){setMessage(ru?"Проверьте почту для подтверждения регистрации.":"Check your email to confirm registration.");}
-  else{window.location.assign("/account");return;}
+  else{window.location.assign("/auth/role-redirect");return;}
   setBusy(false);
  }
  return <main style={{maxWidth:470,margin:"55px auto",padding:"0 20px 60px"}}>
