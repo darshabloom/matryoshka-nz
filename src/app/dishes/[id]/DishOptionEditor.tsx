@@ -1,0 +1,29 @@
+"use client";
+import {useState} from "react";
+import {createSupabaseBrowserClient} from "@/lib/supabase/client";
+type Value={id:string;label_en:string;label_ru:string|null;price_delta_cents:number;sort_order:number};
+type Group={id:string;label_en:string;label_ru:string|null;required:boolean;min_select:number;max_select:number;sort_order:number;menu_item_option_values:Value[]};
+export default function DishOptionEditor({dishId,initial,editable}:{dishId:string;initial:Group[];editable:boolean}){
+ const [groups,setGroups]=useState(initial),[name,setName]=useState(""),[multi,setMulti]=useState(false),[required,setRequired]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const sb=createSupabaseBrowserClient();
+ async function addGroup(){
+  if(!name.trim())return;setBusy(true);setError("");setNotice("");
+  const {data,error}=await sb.from("menu_item_options").insert({menu_item_id:dishId,label_en:name.trim().slice(0,100),required,min_select:required?1:0,max_select:multi?5:1,sort_order:groups.length}).select("id,label_en,label_ru,required,min_select,max_select,sort_order").single();
+  if(error)setError(error.message);else{setGroups(old=>[...old,{...data,menu_item_option_values:[]}]);setName("");setNotice("Option group added. Add choices below.")}setBusy(false);
+ }
+ async function addValue(group:Group){
+  const label=window.prompt("Choice name (e.g. 290 g, Large, Extra sauce)");if(!label?.trim())return;
+  const price=window.prompt("Additional price in NZD (e.g. 0 or 2.50)","0");
+  if(price===null)return;const cents=Math.round(Number(price)*100);
+  if(!Number.isSafeInteger(cents)||cents<0||cents>10000000){setError("Enter a valid additional price of 0 or more.");return}
+  setBusy(true);setError("");setNotice("");
+  const {data,error}=await sb.from("menu_item_option_values").insert({option_id:group.id,label_en:label.trim().slice(0,100),price_delta_cents:cents,sort_order:group.menu_item_option_values.length}).select("id,label_en,label_ru,price_delta_cents,sort_order").single();
+  if(error)setError(error.message);else{setGroups(old=>old.map(g=>g.id===group.id?{...g,menu_item_option_values:[...g.menu_item_option_values,data]}:g));setNotice("Choice added.")}setBusy(false);
+ }
+ async function removeValue(group:Group,value:Value){if(!window.confirm(`Remove "${value.label_en}"?`))return;setBusy(true);setError("");const {error}=await sb.from("menu_item_option_values").delete().eq("id",value.id);if(error)setError(error.message);else setGroups(old=>old.map(g=>g.id===group.id?{...g,menu_item_option_values:g.menu_item_option_values.filter(v=>v.id!==value.id)}:g));setBusy(false)}
+ async function removeGroup(group:Group){if(!window.confirm(`Remove "${group.label_en}" and all its choices?`))return;setBusy(true);setError("");const first=await sb.from("menu_item_option_values").delete().eq("option_id",group.id);if(first.error){setError(first.error.message);setBusy(false);return}const second=await sb.from("menu_item_options").delete().eq("id",group.id);if(second.error)setError(second.error.message);else setGroups(old=>old.filter(g=>g.id!==group.id));setBusy(false)}
+ return <section style={{margin:"25px 0",padding:20,border:"1px solid #e7d1c4",borderRadius:12,background:"#fff8f1"}}><h2 style={{font:"bold 24px Georgia,serif",margin:"0 0 9px"}}>Sizes, variants & extras</h2><p style={{fontSize:12,color:"#766357",lineHeight:1.6}}>Offer portion sizes or extras. Prices shown here are added to the base dish price. You can create groups such as Size (choose one) or Extras (choose multiple).</p>
+ {groups.map(g=><div key={g.id} style={{padding:"16px 0",borderBottom:"1px solid #e4d0c1"}}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}><strong>{g.label_en} · {g.max_select===1?"Choose one":"Choose multiple"} {g.required?"· Required":""}</strong>{editable&&<button disabled={busy} onClick={()=>void removeGroup(g)} style={{background:"none",border:0,color:"#a32c27",cursor:"pointer"}}>Remove group</button>}</div><div style={{display:"grid",gap:7,marginTop:13}}>{g.menu_item_option_values.map(v=><div key={v.id} style={{background:"white",border:"1px solid #e9d8c8",borderRadius:8,padding:"11px 13px",display:"flex",justifyContent:"space-between",gap:10}}><span>{v.label_en}</span><span>+ NZ$ {(v.price_delta_cents/100).toFixed(2)} {editable&&<button disabled={busy} onClick={()=>void removeValue(g,v)} style={{background:"none",border:0,color:"#a32b27",fontWeight:800,cursor:"pointer"}}>×</button>}</span></div>)}</div>{editable&&<button disabled={busy} onClick={()=>void addValue(g)} style={{marginTop:12,padding:"11px 15px",background:"white",border:"1px solid #c79784",borderRadius:8,color:"#a32c27",fontWeight:750,cursor:"pointer"}}>＋ Add choice</button>}</div>)}
+ {editable&&<div style={{display:"grid",gap:12,paddingTop:16}}><strong>New choice group</strong><input aria-label="Option group name" placeholder="e.g. Size, Extras, Sauce" value={name} onChange={e=>setName(e.target.value)} style={{padding:12,border:"1px solid #dec9b9",borderRadius:8}}/><label style={{display:"flex",gap:10,alignItems:"center"}}><input type="checkbox" checked={multi} onChange={e=>setMulti(e.target.checked)}/> Allow multiple selections</label><label style={{display:"flex",gap:10,alignItems:"center"}}><input type="checkbox" checked={required} onChange={e=>setRequired(e.target.checked)}/> Customer must choose at least one</label><button disabled={!name.trim()||busy} onClick={()=>void addGroup()} style={{background:"#a32d27",color:"white",border:0,borderRadius:8,padding:"12px 18px",fontWeight:800,cursor:"pointer",justifySelf:"start"}}>Add option group</button></div>}
+ {error&&<p role="alert" style={{color:"#af2725"}}>{error}</p>}{notice&&<p role="status" style={{color:"#267242"}}>{notice}</p>}</section>;
+}

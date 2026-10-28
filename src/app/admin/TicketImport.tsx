@@ -1,0 +1,15 @@
+"use client";
+import {useState} from "react";
+type Event={id:string;title_en:string;is_published:boolean};
+export default function TicketImport({events}:{events:Event[]}){
+ const [eventId,setEventId]=useState(events[0]?.id||""),[text,setText]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState("");
+ async function importRows(){
+  setBusy(true);setMessage("");setError("");
+  const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const bookings=lines.map(line=>{const [reference,email]=line.split(",").map(s=>s.trim());return {reference,email}});
+  if(bookings.some(x=>!x.reference||!x.email)){setError("Use one verified booking per line: reference,email");setBusy(false);return}
+  try{const r=await fetch("/api/admin/tickets/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId,bookings})});const x=await r.json();if(!r.ok)throw Error(x.error||"Import failed");setMessage(`${x.processed} verified bookings processed. Duplicates were not reactivated.`);setText("");}
+  catch(e){setError(e instanceof Error?e.message:"Import failed")}finally{setBusy(false)}
+ }
+ return <section style={{maxWidth:800,background:"white",border:"1px solid #e7d7ca",borderRadius:13,padding:27}}><h2 style={{font:"bold 27px Georgia,serif",color:"#4d312a"}}>Verified Yumorilnik ticket list</h2><p style={{color:"#78685e",lineHeight:1.7}}>Only import bookings you have verified are valid for the selected event. Customers must enter their booking reference and matching email at checkout. References are stored as salted server-side hashes rather than raw ticket numbers.</p><label style={{display:"grid",gap:9,fontWeight:750,margin:"20px 0"}}>Event<select value={eventId} onChange={e=>setEventId(e.target.value)} style={{padding:13,borderRadius:8,border:"1px solid #d9c7bb"}}>{events.map(e=><option key={e.id} value={e.id}>{e.title_en}</option>)}</select></label><label style={{display:"grid",gap:9,fontWeight:750}}>Confirmed bookings — one per line<textarea rows={8} value={text} onChange={e=>setText(e.target.value)} placeholder={"BOOKING-123,customer@example.com\nBOOKING-124,another@example.com"} style={{padding:13,border:"1px solid #d9c7bb",borderRadius:9,fontFamily:"monospace"}}/></label><p style={{fontSize:12,color:"#8b7264"}}>Maximum 500 records at a time. This does not query Yumorilnik automatically. Do not import cancelled tickets.</p>{error&&<p role="alert" style={{color:"#a62d27"}}>{error}</p>}{message&&<p role="status" style={{color:"#267345"}}>{message}</p>}<button disabled={busy||!eventId||!text.trim()} onClick={()=>void importRows()} style={{background:"#a52d28",color:"white",padding:"14px 20px",borderRadius:9,border:0,cursor:"pointer",fontWeight:800}}>{busy?"Importing…":"Import verified tickets"}</button></section>;
+}

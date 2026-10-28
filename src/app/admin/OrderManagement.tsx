@@ -1,0 +1,22 @@
+"use client";
+import {useState} from "react";
+type Order={id:string;status:string;payment_status:string;subtotal_cents:number;created_at:string;email:string;events:{title_en:string}|null};
+export default function OrderManagement({initial}:{initial:Order[]}){
+ const [orders,setOrders]=useState(initial),[busy,setBusy]=useState<string|null>(null),[message,setMessage]=useState("");
+ const paid=orders.filter(o=>o.payment_status==="paid");
+ const stalePending=orders.filter(o=>o.payment_status==="pending" && Date.now()-new Date(o.created_at).getTime()>35*60*1000);
+ async function refund(order:Order){
+  const confirmation=window.prompt(`Refund NZ$ ${(order.subtotal_cents/100).toFixed(2)} for order #${order.id.slice(0,8)}? Type REFUND to confirm.`);
+  if(confirmation!=="REFUND")return;
+  const reason=window.prompt("Why is this order being refunded? This explanation is kept in the audit log.");
+  if(!reason||reason.trim().length<8)return;
+  setBusy(order.id);setMessage("");
+  try{const r=await fetch("/api/admin/orders/refund",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:order.id,confirm:"REFUND",reason})});const x=await r.json();if(!r.ok)throw Error(x.error||"Refund failed");if(x.status==="succeeded")setOrders(old=>old.map(o=>o.id===order.id?{...o,status:"cancelled",payment_status:"refunded"}:o));setMessage(`Order #${order.id.slice(0,8)}: Stripe refund status ${x.status}. The payment record has been updated if fully refunded.`)}
+  catch(e){setMessage(e instanceof Error?e.message:"Please verify the refund in Stripe.")}finally{setBusy(null)}
+ }
+ return <section style={{padding:26,border:"1px solid #e7d8ca",borderRadius:13,background:"white"}}><h2 style={{font:"bold 29px Georgia,serif",color:"#4e3029"}}>Customer orders</h2><p style={{color:"#74665c",lineHeight:1.6}}>{paid.length} fully paid orders shown below. Cancellation requests require Marina's decision; no automatic refunds are issued.</p>
+ {message&&<p role="status" style={{padding:14,borderRadius:9,background:"#faf0e7",color:"#87452f"}}>{message}</p>}
+ {stalePending.length>0&&<p role="status" style={{padding:14,borderRadius:9,background:"#fff4df",color:"#784916"}}><strong>{stalePending.length} older pending order{stalePending.length===1?"":"s"} need reconciliation.</strong> A session older than 35 minutes may be abandoned or linked to a different Stripe account. Check the correct Stripe account before treating it as failed; no automatic cancellation or refund has been made.</p>}
+ {!orders.length?<p>No orders yet.</p>:<div style={{display:"grid",gap:13,marginTop:20}}>{orders.map(o=><article key={o.id} style={{display:"flex",alignItems:"center",flexWrap:"wrap",justifyContent:"space-between",gap:15,padding:"17px 0",borderBottom:"1px solid #ecdfd4"}}><div><strong>{o.events?.title_en||"Event order"} · #{o.id.slice(0,8).toUpperCase()}</strong><p style={{fontSize:12,color:"#786c61"}}>{o.email} · {new Intl.DateTimeFormat("en-NZ",{dateStyle:"medium",timeZone:"Pacific/Auckland"}).format(new Date(o.created_at))}</p><p style={{fontSize:12,fontWeight:750,color:o.status==="cancel_requested"?"#a12b26":"#816044"}}>{o.status.replaceAll("_"," ")} / {o.payment_status}</p></div><div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}><strong>NZ$ {(o.subtotal_cents/100).toFixed(2)}</strong>{o.payment_status==="paid"&&["confirmed","cancel_requested","locked"].includes(o.status)&&<button disabled={busy!==null} onClick={()=>void refund(o)} style={{padding:"10px 15px",background:o.status==="cancel_requested"?"#a32c27":"white",color:o.status==="cancel_requested"?"white":"#a32c27",border:"1px solid #a32c27",borderRadius:8,cursor:"pointer",fontWeight:750}}>{busy===o.id?"Processing…":"Issue full refund"}</button>}</div></article>)}</div>}
+ </section>;
+}
