@@ -1,8 +1,9 @@
 import {NextResponse} from "next/server";
+import {isCheckoutConfigured} from "@/lib/server/checkout-security";
 export const dynamic="force-dynamic";
 export async function GET(){
  const stripe=!!process.env.STRIPE_SECRET_KEY&&!!process.env.STRIPE_WEBHOOK_SECRET;
  const tickets=!!process.env.SUPABASE_SERVICE_ROLE_KEY&&!!process.env.TICKET_HASH_PEPPER;
- const enabled=process.env.CHECKOUT_ENABLED==="true"&&stripe&&tickets&&!!process.env.NEXT_PUBLIC_SITE_URL;
+ const enabled=isCheckoutConfigured();
  return NextResponse.json({enabled,stripeReady:stripe,ticketVerificationReady:tickets,reason:enabled?null:"Secure checkout is being configured. No payment can be taken yet."},{headers:{"Cache-Control":"no-store"}});
 }
