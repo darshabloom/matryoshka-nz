@@ -9,7 +9,7 @@ export async function eventReadiness(db:DB,eventId:string){
  ]);
  const event=ev.data;if(!event)throw Error("Event not found");
  const dishes=(menus.data??[]).map((m:any)=>({...m,item:m.menu_items})),participating=(apps.data??[]).filter(a=>a.status==="approved");
- const eligible=(d:any)=>!!d.item?.vendor_id&&d.item?.approval_status==="approved"&&d.item?.is_active===true&&d.item?.allergen_review_complete===true&&!!d.item?.ingredients_text?.trim()&&!!d.item?.allergen_statement?.trim()&&participating.some(p=>p.vendor_id===d.item.vendor_id);
+ const eligible=(d:any)=>d.is_available===true&&!!d.item?.vendor_id&&d.item?.approval_status==="approved"&&d.item?.is_active===true&&d.item?.allergen_review_complete===true&&!!d.item?.ingredients_text?.trim()&&!!d.item?.allergen_statement?.trim()&&participating.some(p=>p.vendor_id===d.item.vendor_id);
  const unsafe=dishes.filter(d=>!eligible(d));
  const title=!!event.title_en?.trim(),dates=!!event.starts_at&&!!event.ends_at&&new Date(event.ends_at)>new Date(event.starts_at)&&new Date(event.ends_at)>new Date(),venue=!!event.location_text?.trim();
  const basics=title&&dates&&venue;
