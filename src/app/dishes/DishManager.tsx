@@ -28,7 +28,7 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
    return true;
   }catch(e){setError(e instanceof Error?e.message:"Could not save");return false}finally{setBusy(false)}
  }
- function edit(d:Dish){setEditing(d.id);const tr=d.menu_item_translations.find(x=>x.lang===lang)||d.menu_item_translations[0];setName(tr?.name||"");setDescription(tr?.description||"");setLanguage(tr?.lang==="ru"?"ru":"en");setPrice((d.price_cents/100).toFixed(2));setVendor(d.vendor_id);setOpen(true);}
+ function edit(d:Dish){setEditing(d.id);const tr=d.menu_item_translations.find(x=>x.lang===lang)||d.menu_item_translations[0];setName(tr?.name||"");setDescription(tr?.description||"");setLanguage(tr?.lang==="ru"?"ru":"en");setPrice((d.price_cents/100).toFixed(2));setVendor(d.vendor_id??"");setOpen(true);}
  function beginNew(){setEditing(null);setName("");setDescription("");setPrice("");setOpen(true);}
  async function create(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");
   try{
