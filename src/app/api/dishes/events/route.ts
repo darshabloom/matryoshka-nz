@@ -18,7 +18,9 @@ export async function POST(req:Request){
   if(!membership||!approval)return NextResponse.json({error:"Chef participation must be approved first"},{status:403});
  }
  if(body.action==="include"){
-  const {error}=await db.from("event_menu_items").upsert(dishes.map(d=>({event_id:event.id,menu_item_id:d.id,is_available:d.approval_status==="approved",price_cents:null})),{onConflict:"event_id,menu_item_id"});
+  const {data:accepted}=await db.from("chef_event_applications").select("vendor_id").eq("event_id",event.id).eq("status","approved");
+  const allowed=new Set((accepted??[]).map(a=>a.vendor_id));
+  const {error}=await db.from("event_menu_items").upsert(dishes.map(d=>({event_id:event.id,menu_item_id:d.id,is_available:d.approval_status==="approved"&&!!d.vendor_id&&allowed.has(d.vendor_id),price_cents:null})),{onConflict:"event_id,menu_item_id"});
   if(error)return NextResponse.json({error:"Unable to include dishes"},{status:500});
  }else{
   const {error}=await db.from("event_menu_items").delete().eq("event_id",event.id).in("menu_item_id",ids);
