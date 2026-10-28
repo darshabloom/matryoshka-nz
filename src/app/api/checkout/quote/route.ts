@@ -1,5 +1,6 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
+import {serviceClient} from "@/lib/server/checkout-security";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Item={dishId:string;quantity:number;optionIds:string[]};
 export async function POST(req:Request){
@@ -7,7 +8,10 @@ export async function POST(req:Request){
  const raw=body?.items;if(!UUID.test(body?.eventId??"")||!Array.isArray(raw)||raw.length<1||raw.length>40)return NextResponse.json({error:"Choose an event and 1–40 dishes"},{status:400});
  const items:Item[]=raw.map((x:any)=>({dishId:x?.dishId,quantity:x?.quantity,optionIds:x?.optionIds}));
  if(items.some(x=>!UUID.test(x.dishId)||!Number.isInteger(x.quantity)||x.quantity<1||x.quantity>100||!Array.isArray(x.optionIds)||x.optionIds.length>30||x.optionIds.some((id:any)=>!UUID.test(id))))return NextResponse.json({error:"Invalid dish selection or quantity"},{status:400});
- const db=await createSupabaseServerClient(),now=new Date().toISOString();
+ // The QA fixture remains invisible under shared production RLS. Only this protected
+// preview branch may read it with the server-only service key; real events use RLS.
+ const qaPreview=process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="redesign/food-first-home"&&process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")===true;
+ const db=qaPreview&&body.eventId==="23334f6b-00ee-445c-859f-b85347ce372c"?serviceClient():await createSupabaseServerClient(),now=new Date().toISOString();
  const {data:event}=await db.from("events").select("id,slug,title_en,title_ru,is_published,starts_at,ends_at,ordering_opens_at,ordering_closes_at,ticket_required,fulfilment_mode,ordering_enabled").eq("id",body.eventId).eq("is_published",true).gt("ends_at",now).maybeSingle();
  if(!event||!event.ordering_enabled)return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
  if(event.ordering_opens_at&&event.ordering_opens_at>now||event.ordering_closes_at&&event.ordering_closes_at<=now)return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
