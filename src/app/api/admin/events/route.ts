@@ -42,11 +42,14 @@ export async function PATCH(req:Request){
  const options=Array.isArray(raw.chef_fulfilment_options)?[...new Set(raw.chef_fulfilment_options)]:old.chef_fulfilment_options;
  if(!Array.isArray(options)||!options.length||options.length>3||options.some((x:any)=>!allowed.includes(x)))return NextResponse.json({error:"Choose at least one valid food handover option"},{status:400});
  const publication=typeof raw.is_published==="boolean"?raw.is_published:old.is_published;
+ if(publication&&(!clean.location_text||new Date(clean.ends_at)<=new Date()))return NextResponse.json({error:"A future date and venue are required before publishing an event."},{status:409});
+ const fulfilment=["at_event","collection","delivery"].includes(raw.fulfilment_mode)?raw.fulfilment_mode:old.fulfilment_mode;
+ const ticketRequired=typeof raw.ticket_required==="boolean"?raw.ticket_required:old.ticket_required;
  const appOpen=typeof raw.chef_applications_open==="boolean"?raw.chef_applications_open:old.chef_applications_open;
  const deadline=raw.chef_application_deadline===null?null:
   typeof raw.chef_application_deadline==="string"&&Number.isFinite(Date.parse(raw.chef_application_deadline))
    ?raw.chef_application_deadline:old.chef_application_deadline;
- const {data:updated,error}=await db.from("events").update({...clean,is_published:publication,chef_applications_open:appOpen,chef_application_deadline:deadline,chef_fulfilment_options:options,updated_at:new Date().toISOString()}).eq("id",raw.id).select("id,slug,is_published").single();
+ const {data:updated,error}=await db.from("events").update({...clean,is_published:publication,chef_applications_open:appOpen,chef_application_deadline:deadline,chef_fulfilment_options:options,fulfilment_mode:fulfilment,ticket_required:ticketRequired,ordering_enabled:publication?old.ordering_enabled:false,updated_at:new Date().toISOString()}).eq("id",raw.id).select("id,slug,is_published").single();
  if(error)return NextResponse.json({error:error.code==="23505"?"Slug already exists.":"Unable to update event."},{status:error.code==="23505"?409:500});
  return NextResponse.json({event:updated});
 }
