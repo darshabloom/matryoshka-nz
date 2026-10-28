@@ -6,7 +6,7 @@ import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./editor.module.css";
 type Dish={id:string;vendor_id:string;price_cents:number;approval_status:string;ingredients_text:string;allergen_statement:string;cross_contact_statement:string;portion_label:string;allergen_review_complete:boolean;vendors:{display_name:string}|null;menu_item_translations:{lang:string;name:string;description:string|null}[];menu_item_images:{id:string;image_url:string;sort_order:number}[]};
-export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boolean}){
+export default function CustomerDishEditor({dish,isAdmin,assignmentControl}:{dish:Dish;isAdmin:boolean;assignmentControl?:React.ReactNode}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a,router=useRouter();
  const original=dish.menu_item_translations.find(x=>x.lang===lang)||dish.menu_item_translations[0];
  const [name,setName]=useState(original?.name||""),[description,setDescription]=useState(original?.description||""),[language,setLanguage]=useState<"en"|"ru">(original?.lang==="ru"?"ru":"en"),[price,setPrice]=useState((dish.price_cents/100).toFixed(2));
@@ -29,7 +29,7 @@ export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boo
   if(!ingredients.trim()||!allergens.trim()||!allergenConfirmed){setError(t("Complete ingredients, allergen statement and confirmation before submitting.","Заполните состав, информацию об аллергенах и подтвердите её."));return;}
   setBusy(true);setError("");setNotice("");
   try{
-   const saved=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price})});
+   const saved=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price,ingredients,allergens,crossContact,portion,allergenConfirmed})});
    const sr=await saved.json();if(!saved.ok)throw Error(sr.error||"Could not save your changes");
    const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"submit"})});
    const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to submit");
@@ -66,8 +66,8 @@ export default function CustomerDishEditor({dish,isAdmin}:{dish:Dish;isAdmin:boo
   }
   setBusy(false);
  }
- return <main className={styles.page}><div className={styles.wrap}>
- <div className={styles.top}><Link href="/dishes">← {t("My Dishes","Мои блюда")}</Link><span>{t("Customer page · Editing mode","Страница покупателя · Редактирование")}</span><button type="button" onClick={()=>router.back()}>{t("Done","Готово")}</button></div>
+ return <main className={styles.page}><div className={styles.wrap}>{assignmentControl}
+ <div className={styles.top}><Link href={isAdmin?"/admin?tab=food":"/chef-dashboard?tab=dishes"}>← {t("My Dishes","Мои блюда")}</Link><span>{t("Customer page · Editing mode","Страница покупателя · Редактирование")}</span><button type="button" onClick={()=>router.back()}>{t("Done","Готово")}</button></div>
  <div className={styles.product}><section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} alt={name}/>:<div className={styles.placeholder}>✿<small>{t("Add a photograph of your dish","Добавьте фотографию блюда")}</small></div>}</div><div className={styles.thumbs}>{photos.map((photo,i)=><div key={photo.id} className={styles.thumb}><button onClick={()=>setActive(i)} className={styles.thumbPhoto}><img src={photo.image_url} alt={`Photo ${i+1}`}/></button>{canEdit&&<button className={styles.remove} disabled={busy} onClick={()=>void removePhoto(photo.id)} aria-label="Remove photo">×</button>}</div>)}{canEdit&&photos.length<3&&<label className={styles.addPhoto}>＋<small>{t("Add photo","Добавить фото")}</small><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{void upload(e.target.files);e.target.value=""}} hidden disabled={busy}/></label>}</div><p className={styles.hint}>{t("Up to 3 photos · JPG, PNG or WebP · Maximum 5 MB each","До 3 фотографий · JPG, PNG или WebP · Не более 5 МБ")}</p></section>
  <section className={styles.details}><div className={styles.chef}><span className={styles.avatar}>{(dish.vendors?.display_name||"C")[0].toUpperCase()}</span><strong>{dish.vendors?.display_name||"Chef"}</strong></div><span className={styles.status}>{status==="approved"?t("Approved","Одобрено"):status==="pending"?t("Awaiting approval","На рассмотрении"):t("Draft · Not public","Черновик · Не опубликовано")}</span>
  <label className={styles.nameLabel}>{t("Dish name","Название блюда")}<input disabled={!canEdit} className={styles.name} value={name} onChange={e=>setName(e.target.value)}/></label>
