@@ -1,3 +1,4 @@
+import {verifyLinkedTicket} from "@/lib/server/yumorilnik-link";
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import {serviceClient,isCheckoutConfigured,checkTicket} from "@/lib/server/checkout-security";
@@ -15,8 +16,8 @@ export async function POST(req:Request){
  const quote=await quoteResponse.json();if(!quoteResponse.ok)return NextResponse.json({error:quote.error||"Your basket needs updating"},{status:quoteResponse.status});
  const service=serviceClient();let bookingId:null|string=null;
  if(quote.event.ticketRequired){
-  if(typeof body.ticketReference!=="string")return NextResponse.json({error:"A valid event ticket is required"},{status:400});
-  try{bookingId=await checkTicket(service,body.eventId,email,body.ticketReference)}catch{return NextResponse.json({error:"Ticket verification is temporarily unavailable"},{status:503})}
+  if(typeof body.ticketReference!=="string"&&typeof body.ticketLinkToken!=="string")return NextResponse.json({error:"A valid event ticket is required"},{status:400});
+  try{bookingId=typeof body.ticketLinkToken==="string"&&body.ticketLinkToken?await verifyLinkedTicket(service,body.eventId,email,body.ticketLinkToken):await checkTicket(service,body.eventId,email,body.ticketReference)}catch{return NextResponse.json({error:"Ticket verification is temporarily unavailable"},{status:503})}
   if(!bookingId)return NextResponse.json({error:"Unable to verify this event ticket and booking email. Check your confirmation details."},{status:403});
  }
  const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();
