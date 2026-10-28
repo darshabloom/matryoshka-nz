@@ -50,10 +50,11 @@ export async function PATCH(req:Request){
   const values=x.status==="approved"?{approval_status:"approved",approved_at:new Date().toISOString(),approved_by:user.id,is_active:true,review_note:null}:{approval_status:"changes_requested",review_note:String(x.note??"").slice(0,2000),is_active:false};
   const {error}=await db.from("menu_items").update(values).eq("id",item.id);
   if(error)return NextResponse.json({error:"Review failed"},{status:500});
-  const {data:offers}=await db.from("event_menu_items").select("event_id").eq("menu_item_id",item.id);
-  for(const offer of offers??[]){
-   const {data:accepted}=await db.from("chef_event_applications").select("id").eq("event_id",offer.event_id).eq("vendor_id",item.vendor_id).eq("status","approved").maybeSingle();
-   await db.from("event_menu_items").update({is_available:x.status==="approved"&&!!accepted}).eq("event_id",offer.event_id).eq("menu_item_id",item.id);
+  // Review changes must never reopen a deliberately paused event dish.
+  // An admin can explicitly enable it in the event menu after checking readiness.
+  if(x.status!=="approved"){
+   const {error:pauseError}=await db.from("event_menu_items").update({is_available:false}).eq("menu_item_id",item.id);
+   if(pauseError)return NextResponse.json({error:"Dish review saved, but event availability needs manual attention"},{status:500});
   }
   return NextResponse.json({ok:true});
  }
