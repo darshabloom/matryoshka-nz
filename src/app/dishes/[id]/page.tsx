@@ -11,5 +11,6 @@ export default async function Page({params}:{params:Promise<{id:string}>}){
  if(!dish)notFound();
  if(!admin){const {data:member}=await db.from("vendor_users").select("vendor_id").eq("user_id",user.id).eq("vendor_id",dish.vendor_id).maybeSingle();if(!member)notFound()}
  const [vendors,assignment]=admin?await Promise.all([db.from("vendors").select("id,display_name").order("display_name"),db.from("dish_chef_assignments").select("vendor_id,status,chef_note").eq("dish_id",id).maybeSingle()]):[{data:[]},{data:null}];
- return <CustomerDishEditor dish={dish as any} isAdmin={!!admin} assignmentControl={admin&&!dish.vendor_id?<AssignmentControl dishId={id} vendors={vendors.data??[]} assignment={assignment.data??null}/>:null}/>;
+ const {data:options}=await db.from("menu_item_options").select("id,label_en,label_ru,required,min_select,max_select,sort_order,menu_item_option_values(id,label_en,label_ru,price_delta_cents,sort_order)").eq("menu_item_id",id).order("sort_order");
+ return <CustomerDishEditor options={(options??[]) as any} dish={dish as any} isAdmin={!!admin} assignmentControl={admin&&!dish.vendor_id?<AssignmentControl dishId={id} vendors={vendors.data??[]} assignment={assignment.data??null}/>:null}/>;
 }
