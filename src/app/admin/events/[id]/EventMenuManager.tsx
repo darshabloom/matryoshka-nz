@@ -37,3 +37,5 @@ export default function EventMenuManager({eventId,dishes,vendors,initialOffers,a
  </article>})}</div>}
  {adding&&<div style={{position:"sticky",bottom:12,padding:15,background:"#fff7f1",border:"1px solid #d9b9a6",borderRadius:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}><strong>{selected.length} selected</strong><button disabled={busy||!selected.length} onClick={()=>void change("include",selected)} style={{padding:"13px 19px",background:"#a32e28",color:"white",border:0,borderRadius:8,fontWeight:800,cursor:"pointer"}}>Include selected dishes →</button></div>}
  </section>;
+
+}
