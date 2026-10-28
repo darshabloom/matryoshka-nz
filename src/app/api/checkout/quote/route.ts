@@ -8,7 +8,7 @@ export async function POST(req:Request){
  const items:Item[]=raw.map((x:any)=>({dishId:x?.dishId,quantity:x?.quantity,optionIds:x?.optionIds}));
  if(items.some(x=>!UUID.test(x.dishId)||!Number.isInteger(x.quantity)||x.quantity<1||x.quantity>100||!Array.isArray(x.optionIds)||x.optionIds.length>30||x.optionIds.some((id:any)=>!UUID.test(id))))return NextResponse.json({error:"Invalid dish selection or quantity"},{status:400});
  const db=await createSupabaseServerClient(),now=new Date().toISOString();
- const {data:event}=await db.from("events").select("id,slug,title_en,title_ru,is_published,starts_at,ends_at,ordering_opens_at,ordering_closes_at,ticket_required,fulfilment_mode").eq("id",body.eventId).eq("is_published",true).gt("ends_at",now).maybeSingle();
+ const {data:event}=await db.from("events").select("id,slug,title_en,title_ru,is_published,starts_at,ends_at,ordering_opens_at,ordering_closes_at,ticket_required,fulfilment_mode,ordering_enabled").eq("id",body.eventId).eq("is_published",true).gt("ends_at",now).maybeSingle();
  if(!event||!event.ordering_enabled)return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
  if(event.ordering_opens_at&&event.ordering_opens_at>now||event.ordering_closes_at&&event.ordering_closes_at<=now)return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
  const {data:offers,error:offerErr}=await db.from("event_menu_items").select("menu_item_id,is_available,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,menu_item_translations(lang,name),vendors(display_name))").eq("event_id",event.id).in("menu_item_id",items.map(i=>i.dishId));
