@@ -10,7 +10,8 @@ export default async function Page({params}:{params:Promise<{id:string}>}){
  const {data:dish}=await db.from("menu_items").select("id,vendor_id,price_cents,approval_status,ingredients_text,allergen_statement,cross_contact_statement,portion_label,allergen_review_complete,menu_item_translations(lang,name,description),menu_item_images(id,image_url,sort_order),vendors(display_name)").eq("id",id).maybeSingle();
  if(!dish)notFound();
  if(!admin){const {data:member}=await db.from("vendor_users").select("vendor_id").eq("user_id",user.id).eq("vendor_id",dish.vendor_id).maybeSingle();if(!member)notFound()}
- const [vendors,assignment]=admin?await Promise.all([db.from("vendors").select("id,display_name").order("display_name"),db.from("dish_chef_assignments").select("vendor_id,status,chef_note").eq("dish_id",id).maybeSingle()]):[{data:[]},{data:null}];
+ const [vendors,assignment,members]=admin?await Promise.all([db.from("vendors").select("id,display_name").order("display_name"),db.from("dish_chef_assignments").select("vendor_id,status,chef_note").eq("dish_id",id).maybeSingle(),db.from("vendor_users").select("vendor_id")]):[{data:[]},{data:null},{data:[]}];
+ const joined=new Set((members.data??[]).map(m=>m.vendor_id));
  const {data:options}=await db.from("menu_item_options").select("id,label_en,label_ru,required,min_select,max_select,sort_order,menu_item_option_values(id,label_en,label_ru,price_delta_cents,sort_order)").eq("menu_item_id",id).order("sort_order");
- return <CustomerDishEditor options={(options??[]) as any} dish={dish as any} isAdmin={!!admin} assignmentControl={admin&&!dish.vendor_id?<AssignmentControl dishId={id} vendors={vendors.data??[]} assignment={assignment.data??null}/>:null}/>;
+ return <CustomerDishEditor options={(options??[]) as any} dish={dish as any} isAdmin={!!admin} assignmentControl={admin&&!dish.vendor_id?<AssignmentControl dishId={id} vendors={(vendors.data??[]).filter(v=>joined.has(v.id))} assignment={assignment.data??null}/>:null}/>;
 }
