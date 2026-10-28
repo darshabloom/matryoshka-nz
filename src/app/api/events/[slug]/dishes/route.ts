@@ -1,9 +1,14 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
+import {serviceClient} from "@/lib/server/checkout-security";
 export const dynamic="force-dynamic";
 export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>}){
  try{
-  const {slug}=await params;const db=await createSupabaseServerClient(),now=new Date().toISOString();
+  // The QA fixture remains invisible under shared production RLS. Only this protected
+// preview branch may read it with the server-only service key; real events use RLS.
+  const {slug}=await params;
+  const qaPreview=process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="redesign/food-first-home"&&process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")===true;
+  const db=qaPreview&&slug==="test-sandbox-checkout"?serviceClient():await createSupabaseServerClient(),now=new Date().toISOString();
   const {data:{user}}=await db.auth.getUser();
   const {data:admin}=user?await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle():{data:null};
   const isAdmin=!!admin;
