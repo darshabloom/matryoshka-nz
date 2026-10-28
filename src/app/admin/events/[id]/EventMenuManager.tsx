@@ -1,5 +1,5 @@
-import {dishReadinessIssues,dishReadyForEvent} from "@/lib/menu-readiness";
 "use client";
+import {dishReadinessIssues,dishReadyForEvent} from "@/lib/menu-readiness";
 import {useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
