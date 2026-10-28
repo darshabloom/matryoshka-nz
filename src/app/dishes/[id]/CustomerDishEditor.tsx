@@ -1,3 +1,4 @@
+import DishOptionEditor from "./DishOptionEditor";
 "use client";
 import {useState} from "react";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./editor.module.css";
 type Dish={id:string;vendor_id:string;price_cents:number;approval_status:string;ingredients_text:string;allergen_statement:string;cross_contact_statement:string;portion_label:string;allergen_review_complete:boolean;vendors:{display_name:string}|null;menu_item_translations:{lang:string;name:string;description:string|null}[];menu_item_images:{id:string;image_url:string;sort_order:number}[]};
-export default function CustomerDishEditor({dish,isAdmin,assignmentControl}:{dish:Dish;isAdmin:boolean;assignmentControl?:React.ReactNode}){
+export default function CustomerDishEditor({dish,isAdmin,assignmentControl,options}:{dish:Dish;isAdmin:boolean;assignmentControl?:React.ReactNode;options:any[]}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a,router=useRouter();
  const original=dish.menu_item_translations.find(x=>x.lang===lang)||dish.menu_item_translations[0];
  const [name,setName]=useState(original?.name||""),[description,setDescription]=useState(original?.description||""),[language,setLanguage]=useState<"en"|"ru">(original?.lang==="ru"?"ru":"en"),[price,setPrice]=useState((dish.price_cents/100).toFixed(2));
@@ -79,7 +80,7 @@ export default function CustomerDishEditor({dish,isAdmin,assignmentControl}:{dis
  <label>{t("Allergens present, or explicitly state none known (required)","Аллергены или прямое указание их отсутствия (обязательно)")}<textarea disabled={!canEdit} value={allergens} onChange={e=>{setAllergens(e.target.value);setAllergenConfirmed(false)}} rows={3} placeholder={t("e.g. Contains eggs, dairy and wheat","Например, содержит яйца, молоко и пшеницу")}/></label>
  <label>{t("Cross-contact risks / shared equipment","Риски перекрёстного контакта / общее оборудование")}<textarea disabled={!canEdit} value={crossContact} onChange={e=>{setCrossContact(e.target.value);setAllergenConfirmed(false)}} rows={2}/></label>
  <label className={styles.safetyCheck}><input disabled={!canEdit} type="checkbox" checked={allergenConfirmed} onChange={e=>setAllergenConfirmed(e.target.checked)}/>{t("I confirm the ingredient and allergen information is accurate and complete to the best of my knowledge.","Подтверждаю, что сведения о составе и аллергенах являются полными и точными, насколько мне известно.")}</label></section>
- <div className={styles.mockCheckout}><span>− &nbsp; 1 &nbsp; ＋</span><button disabled>{t("Add to Cart · Customer preview","В корзину · Предпросмотр")}</button></div>
+ <DishOptionEditor dishId={dish.id} initial={options??[]} editable={canEdit}/><div className={styles.mockCheckout}><span>− &nbsp; 1 &nbsp; ＋</span><button disabled>{t("Add to Cart · Customer preview","В корзину · Предпросмотр")}</button></div>
  {canEdit?<div className={styles.editActions}><button className={styles.saveDraft} disabled={busy||!name.trim()} onClick={()=>void save()}>{busy?t("Saving…","Сохранение…"):t("Save draft","Сохранить черновик")}</button>{!isAdmin&&<button className={styles.submitApproval} disabled={busy||!name.trim()} onClick={()=>void submitForApproval()}>{t("Submit for approval →","Отправить на одобрение →")}</button>}</div>:<p className={styles.hint}>{t("Approved dishes are protected. Material edits will use a reviewable version.","Одобренные блюда защищены. Изменения будут проходить проверку.")}</p>}
  {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
  </section></div><section className={styles.description}><div className={styles.tabs}><strong>{t("Description","Описание")}</strong><span>{t("Ingredients","Ингредиенты")}</span></div><p>{description||t("Your description will appear here.","Здесь появится ваше описание.")}</p><p><strong>{t("Ingredients: ","Состав: ")}</strong>{ingredients}</p><p><strong>{t("Allergens: ","Аллергены: ")}</strong>{allergens}</p><div className={styles.floral}>✿ ❀</div></section></div></main>;
