@@ -12,6 +12,15 @@ export default function EventFoodPage(){
  const {slug}=useParams<{slug:string}>(),{count,items}=useBasket();
  const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
  const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
+ useEffect(()=>{
+  if(slug!=="novogodnik26")return;
+  const url=new URL(window.location.href);
+  const token=url.searchParams.get("ticket_link");
+  if(token){
+   if(token.length<2000 && /^[A-Za-z0-9_.-]+$/.test(token)){try{sessionStorage.setItem("yumorilnik_food_ticket_link",token)}catch{}}
+   url.searchParams.delete("ticket_link");window.history.replaceState(null,"",url.pathname+url.search+url.hash);
+  }
+ },[slug]);
  useEffect(()=>{const controller=new AbortController();if(!slug)return;
   setBusy(true);fetch(`/api/events/${encodeURIComponent(slug)}/dishes`,{signal:controller.signal}).then(async r=>{const x=await r.json();if(!r.ok)throw Error(x.error||"Cannot load menu");return x}).then(x=>setData(x)).catch(e=>{if(!controller.signal.aborted)setError(e.message)}).finally(()=>{if(!controller.signal.aborted)setBusy(false)});
   return ()=>controller.abort();
