@@ -7,7 +7,7 @@ export async function POST(req:Request){
  if(!user)return NextResponse.json({error:"Sign-in required"},{status:401});
  const {data:admin}=await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();
  if(!admin)return NextResponse.json({error:"Admin only"},{status:403});
- if(!process.env.STRIPE_SECRET_KEY||!process.env.SUPABASE_SERVICE_ROLE_KEY)return NextResponse.json({error:"Stripe refunds are not configured"},{status:503});
+ if(!process.env.STRIPE_SECRET_KEY||!process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.VERCEL_ENV==="preview"&&!process.env.STRIPE_SECRET_KEY.startsWith("sk_test_"))return NextResponse.json({error:"Stripe refunds are not safely configured for this environment"},{status:503});
  let x:any;try{x=await req.json()}catch{return NextResponse.json({error:"Invalid request"},{status:400})}
  if(!UUID.test(x.orderId??"")||x.confirm!=="REFUND"||typeof x.reason!=="string"||x.reason.trim().length<8)return NextResponse.json({error:"Confirm REFUND and provide a meaningful reason"},{status:400});
  const service=serviceClient(),{data:order}=await service.from("food_orders").select("id,subtotal_cents,payment_status,status,stripe_payment_intent_id").eq("id",x.orderId).maybeSingle();
