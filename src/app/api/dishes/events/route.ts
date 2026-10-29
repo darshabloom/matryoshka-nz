@@ -19,9 +19,34 @@ export async function POST(req:Request){
   if(!membership||!approval)return NextResponse.json({error:"Chef participation must be approved first"},{status:403});
  }
  if(body.action==="include"){
+  if(admin){
+   // Admin inclusion is a catalogue/editorial action, not a sale-safety waiver.
+   // Chef participation is arranged automatically where there is a chef.
+   for(const chefId of [...new Set(dishes.map(d=>d.vendor_id).filter(Boolean))]){
+    const {data:existing,error:check}=await db.from("chef_event_applications")
+     .select("status").eq("event_id",event.id).eq("vendor_id",chefId).maybeSingle();
+    if(check)return NextResponse.json({error:"Unable to check participating chef"},{status:503});
+    if(existing?.status!=="approved"){
+     const {error:accept}=await db.from("chef_event_applications").upsert({
+      event_id:event.id,vendor_id:chefId,status:"approved",reviewed_by:user.id,
+      reviewed_at:new Date().toISOString(),message:"Included by organiser",
+      review_note:"Approved directly by organiser",fulfilment:"at_event"
+     },{onConflict:"event_id,vendor_id"});
+     if(accept)return NextResponse.json({error:"Unable to include chef"},{status:503});
+    }
+   }
+   const {error:approve}=await db.from("menu_items").update({
+    approval_status:"approved",is_active:true,approved_at:new Date().toISOString(),
+    approved_by:user.id
+   }).in("id",ids);
+   if(approve)return NextResponse.json({error:"Unable to approve selected dishes"},{status:503});
+  }
   const {data:accepted}=await db.from("chef_event_applications").select("vendor_id").eq("event_id",event.id).eq("status","approved");
   const allowed=(accepted??[]).map(a=>a.vendor_id);
-  const {error}=await db.from("event_menu_items").upsert(dishes.map(d=>({event_id:event.id,menu_item_id:d.id,is_available:dishReadyForEvent(d,allowed),price_cents:null})),{onConflict:"event_id,menu_item_id",ignoreDuplicates:true});
+  const {error}=await db.from("event_menu_items").upsert(dishes.map(d=>({
+   event_id:event.id,menu_item_id:d.id,
+   is_available:admin?true:dishReadyForEvent(d,allowed),price_cents:null
+  })),{onConflict:"event_id,menu_item_id"});
   if(error)return NextResponse.json({error:"Unable to include dishes"},{status:500});
  }else{
   const {error}=await db.from("event_menu_items").delete().eq("event_id",event.id).in("menu_item_id",ids);
