@@ -1,9 +1,11 @@
 "use client";
 import {useState} from "react";
 import Link from "next/link";
+import {useSearchParams} from "next/navigation";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 export default function NewDishEditor(){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
+ const assignedChef=useSearchParams().get("chef");
  const [name,setName]=useState(""),[description,setDescription]=useState(""),[language,setLanguage]=useState<"en"|"ru">(ru?"ru":"en");
  const [price,setPrice]=useState(""),[ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[portion,setPortion]=useState(""),[confirmed,setConfirmed]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
@@ -17,7 +19,7 @@ export default function NewDishEditor(){
     if(portions.length<2||portions.some(p=>!p.grams||!p.price||Number(p.grams)<=0||Number(p.price)<0)||new Set(portions.map(p=>Number(p.grams))).size!==portions.length)
      throw Error(t("Add at least two unique weights and valid prices.","Добавьте минимум два разных веса и корректные цены."));
    }
-   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,description,language,price:byWeight?String(basePrice):price,vendor_id:null})});
+   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,description,language,price:byWeight?String(basePrice):price,vendor_id:assignedChef||null})});
    const result=await response.json() as {id?:string;error?:string};
    if(!response.ok||!result.id)throw Error(result.error||"Unable to create dish");
    const update=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:result.id,action:"edit",name,description,language,price:byWeight?String(basePrice):price,ingredients,allergens,crossContact,portion,allergenConfirmed:confirmed})});
