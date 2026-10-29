@@ -4,6 +4,7 @@ import {useBasket} from "@/components/cart/BasketProvider";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {dollars,label,type CustomerDish,type ShoppingEvent} from "@/lib/customer-types";
 import styles from "./shop.module.css";
+import {customerPriceCents} from "@/lib/customer-pricing";
 export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:ShoppingEvent}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
  const {add}=useBasket();
@@ -17,7 +18,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
   return n>=Math.max(group.min_select,group.required?1:0)&&n<=group.max_select;
  });
  const limit=Math.max(0,Math.min(100,dish.max_quantity??100));
- const price=dish.price_cents+chosen.reduce((sum,v)=>sum+v.price_delta_cents,0);
+ const price=customerPriceCents(dish.price_cents+chosen.reduce((sum,v)=>sum+v.price_delta_cents,0));
  function toggle(groupId:string,id:string,max:number){
   setNotice("");setSelected(old=>{
    const list=old[groupId]??[];
@@ -42,7 +43,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
    <div className={styles.quickChoices}>{group.values.map(value=><label key={value.id} className={styles.quickOption}>
     <input type={group.max_select===1?"radio":"checkbox"} name={dish.menu_item_id+group.id}
      checked={(selected[group.id]??[]).includes(value.id)} onChange={()=>toggle(group.id,value.id,group.max_select)}/>
-    <span>{label(value.label_en,value.label_ru,ru)}{(group.label_en==="Size"||group.label_en==="Weight")?(" · "+dollars(dish.price_cents+value.price_delta_cents)):value.price_delta_cents?(" · +"+dollars(value.price_delta_cents)):""}</span>
+    <span>{label(value.label_en,value.label_ru,ru)}{(group.label_en==="Size"||group.label_en==="Weight")?(" · "+dollars(customerPriceCents(dish.price_cents+value.price_delta_cents))):value.price_delta_cents?(" · +"+dollars(value.price_delta_cents)):""}</span>
    </label>)}</div>
    {group.max_select>1&&<small>{t("Choose up to ","Можно выбрать до ")}{group.max_select}</small>}
   </fieldset>)}
