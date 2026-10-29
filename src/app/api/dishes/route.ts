@@ -50,8 +50,13 @@ export async function PATCH(req:Request){
    }
    return NextResponse.json({ok:true});
   }
-  const {error:up}=await db.from("menu_items").update({price_cents:cents,ingredients_text:String(x.ingredients??"").slice(0,4000),allergen_statement:String(x.allergens??"").slice(0,2000),cross_contact_statement:String(x.crossContact??"").slice(0,2000),portion_label:String(x.portion??"").slice(0,150),allergen_review_complete:x.allergenConfirmed===true,updated_at:new Date().toISOString()}).eq("id",item.id);
+  const {error:up}=await db.from("menu_items").update({price_cents:cents,ingredients_text:String(x.ingredients??"").slice(0,4000),allergen_statement:String(x.allergens??"").slice(0,2000),cross_contact_statement:String(x.crossContact??"").slice(0,2000),portion_label:String(x.portion??"").slice(0,150),allergen_review_complete:x.allergenConfirmed===true,
+   approval_status:"draft",is_active:false,approved_by:null,approved_at:null,updated_at:new Date().toISOString()}).eq("id",item.id);
   if(up)return NextResponse.json({error:"Unable to update dish price"},{status:500});
+  // A saved draft cannot remain available to purchase on any event until
+  // organiser Done has rechecked all food details and reapproved it.
+  const {error:pauseError}=await db.from("event_menu_items").update({is_available:false}).eq("menu_item_id",item.id);
+  if(pauseError)return NextResponse.json({error:"Draft saved but event listings need review"},{status:503});
   const translations=bilingual?bilingualRows.map(row=>({menu_item_id:item.id,...row})):[{menu_item_id:item.id,lang,name,description}];
   const {error:tr}=await db.from("menu_item_translations").upsert(translations,{onConflict:"menu_item_id,lang"});
   return tr?NextResponse.json({error:"Details saved, but translation could not be saved"},{status:500}):NextResponse.json({ok:true});
