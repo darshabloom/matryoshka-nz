@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic="force-dynamic";
 import { listChefs } from "@/lib/data/chefs";
 
 export async function GET(req: Request) {
@@ -11,5 +12,5 @@ export async function GET(req: Request) {
 
     const chefs = await listChefs({ lang, q, area, cuisine });
 
-    return NextResponse.json({ chefs });
+    return NextResponse.json({ chefs },{headers:{"Cache-Control":"no-store"}});
 }
