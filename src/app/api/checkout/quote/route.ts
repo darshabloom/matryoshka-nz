@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import {serviceClient} from "@/lib/server/checkout-security";
+import {customerPriceCents} from "@/lib/customer-pricing";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Item={dishId:string;quantity:number;optionIds:string[]};
 export async function POST(req:Request){
@@ -40,7 +41,7 @@ export async function POST(req:Request){
   }
   const matched=(values??[]).filter((v:any)=>uniq.includes(v.id));
   if(matched.length!==uniq.length||matched.some((v:any)=>!options.some(g=>g.id===v.option_id)))return NextResponse.json({error:"Invalid option for this dish"},{status:400});
-  const unit=dish.price_cents+extra;if(!Number.isSafeInteger(unit)||unit<0)return NextResponse.json({error:"Invalid dish pricing"},{status:409});
+  const chefUnit=dish.price_cents+extra;const unit=customerPriceCents(chefUnit);if(!Number.isSafeInteger(unit)||unit<0)return NextResponse.json({error:"Invalid dish pricing"},{status:409});
   const en=dish.menu_item_translations?.find((x:any)=>x.lang==="en")??dish.menu_item_translations?.[0];
   const line={dishId:it.dishId,vendorId:dish.vendor_id,name:en?.name||"Dish",chef:dish.vendors?.display_name||"Chef",quantity:it.quantity,unitPriceCents:unit,totalCents:unit*it.quantity,optionIds:uniq,optionSummary:summary};
   subtotal+=line.totalCents;result.push(line);
