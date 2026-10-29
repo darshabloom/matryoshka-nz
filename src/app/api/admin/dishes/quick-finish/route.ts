@@ -1,5 +1,6 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
+import {serviceClient} from "@/lib/server/checkout-security";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const response=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(req:Request){
@@ -28,6 +29,21 @@ export async function POST(req:Request){
   // Existing event listings must be explicitly rechecked after reassignment.
   const {error:pause}=await db.from("event_menu_items").update({is_available:false}).eq("menu_item_id",item.id);
   if(pause)return response({error:"Chef reassigned, but event listings need review"},503);
+  // Update any legacy pending chef-assignment queue so the previous chef
+  // does not receive a stale request after Marina assigned the dish directly.
+  const secure=serviceClient();
+  if(vendorId){
+   const {error:assignmentError}=await secure.from("dish_chef_assignments")
+    .upsert({dish_id:item.id,vendor_id:vendorId,status:"accepted",
+     assigned_by:user.id,assigned_at:new Date().toISOString(),
+     responded_at:new Date().toISOString(),chef_note:"Assigned directly by organiser"},
+     {onConflict:"dish_id"});
+   if(assignmentError)return response({error:"Chef changed, but pending assignment reconciliation failed"},503);
+  }else{
+   const {error:cleanupError}=await secure.from("dish_chef_assignments")
+    .delete().eq("dish_id",item.id);
+   if(cleanupError)return response({error:"Chef removed, but an old assignment needs review"},503);
+  }
  }
  if(x.action==="assign")return response({ok:true,assigned:vendorId});
  if(!vendorId)return response({error:"Choose a chef before completing the dish"},409);
@@ -43,13 +59,18 @@ export async function POST(req:Request){
   if(eventError||!event)return response({error:"Event not found"},404);
   // A direct organiser assignment also accepts the chef for the event,
   // without making Marina repeat an application review workflow.
-  const {error:joinError}=await db.from("chef_event_applications").upsert({
-   event_id:eventId,vendor_id:vendorId,status:"approved",
-   reviewed_by:user.id,reviewed_at:new Date().toISOString(),
-   message:"Added by event organiser",review_note:"Approved directly by organiser",
-   fulfilment:"at_event"
-  },{onConflict:"event_id,vendor_id"});
-  if(joinError)return response({error:"Unable to attach chef to this event"},503);
+  const {data:existing,error:checkError}=await db.from("chef_event_applications")
+   .select("status").eq("event_id",eventId).eq("vendor_id",vendorId).maybeSingle();
+  if(checkError)return response({error:"Unable to check event chef participation"},503);
+  if(existing?.status!=="approved"){
+   const {error:joinError}=await db.from("chef_event_applications").upsert({
+    event_id:eventId,vendor_id:vendorId,status:"approved",
+    reviewed_by:user.id,reviewed_at:new Date().toISOString(),
+    message:"Added by event organiser",review_note:"Approved directly by organiser",
+    fulfilment:"at_event"
+   },{onConflict:"event_id,vendor_id"});
+   if(joinError)return response({error:"Unable to attach chef to this event"},503);
+  }
  }
  const {error:approve}=await db.from("menu_items").update({approval_status:"approved",is_active:true,approved_at:new Date().toISOString(),approved_by:user.id,review_note:null,updated_at:new Date().toISOString()}).eq("id",item.id);
  if(approve)return response({error:"Could not approve dish"},500);
