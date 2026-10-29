@@ -1,98 +1,145 @@
 "use client";
-import DishOptionEditor from "./DishOptionEditor";
 import {useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./editor.module.css";
-type Dish={id:string;vendor_id:string;price_cents:number;approval_status:string;ingredients_text:string;allergen_statement:string;cross_contact_statement:string;portion_label:string;allergen_review_complete:boolean;vendors:{display_name:string}|null;menu_item_translations:{lang:string;name:string;description:string|null}[];menu_item_images:{id:string;image_url:string;sort_order:number}[]};
-export default function CustomerDishEditor({dish,isAdmin,assignmentControl,options}:{dish:Dish;isAdmin:boolean;assignmentControl?:React.ReactNode;options:any[]}){
- const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a,router=useRouter();
- const original=dish.menu_item_translations.find(x=>x.lang===lang)||dish.menu_item_translations[0];
- const [name,setName]=useState(original?.name||""),[description,setDescription]=useState(original?.description||""),[language,setLanguage]=useState<"en"|"ru">(original?.lang==="ru"?"ru":"en"),[price,setPrice]=useState((dish.price_cents/100).toFixed(2));
+type Translation={lang:string;name:string;description:string|null};
+type Image={id:string;image_url:string;sort_order:number};
+type Vendor={id:string;display_name:string;slug:string;hero_image_url:string|null};
+type Event={id:string;title_en:string;title_ru:string|null};
+type Option={id:string;label_en:string;menu_item_option_values:{id:string;label_en:string;price_delta_cents:number;sort_order:number}[]};
+type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;ingredients_text:string|null;allergen_statement:string|null;cross_contact_statement:string|null;portion_label:string|null;allergen_review_complete:boolean;menu_item_translations:Translation[];menu_item_images:Image[]};
+type Size={size:string;price:string};
+export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,initialEventId}:{dish:Dish;isAdmin:boolean;options:Option[];vendors:Vendor[];events:Event[];initialEventId:string}){
+ const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
+ const router=useRouter();
+ const en=dish.menu_item_translations.find(x=>x.lang==="en"),rus=dish.menu_item_translations.find(x=>x.lang==="ru");
+ const [nameEn,setNameEn]=useState(en?.name??rus?.name??"");
+ const [nameRu,setNameRu]=useState(rus?.name??en?.name??"");
+ const [descriptionEn,setDescriptionEn]=useState(en?.description??"");
+ const [descriptionRu,setDescriptionRu]=useState(rus?.description??"");
+ const [chefId,setChefId]=useState(dish.vendor_id??"");
+ const [eventId,setEventId]=useState(initialEventId);
+ const initialGroup=options.find(g=>g.label_en==="Size"||g.label_en==="Weight");
+ const [sizes,setSizes]=useState<Size[]>(()=>{
+  const options=(initialGroup?.menu_item_option_values??[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
+  return options.length?options.map(x=>({size:x.label_en,price:((dish.price_cents+x.price_delta_cents)/100).toFixed(2)})):[{size:"",price:(dish.price_cents/100).toFixed(2)}];
+ });
  const [ingredients,setIngredients]=useState(dish.ingredients_text??"");
  const [allergens,setAllergens]=useState(dish.allergen_statement??"");
  const [crossContact,setCrossContact]=useState(dish.cross_contact_statement??"");
- const [portion,setPortion]=useState(dish.portion_label??"");
- const [allergenConfirmed,setAllergenConfirmed]=useState(dish.allergen_review_complete??false);
+ const [confirmed,setConfirmed]=useState(dish.allergen_review_complete??false);
  const [photos,setPhotos]=useState([...dish.menu_item_images].sort((a,b)=>a.sort_order-b.sort_order));
  const [active,setActive]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
- const [status,setStatus]=useState(dish.approval_status);
- const canEdit=isAdmin||["draft","changes_requested"].includes(status);
- const weightOption=options.find((o:any)=>o.label_en==="Weight"&&o.required&&o.max_select===1);
- const weightValues=(weightOption?.menu_item_option_values??[]).slice().sort((a:any,b:any)=>a.sort_order-b.sort_order);
- const [selectedWeight,setSelectedWeight]=useState<string>("");
- const chosenWeight=weightValues.find((v:any)=>v.id===selectedWeight)??weightValues[0];
- const currentPrice=Number(price||0)+(chosenWeight?.price_delta_cents??0)/100;
- async function save(){
-  setBusy(true);setError("");setNotice("");
-  try{const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price,ingredients,allergens,crossContact,portion,allergenConfirmed})});const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to save");
-   setNotice(t("Changes saved.","Изменения сохранены."));router.refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to save")}finally{setBusy(false)}
+ const canEdit=isAdmin||["draft","changes_requested"].includes(dish.approval_status);
+ const chef=vendors.find(c=>c.id===chefId);
+ function message(data:any){return String(data?.error??"Unable to save");}
+ async function api(url:string,body:unknown){
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const result=await r.json();if(!r.ok)throw Error(message(result));return result;
  }
- async function submitForApproval(){
-  if(!ingredients.trim()||!allergens.trim()||!allergenConfirmed){setError(t("Complete ingredients, allergen statement and confirmation before submitting.","Заполните состав, информацию об аллергенах и подтвердите её."));return;}
+ async function done(draftOnly=false){
+  if(!canEdit)return;
   setBusy(true);setError("");setNotice("");
   try{
-   const saved=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price,ingredients,allergens,crossContact,portion,allergenConfirmed})});
-   const sr=await saved.json();if(!saved.ok)throw Error(sr.error||"Could not save your changes");
-   const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"submit"})});
-   const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to submit");
-   setStatus("pending");setNotice(t("Submitted! Marina can now review your dish.","Отправлено! Марина может рассмотреть блюдо."));router.refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to submit")}finally{setBusy(false)}
+   if(!nameEn.trim()||!nameRu.trim())throw Error(t("Enter both dish names.","Укажите название блюда на двух языках."));
+   if(sizes.some(s=>!s.size.trim()||s.price.trim()===""||!Number.isFinite(Number(s.price))||Number(s.price)<0)||
+     new Set(sizes.map(s=>s.size.trim().toLowerCase())).size!==sizes.length)
+    throw Error(t("Enter a different size and valid price on each row.","Укажите разные размеры и правильные цены."));
+   if(isAdmin&&chefId!==(dish.vendor_id??"")){
+    await api("/api/admin/dishes/quick-finish",{dishId:dish.id,vendorId:chefId||null,action:"assign"});
+   }
+   const lowest=Math.min(...sizes.map(s=>Number(s.price)));
+   const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    id:dish.id,action:"edit",name:nameEn,description:descriptionEn,language:"en",
+    nameEn,nameRu,descriptionEn,descriptionRu,price:String(lowest),
+    ingredients,allergens,crossContact,portion:"",allergenConfirmed:confirmed
+   })});
+   const result=await response.json();if(!response.ok)throw Error(message(result));
+   await api("/api/dishes/size-prices",{dishId:dish.id,sizes});
+   if(isAdmin&&!draftOnly){
+    await api("/api/admin/dishes/quick-finish",{dishId:dish.id,vendorId:chefId||null,eventId:eventId||null,action:"finish"});
+   }
+   router.push(isAdmin&&eventId?`/admin/events/${eventId}?tab=menu`:isAdmin?"/admin?tab=food":"/chef-dashboard?tab=dishes");
+   router.refresh();
+  }catch(e){setError(e instanceof Error?e.message:"Unable to save");setNotice(t("Your editor is still open so you can correct the issue.","Редактор открыт, чтобы вы могли исправить проблему."))}
+  finally{setBusy(false)}
  }
  async function upload(files:FileList|null){
   if(!files?.length)return;
-  if(photos.length+files.length>3){setError(t("Maximum three photos per dish.","Не более трёх фотографий блюда."));return}
+  if(photos.length+files.length>3){setError(t("Maximum 3 photos.","Не более трёх фото."));return}
   setBusy(true);setError("");
-  const sb=createSupabaseBrowserClient();
+  const db=createSupabaseBrowserClient();
   for(const file of Array.from(files)){
-   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5242880){setError(t("Use JPG, PNG or WebP images under 5 MB.","Только JPG, PNG или WebP до 5 МБ."));break}
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5242880){
+    setError(t("Use JPG, PNG or WebP under 5 MB.","Используйте JPG, PNG или WebP до 5 МБ."));break;
+   }
    const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
    const key=`${dish.id}/${crypto.randomUUID()}.${ext}`;
-   const {error:uploadError}=await sb.storage.from("dish-photos").upload(key,file,{contentType:file.type,upsert:false});
-   if(uploadError){setError(uploadError.message);break}
-   const {data:publicUrl}=sb.storage.from("dish-photos").getPublicUrl(key);
-   const {data:image,error:dbError}=await sb.from("menu_item_images").insert({menu_item_id:dish.id,image_url:publicUrl.publicUrl,sort_order:photos.length}).select("id,image_url,sort_order").single();
-   if(dbError){setError(dbError.message);break}
-   setPhotos(p=>[...p,image]);setNotice(t("Photo added.","Фото добавлено."));
+   const {error:up}=await db.storage.from("dish-photos").upload(key,file,{contentType:file.type,upsert:false});
+   if(up){setError(up.message);break}
+   const url=db.storage.from("dish-photos").getPublicUrl(key).data.publicUrl;
+   const {data:photo,error:save}=await db.from("menu_item_images").insert({menu_item_id:dish.id,image_url:url,sort_order:photos.length}).select("id,image_url,sort_order").single();
+   if(save){setError(save.message);await db.storage.from("dish-photos").remove([key]);break}
+   setPhotos(old=>[...old,photo]);
   }
   setBusy(false);
  }
  async function removePhoto(id:string){
   const photo=photos.find(p=>p.id===id);if(!photo)return;
   setBusy(true);setError("");
-  const sb=createSupabaseBrowserClient();
-  const {error:e}=await sb.from("menu_item_images").delete().eq("id",id);
-  if(e){setError(e.message)}else{
-   const path=decodeURIComponent(new URL(photo.image_url).pathname.split("/dish-photos/")[1]||"");
-   if(path)await sb.storage.from("dish-photos").remove([path]);
+  const db=createSupabaseBrowserClient();const {error}=await db.from("menu_item_images").delete().eq("id",id);
+  if(error)setError(error.message);
+  else{
+   const path=decodeURIComponent(new URL(photo.image_url).pathname.split("/dish-photos/")[1]??"");
+   if(path)await db.storage.from("dish-photos").remove([path]);
    setPhotos(prev=>prev.filter(p=>p.id!==id));setActive(0);
   }
   setBusy(false);
  }
- return <main className={styles.page}><div className={styles.wrap}>{assignmentControl}
- <div className={styles.top}><Link href={isAdmin?"/admin?tab=food":"/chef-dashboard?tab=dishes"}>← {t("My Dishes","Мои блюда")}</Link><span>{t("Customer page · Editing mode","Страница покупателя · Редактирование")}</span><button type="button" onClick={()=>router.back()}>{t("Done","Готово")}</button></div>
- <div className={styles.product}><section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} alt={name}/>:<div className={styles.placeholder}>✿<small>{t("Add a photograph of your dish","Добавьте фотографию блюда")}</small></div>}</div><div className={styles.thumbs}>{photos.map((photo,i)=><div key={photo.id} className={styles.thumb}><button onClick={()=>setActive(i)} className={styles.thumbPhoto}><img src={photo.image_url} alt={`Photo ${i+1}`}/></button>{canEdit&&<button className={styles.remove} disabled={busy} onClick={()=>void removePhoto(photo.id)} aria-label="Remove photo">×</button>}</div>)}{canEdit&&photos.length<3&&<label className={styles.addPhoto}>＋<small>{t("Add photo","Добавить фото")}</small><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{void upload(e.target.files);e.target.value=""}} hidden disabled={busy}/></label>}</div><p className={styles.hint}>{t("Up to 3 photos · JPG, PNG or WebP · Maximum 5 MB each","До 3 фотографий · JPG, PNG или WebP · Не более 5 МБ")}</p></section>
- <section className={styles.details}><div className={styles.chef}><span className={styles.avatar}>{(dish.vendors?.display_name||"C")[0].toUpperCase()}</span><strong>{dish.vendors?.display_name||"Chef"}</strong></div><span className={styles.status}>{status==="approved"?t("Approved","Одобрено"):status==="pending"?t("Awaiting approval","На рассмотрении"):t("Draft · Not public","Черновик · Не опубликовано")}</span>
- <label className={styles.nameLabel}>{t("Dish name","Название блюда")}<input disabled={!canEdit} className={styles.name} value={name} onChange={e=>setName(e.target.value)}/></label>
- <label className={styles.inputLabel}>{t("Writing language","Язык описания")}<select disabled={!canEdit} value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label>
- <label className={styles.inputLabel}>{t("Description","Описание")}<textarea disabled={!canEdit} rows={4} value={description} onChange={e=>setDescription(e.target.value)}/></label>
- <h2>{t("Choose an option","Выберите вариант")}</h2>
- {weightValues.length>0&&<label className={styles.inputLabel}>{t("Weight and price","Вес и цена")}
- <select value={chosenWeight?.id??""} onChange={e=>setSelectedWeight(e.target.value)}>
- {weightValues.map((v:any)=><option key={v.id} value={v.id}>{ru?(v.label_ru||v.label_en):v.label_en} — NZ$ {(Number(price||0)+v.price_delta_cents/100).toFixed(2)}</option>)}
- </select></label>}
- <div className={styles.option}><span>◉ {weightValues.length>0?t("Selected portion","Выбранная порция"):t("Standard serving","Стандартная порция")}</span><label>NZ$ {weightValues.length>0?<strong>{currentPrice.toFixed(2)}</strong>:<input disabled={!canEdit} type="number" min="0" step=".01" value={price} onChange={e=>setPrice(e.target.value)}/>}</label></div>
- <section className={styles.safetyEditor}><h2>{t("Ingredients & food safety","Состав и безопасность")}</h2><label>{t("Portion or package size","Размер порции или упаковки")}<input disabled={!canEdit} value={portion} onChange={e=>setPortion(e.target.value)} placeholder={t("e.g. 500 g","Например, 500 г")}/></label>
- <label>{t("Full ingredient list (required)","Полный состав (обязательно)")}<textarea disabled={!canEdit} value={ingredients} onChange={e=>{setIngredients(e.target.value);setAllergenConfirmed(false)}} rows={3}/></label>
- <label>{t("Allergens present, or explicitly state none known (required)","Аллергены или прямое указание их отсутствия (обязательно)")}<textarea disabled={!canEdit} value={allergens} onChange={e=>{setAllergens(e.target.value);setAllergenConfirmed(false)}} rows={3} placeholder={t("e.g. Contains eggs, dairy and wheat","Например, содержит яйца, молоко и пшеницу")}/></label>
- <label>{t("Cross-contact risks / shared equipment","Риски перекрёстного контакта / общее оборудование")}<textarea disabled={!canEdit} value={crossContact} onChange={e=>{setCrossContact(e.target.value);setAllergenConfirmed(false)}} rows={2}/></label>
- <label className={styles.safetyCheck}><input disabled={!canEdit} type="checkbox" checked={allergenConfirmed} onChange={e=>setAllergenConfirmed(e.target.checked)}/>{t("I confirm the ingredient and allergen information is accurate and complete to the best of my knowledge.","Подтверждаю, что сведения о составе и аллергенах являются полными и точными, насколько мне известно.")}</label></section>
- <DishOptionEditor dishId={dish.id} initial={options??[]} editable={canEdit}/><div className={styles.mockCheckout}><span>− &nbsp; 1 &nbsp; ＋</span><button disabled>{t("Add to Cart · Customer preview","В корзину · Предпросмотр")}</button></div>
- {canEdit?<div className={styles.editActions}><button className={styles.saveDraft} disabled={busy||!name.trim()} onClick={()=>void save()}>{busy?t("Saving…","Сохранение…"):t("Save draft","Сохранить черновик")}</button>{!isAdmin&&<button className={styles.submitApproval} disabled={busy||!name.trim()} onClick={()=>void submitForApproval()}>{t("Submit for approval →","Отправить на одобрение →")}</button>}</div>:<p className={styles.hint}>{t("Approved dishes are protected. Material edits will use a reviewable version.","Одобренные блюда защищены. Изменения будут проходить проверку.")}</p>}
- {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
- </section></div><section className={styles.description}><div className={styles.tabs}><strong>{t("Description","Описание")}</strong><span>{t("Ingredients","Ингредиенты")}</span></div><p>{description||t("Your description will appear here.","Здесь появится ваше описание.")}</p><p><strong>{t("Ingredients: ","Состав: ")}</strong>{ingredients}</p><p><strong>{t("Allergens: ","Аллергены: ")}</strong>{allergens}</p><div className={styles.floral}>✿ ❀</div></section></div></main>;
-
+ return <main className={styles.page}><div className={styles.wrap}>
+  <div className={styles.top}><Link href={isAdmin?eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food":"/chef-dashboard?tab=dishes"}>← {t("Dishes","Блюда")}</Link>
+   <span>{t("Edit dish","Редактирование блюда")}</span>
+   <button className={styles.doneButton} type="button" disabled={busy||!canEdit} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button>
+  </div>
+  <div className={styles.product}>
+   <section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} alt={ru?nameRu:nameEn}/>:<div className={styles.placeholder}>✿<small>{t("Add a dish photo","Добавьте фото блюда")}</small></div>}</div>
+    <div className={styles.thumbs}>{photos.map((p,i)=><div key={p.id} className={styles.thumb}><button type="button" className={styles.thumbPhoto} onClick={()=>setActive(i)}><img src={p.image_url} alt={`Photo ${i+1}`}/></button>{canEdit&&<button type="button" className={styles.remove} disabled={busy} onClick={()=>void removePhoto(p.id)}>×</button>}</div>)}{canEdit&&photos.length<3&&<label className={styles.addPhoto}>＋<small>{t("Photo","Фото")}</small><input hidden multiple type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{void upload(e.target.files);e.target.value=""}}/></label>}</div>
+    <p className={styles.hint}>{t("Up to 3 photos, 5 MB each.","До 3 фото по 5 МБ.")}</p>
+   </section>
+   <section className={styles.details}>
+    <div className={styles.chef}>
+      {chef?.hero_image_url?<img className={styles.avatar} src={chef.hero_image_url} alt={chef.display_name}/>:<span className={styles.avatar}>{(chef?.display_name??"M")[0]}</span>}
+      {isAdmin?<label className={styles.chefSelect}>{t("Chef","Повар")}<select value={chefId} onChange={e=>setChefId(e.target.value)} disabled={busy}><option value="">{t("Assign chef","Назначить повара")}</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.display_name}</option>)}</select></label>:<strong>{chef?.display_name??t("Chef","Повар")}</strong>}
+      <span className={styles.status}>{dish.approval_status==="approved"?t("Approved","Одобрено"):t("Draft","Черновик")}</span>
+    </div>
+    {isAdmin&&<label className={styles.compactLabel}>{t("Add to event when done","Добавить к событию")}<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">{t("No event selected","Событие не выбрано")}</option>{events.map(e=><option key={e.id} value={e.id}>{ru?e.title_ru||e.title_en:e.title_en}</option>)}</select></label>}
+    <div className={styles.languageGrid}>
+     <label className={styles.compactLabel}>{t("English name","Название на английском")}<input disabled={!canEdit} maxLength={160} value={nameEn} onChange={e=>setNameEn(e.target.value)}/></label>
+     <label className={styles.compactLabel}>{t("Russian name","Название на русском")}<input disabled={!canEdit} maxLength={160} value={nameRu} onChange={e=>setNameRu(e.target.value)}/></label>
+     <label className={styles.compactLabel}>{t("English Description","Описание на английском")}<textarea disabled={!canEdit} rows={3} value={descriptionEn} onChange={e=>setDescriptionEn(e.target.value)}/></label>
+     <label className={styles.compactLabel}>{t("Russian Description","Описание на русском")}<textarea disabled={!canEdit} rows={3} value={descriptionRu} onChange={e=>setDescriptionRu(e.target.value)}/></label>
+    </div>
+    <section className={styles.sizes}><h2>{t("Size and price","Размер и цена")}</h2><div className={styles.sizesHeader}><span>{t("Size (e.g. 300g, 1kg)","Размер (300 г, 1 кг)")}</span><span>{t("Price (NZD)","Цена (NZD)")}</span></div>
+      {sizes.map((s,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} disabled={!canEdit} placeholder="300g / 1kg" maxLength={45} value={s.size} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,size:e.target.value}:p))}/><input aria-label={t("Price NZD","Цена NZD")} disabled={!canEdit} type="number" min="0" step=".01" placeholder="0.00" value={s.price} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,price:e.target.value}:p))}/><button type="button" disabled={!canEdit||sizes.length===1} onClick={()=>setSizes(old=>old.filter((_,j)=>j!==i))} aria-label={t("Remove","Удалить")}>×</button></div>)}
+      {canEdit&&<button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(old=>[...old,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>}
+    </section>
+    <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2>
+     <div className={styles.safetyGrid}>
+      <label>{t("Ingredients","Состав")}<textarea rows={2} disabled={!canEdit} value={ingredients} onChange={e=>{setIngredients(e.target.value);setConfirmed(false)}}/></label>
+      <label>{t("Allergens (or explicitly none)","Аллергены (или явно нет)")}<textarea rows={2} disabled={!canEdit} value={allergens} onChange={e=>{setAllergens(e.target.value);setConfirmed(false)}}/></label>
+     </div>
+     <label>{t("Cross-contact information","Перекрёстный контакт")}<input disabled={!canEdit} value={crossContact} onChange={e=>{setCrossContact(e.target.value);setConfirmed(false)}}/></label>
+     <label className={styles.safetyCheck}><input type="checkbox" disabled={!canEdit} checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("Ingredients and allergen details checked and accurate.","Состав и сведения об аллергенах проверены и точны.")}</label>
+    </section>
+    {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
+    <div className={styles.editActions}>
+      {canEdit&&<button type="button" className={styles.saveDraft} disabled={busy} onClick={()=>void done(true)}>{t("Save draft","Сохранить черновик")}</button>}
+      {canEdit&&<button type="button" className={styles.submitApproval} disabled={busy} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("✓ Done · Approve","✓ Готово · Одобрить"):t("✓ Done","✓ Готово")}</button>}
+    </div>
+   </section>
+  </div>
+ </div></main>;
 }
