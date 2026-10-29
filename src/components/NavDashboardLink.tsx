@@ -9,5 +9,6 @@ export default async function NavDashboardLink(){
  let url="/account";
  if(admin)url="/admin";
  else {const {data:chef}=await db.from("vendor_users").select("vendor_id").eq("user_id",user.id).limit(1);if(chef?.length)url="/chef-dashboard";}
- return <AccountAvatarMenu email={user.email??"M"} dashboard={url}/>;
+ const avatar=typeof user.user_metadata?.avatar_url==="string"?user.user_metadata.avatar_url:null;
+ return <AccountAvatarMenu email={user.email??"M"} dashboard={url} avatar={avatar}/>;
 }
