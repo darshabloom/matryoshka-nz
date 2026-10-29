@@ -30,8 +30,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
    if(!nameEn.trim()||!nameRu.trim())throw Error(t("Enter both English and Russian dish names.","Укажите название блюда на английском и русском."));
    if(!sizes.length||sizes.some(s=>!s.size.trim()||s.price.trim()===""||!Number.isFinite(Number(s.price))||Number(s.price)<0)||new Set(sizes.map(s=>s.size.trim().toLowerCase())).size!==sizes.length)
     throw Error(t("Enter unique sizes and valid prices.","Укажите уникальные размеры и правильные цены."));
-   if(!draftOnly&&(!chefId||!ingredients.trim()||!allergens.trim()||!confirmed))
-    throw Error(t("Choose the chef, complete ingredients and allergens, and confirm the information before Done. Or save a draft.","Назначьте повара, заполните состав и аллергены, подтвердите данные. Или сохраните черновик."));
+
    const price=Math.min(...sizes.map(s=>Number(s.price)));
    let id=createdId;
    if(!id){
