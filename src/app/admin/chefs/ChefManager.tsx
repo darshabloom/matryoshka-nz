@@ -1,5 +1,5 @@
-import Link from "next/link";
 "use client";
+import Link from "next/link";
 import {useState} from "react";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 type Chef={id:string;slug:string;display_name:string;vendor_translations:{lang:string;description:string|null}[];vendor_users:{user_id:string;role:string}[]};
