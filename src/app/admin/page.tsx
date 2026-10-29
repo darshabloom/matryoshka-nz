@@ -19,7 +19,7 @@ export default async function AdminPage({searchParams}:{searchParams:Promise<{ta
  sb.from("chef_event_applications").select("id,vendor_id,event_id,status,message,fulfilment,review_note,created_at,events(title_en,title_ru),vendors(display_name)").order("created_at",{ascending:false}),
  sb.from("vendors").select("id,display_name").order("display_name"),
  sb.from("event_menu_items").select("event_id,menu_item_id"),
- sb.from("food_orders").select("id,status,payment_status,subtotal_cents,created_at,event_id,email,events(title_en)").order("created_at",{ascending:false}).limit(100)
+ sb.from("food_orders").select("id,status,payment_status,subtotal_cents,created_at,event_id,email,allergy_declaration,allergy_details,special_requests,events(title_en)").order("created_at",{ascending:false}).limit(100)
  ]);
  const events=eventResult.data??[],dishes=dishResult.data??[],apps=applicationResult.data??[],vendors=vendorResult.data??[];
  const heading=tab==="events"?"Events":tab==="food"?"Food & Menus":tab==="applications"?"Chef Applications":tab==="chefs"?"Chefs":tab==="tickets"?"Ticket Verification":tab==="payments"?"Payments & Stripe":tab==="settings"?"Settings":"Admin Dashboard";
