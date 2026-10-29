@@ -16,7 +16,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
   const n=(selected[group.id]??[]).length;
   return n>=Math.max(group.min_select,group.required?1:0)&&n<=group.max_select;
  });
- const limit=Math.max(1,Math.min(100,dish.max_quantity??100));
+ const limit=Math.max(0,Math.min(100,dish.max_quantity??100));
  const price=dish.price_cents+chosen.reduce((sum,v)=>sum+v.price_delta_cents,0);
  function toggle(groupId:string,id:string,max:number){
   setNotice("");setSelected(old=>{
@@ -53,7 +53,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
     <button type="button" disabled={quantity>=limit} onClick={()=>setQuantity(q=>q+1)} aria-label={t("Increase","Больше")}>+</button>
    </div>
    <button type="button" className={styles.quickButton} disabled={!ready||limit<1} onClick={addDish}>
-    {t("Add to basket","В корзину")} · {dollars(price*quantity)}
+    {limit===0?t("Sold out","Нет в наличии"):t("Add to basket","В корзину")+" · "+dollars(price*quantity)}
    </button>
   </div>
   {!ready&&<small className={styles.quickHint}>{t("Choose the required options above.","Выберите обязательные варианты выше.")}</small>}
