@@ -8,6 +8,7 @@ import type {EventMenuData,CustomerDish} from "@/lib/customer-types";
 import {dollars,label} from "@/lib/customer-types";
 import styles from "./shop.module.css";
 import EventMenuQuickAdd from "./EventMenuQuickAdd";
+import {customerPriceCents} from "@/lib/customer-pricing";
 export default function EventFoodPage(){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
  const {slug}=useParams<{slug:string}>(),{count,items}=useBasket();
@@ -34,7 +35,7 @@ export default function EventFoodPage(){
  <div className={styles.cardBody}><div className={styles.cardChef}>{d.vendor_photo?<img src={d.vendor_photo} alt=""/>:<span className={styles.chefFallback}>✿</span>}<span className={styles.chef}>{d.vendor_name}</span></div>
  <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`}><h3>{label(d.title_en,d.title_ru,ru)}</h3></Link>
  <p>{label(d.description_en,d.description_ru,ru)}</p>
- <div className={styles.cardBottom}><strong>{t("From ","От ")}{dollars(d.price_cents)}</strong><Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`}>{t("Ingredients & details","Состав и описание")} →</Link></div>
+ <div className={styles.cardBottom}><strong>{t("From ","От ")}{dollars(customerPriceCents(d.price_cents))}</strong><Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`}>{t("Ingredients & details","Состав и описание")} →</Link></div>
  <EventMenuQuickAdd dish={d} event={e}/></div></article>)}</div>}
  </section></>}
  </div></main>
