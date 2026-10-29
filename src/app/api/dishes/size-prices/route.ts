@@ -69,6 +69,6 @@ export async function POST(req:Request){
  const {error:groupError}=await db.from("menu_item_options").update({label_en:"Size",label_ru:"Размер",min_select:1,max_select:1,required:true}).eq("id",groupId);
  if(groupError)return NextResponse.json({error:"Size labels need review"},{status:503});
  const {error:priceError}=await db.from("menu_items").update({price_cents:base,updated_at:new Date().toISOString()}).eq("id",dish.id);
- if(priceError)return NextResponse.json({error:"Size prices saved but base price was not updated"},503);
+ if(priceError)return NextResponse.json({error:"Size prices saved but base price was not updated"},{status:503});
  return NextResponse.json({ok:true,count:rows.length,basePriceCents:base});
 }
