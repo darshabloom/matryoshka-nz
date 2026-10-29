@@ -16,7 +16,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   const {data:event,error}=await (isAdmin?eventQuery:eventQuery.eq("is_published",true)).maybeSingle();
   if(error)throw error;if(!event)return NextResponse.json({error:"Event unavailable"},{status:404});
   const {data:offers,error:oe}=await db.from("event_menu_items")
-   .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors!inner(display_name))")
+   .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors!inner(display_name,hero_image_url))")
    .eq("event_id",event.id).eq("is_available",true).eq("menu_items.is_active",true).eq("menu_items.approval_status","approved").order("sort_order");
   if(oe)throw oe;
   const eligible=(offers??[]).filter((o:any)=>o.menu_items?.allergen_review_complete&&o.menu_items?.ingredients_text?.trim()&&o.menu_items?.allergen_statement?.trim());
@@ -35,7 +35,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     menu_item_id:item.id,vendor_id:item.vendor_id,
     title_en:en?.name??ru?.name??"",title_ru:ru?.name??en?.name??null,
     description_en:en?.description??ru?.description??"",description_ru:ru?.description??en?.description??"",
-    vendor_name:item.vendors.display_name,price_cents:item.price_cents,
+    vendor_name:item.vendors.display_name,vendor_photo:item.vendors.hero_image_url??null,price_cents:item.price_cents,
     ingredients:item.ingredients_text,allergens:item.allergen_statement,cross_contact:item.cross_contact_statement,portion:item.portion_label,
     max_quantity:offer.max_quantity,
     categories:(cats.data??[]).filter((c:any)=>c.menu_item_id===item.id).map((c:any)=>c.food_categories).filter(Boolean),
