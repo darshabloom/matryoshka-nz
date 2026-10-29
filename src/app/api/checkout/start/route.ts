@@ -10,7 +10,9 @@ export async function POST(req:Request){
  if(email.length<6||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:"Enter a valid booking email address"},{status:400});
  if(!UUID.test(body.idempotencyKey??"")||!UUID.test(body.eventId??""))return NextResponse.json({error:"Invalid checkout session"},{status:400});
  if(body.allergyDeclaration!=="none"&&body.allergyDeclaration!=="declared")return NextResponse.json({error:"Please complete the allergy declaration"},{status:400});
- if(body.allergyDeclaration==="declared")return NextResponse.json({error:"An allergy safety review is required before payment. Please contact the event organiser so the relevant chef can confirm your order is safe to prepare."},{status:409});
+ if(body.allergyDeclaration==="declared"&&(typeof body.allergyDetails!=="string"||!body.allergyDetails.trim()||body.allergyDetails.length>2000))return NextResponse.json({error:"Please describe the allergy for the kitchen."},{status:400});
+ const specialRequests=typeof body.specialRequests==="string"?body.specialRequests.trim():"";
+ if(specialRequests.length>500)return NextResponse.json({error:"Please keep comments under 500 characters"},{status:400});
  const quoteResponse=await validateQuote(new Request(req.url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:body.eventId,items:body.items})}));
  const quote=await quoteResponse.json();if(!quoteResponse.ok)return NextResponse.json({error:quote.error||"Your basket needs updating"},{status:quoteResponse.status});
  const service=serviceClient();let bookingId:null|string=null;
@@ -23,7 +25,7 @@ export async function POST(req:Request){
  const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();
  const {data:orderId,error:reserveError}=await service.rpc("reserve_food_order",{
   p_event_id:body.eventId,p_user_id:user?.id??null,p_email:email,p_booking_id:bookingId,
-  p_allergy_declaration:body.allergyDeclaration,p_allergy_details:"",
+  p_allergy_declaration:body.allergyDeclaration,p_allergy_details:body.allergyDeclaration==="declared"?body.allergyDetails.trim():"",p_special_requests:specialRequests,
   p_items:body.items,p_idempotency_key:body.idempotencyKey
  });
  if(reserveError||!orderId)return NextResponse.json({error:"Could not reserve this order. Please review availability and try again."},{status:409});
