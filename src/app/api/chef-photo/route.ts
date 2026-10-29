@@ -27,7 +27,12 @@ export async function POST(req:Request){
  const {error}=await service.storage.from("profile-photos").upload(path,await file.arrayBuffer(),{contentType:file.type});
  if(error)return NextResponse.json({error:"Upload failed"},{status:500});
  const publicUrl=service.storage.from("profile-photos").getPublicUrl(path).data.publicUrl;
- const {error:saveError}=await service.from("vendors").update({hero_image_url:publicUrl}).eq("id",vendor);
- if(saveError)return NextResponse.json({error:"Unable to save photo"},{status:500});
- return NextResponse.json({url:publicUrl});
+ const {data:saved,error:saveError}=await service.from("vendors")
+  .update({hero_image_url:publicUrl}).eq("id",vendor).select("id").maybeSingle();
+ if(saveError||!saved){
+  await service.storage.from("profile-photos").remove([path]);
+  console.error("Chef profile photo update failed",saveError?.code??"no matching vendor row");
+  return NextResponse.json({error:"Photo uploaded but profile could not be saved. Please try again."},{status:500});
+ }
+ return NextResponse.json({url:publicUrl},{headers:{"Cache-Control":"no-store"}});
 }
