@@ -15,14 +15,22 @@ export async function eventReadiness(db:DB,eventId:string){
  const basics=title&&dates&&venue;
  const chefReady=participating.length>0;
  const menuReady=offered.length>0&&unsafe.length===0;
- const ticketReady=!event.ticket_required||(Number(tickets.data??0)>0&&!!process.env.TICKET_HASH_PEPPER);
+ // The NYE ticket integration verifies bookings LIVE against Yumorilnik.
+ // Requiring a pre-imported local ticket prevents opening legitimate preorders
+ // and no longer reflects the source of truth.
+ const liveTicketEvent=eventId==="3b7d5371-926e-408b-a4b7-af69f27b42cf";
+ const ticketReady=!event.ticket_required||(
+  !!process.env.TICKET_HASH_PEPPER&&
+  (liveTicketEvent?!!process.env.CROSS_SITE_TICKET_VERIFY_SECRET:
+   Number(tickets.data??0)>0)
+ );
  const stripeReady=!!process.env.STRIPE_SECRET_KEY&&!!process.env.STRIPE_WEBHOOK_SECRET&&!!process.env.SUPABASE_SERVICE_ROLE_KEY&&!!process.env.NEXT_PUBLIC_SITE_URL&&process.env.CHECKOUT_ENABLED==="true";
  const deadlineReady=!!event.ordering_closes_at&&new Date(event.ordering_closes_at)>new Date()&&new Date(event.ordering_closes_at)<=new Date(event.starts_at);
  const checks=[
   {key:"details",label:"Event details, venue and dates",ok:basics,help:"Add a valid future event date and venue in Settings"},
   {key:"chefs",label:"Participating chefs",ok:chefReady,help:"Approve at least one chef application in Chefs"},
   {key:"menu",label:"Approved, assigned and safe dishes",ok:menuReady,help:unsafe.length?`${unsafe.length} enabled dishes need chef acceptance, approval or complete food-safety information`:"Enable at least one safe, approved dish in Dishes & Menu"},
-  {key:"tickets",label:"Event ticket verification",ok:ticketReady,help:"Import verified Yumorilnik bookings and configure the ticket hash secret"},
+  {key:"tickets",label:liveTicketEvent?"Live Yumorilnik ticket validation":"Event ticket verification",ok:ticketReady,help:liveTicketEvent?"Configure the secure Yumorilnik connection and ticket hash secret; paid ticket validation occurs at checkout":"Import verified bookings and configure the ticket hash secret"},
   {key:"deadline",label:"Food ordering deadline",ok:deadlineReady,help:"Set an ordering closing time before the event starts"},
   {key:"payments",label:"Stripe payment infrastructure",ok:stripeReady,help:"Complete Stripe test mode, webhook and secure checkout setup in Payments"}
  ];
