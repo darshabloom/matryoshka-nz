@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
+import {customerPriceCents} from "@/lib/customer-pricing";
 import styles from "../[id]/editor.module.css";
 type Vendor={id:string;display_name:string;hero_image_url:string|null};
 type Event={id:string;title_en:string;title_ru:string|null};
@@ -74,7 +75,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
     {label(t("Russian Description","Описание на русском"),<textarea rows={3} value={descriptionRu} onChange={e=>setDescriptionRu(e.target.value)}/>)}
    </div>
    <section className={styles.sizes}><h2>{t("Size and price","Размер и цена")}</h2><div className={styles.sizesHeader}><span>{t("Size (e.g. 300g, 1kg)","Размер (300 г, 1 кг)")}</span><span>{t("Price (NZD)","Цена (NZD)")}</span></div>
-    {sizes.map((row,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} placeholder="300g / 1kg" value={row.size} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,size:e.target.value}:x))}/><input aria-label={t("Price","Цена")} type="number" min="0" step=".01" placeholder="0.00" value={row.price} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/><button type="button" disabled={sizes.length===1} onClick={()=>setSizes(v=>v.filter((_,j)=>j!==i))}>×</button></div>)}
+    {sizes.map((row,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} placeholder="300g / 1kg" value={row.size} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,size:e.target.value}:x))}/><input aria-label={t("Price","Цена")} type="number" min="0" step=".01" placeholder="0.00" value={row.price} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/><button type="button" disabled={sizes.length===1} onClick={()=>setSizes(v=>v.filter((_,j)=>j!==i))}>×</button><small style={{gridColumn:"1 / -1",fontSize:12,color:"#2d6840",fontWeight:750,marginBottom:5}}>{t("Customer sees","Покупатель видит")} {row.price!==""&&Number.isFinite(Number(row.price))?new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(Math.round(Number(row.price)*100))/100):"—"} (+10%)</small></div>)}
     <button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(v=>[...v,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>
    </section>
    <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2><div className={styles.safetyGrid}>
