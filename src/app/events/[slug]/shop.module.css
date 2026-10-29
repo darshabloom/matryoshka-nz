@@ -2,3 +2,25 @@
 .cardChef{display:flex;align-items:center;gap:9px;margin-bottom:2px}.cardChef img,.chefFallback{width:30px;height:30px;flex-shrink:0;border-radius:50%;object-fit:cover;border:1px solid #e4d5c8}.chefFallback{background:#f4e4d5;display:grid;place-items:center;color:#aa5346}.cardBody>a h3{transition:color .15s}.cardBody>a:hover h3{color:#a32e28}.cardBottom a{color:#a32e28;text-decoration:underline;text-underline-offset:2px;font-size:12px}.quickAdd{margin-top:17px;padding-top:16px;border-top:1px solid #f0e3d7;display:grid;gap:12px}.quickOptions{border:0;padding:0;margin:0;min-width:0}.quickOptions legend{font-size:12px;font-weight:800;margin-bottom:7px;color:#59483a}.quickOptions small{font-size:11px;color:#7a6a5b}.quickChoices{display:flex;flex-wrap:wrap;gap:7px}.quickOption{display:flex;gap:5px;align-items:center;font-size:12px;padding:8px 10px;background:#faf5ef;border:1px solid #e7d8c8;border-radius:8px;cursor:pointer}.quickOption:has(input:checked){background:#fff0dc;border-color:#bd765f}.quickOption input{accent-color:#a32e28}.quickActions{display:flex;align-items:center;justify-content:space-between;gap:9px}.quickQuantity{display:flex;align-items:center;border:1px solid #dfcdbd;border-radius:8px;overflow:hidden;flex-shrink:0}.quickQuantity button{background:#fff8f1;border:0;padding:8px 10px;font-size:17px;cursor:pointer}.quickQuantity button:disabled{opacity:.4;cursor:not-allowed}.quickQuantity strong{min-width:22px;text-align:center;font-size:13px}.quickButton{border:0;background:#aa3029;color:#fff;border-radius:8px;font-weight:750;font-size:12px;min-height:40px;padding:8px 12px;cursor:pointer;flex:1}.quickButton:disabled{background:#bba69a;cursor:not-allowed}.quickHint{color:#9c553c;font-size:11px}.quickSuccess{color:#286137;font-weight:750;font-size:12px}@media(max-width:450px){.quickActions{flex-wrap:wrap}.quickButton{min-width:160px}}
 
 .cover{width:100%;aspect-ratio:16/7;max-height:480px;overflow:hidden;border-radius:17px;box-shadow:0 15px 40px #3d24151b;margin-bottom:28px;background:#f0e2d6}.cover img{width:100%;height:100%;object-fit:cover}.eventGallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:17px 0}.eventGallery img{width:100%;height:145px;object-fit:cover;border-radius:9px}@media(max-width:600px){.cover{aspect-ratio:4/3;max-height:320px;margin-bottom:17px}.eventGallery img{height:110px}}
+
+
+/* Compact event menu and responsive food-first catalogue */
+.page{padding-top:20px}.wrap{max-width:1400px}.heading{padding:12px 0 18px}
+.eventIntro{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);align-items:start;gap:24px}
+.eventIntroText h1{font-size:clamp(28px,3vw,42px);line-height:1.1;margin:8px 0 10px}
+.eventIntroText>p{font-size:14px;line-height:1.45;color:#67584f;margin:0}
+.eventFacts{margin:12px 0;gap:7px}.eventFacts span{padding:7px 9px;font-size:11px}
+.eventIntroMedia{display:grid;gap:8px}.cover{width:100%;aspect-ratio:16/9;max-height:240px;margin:0;border-radius:12px;box-shadow:none}
+.notice{padding:9px 12px;max-width:none;border-left-width:3px}.notice strong{font-size:12px}.notice p{font-size:11px;margin-top:2px;line-height:1.35}
+.eventGallery{margin:12px 0}.eventGallery img{height:100px}
+.shop{padding-top:8px}.sectionHead{margin-bottom:12px}.menuLabel{font-size:13px;font-weight:750;color:#7b352e}
+.filters{margin:10px 0 15px;padding:10px;gap:9px}.filters input,.filters select{padding:9px}
+.grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.image{height:auto;aspect-ratio:1/1}.cardBody{padding:10px;gap:6px}
+.cardBody h3{font-size:15px;line-height:1.2;margin:0;min-height:36px}
+.cardBottom{margin-top:0;font-size:12px}.quickAdd{margin-top:4px;padding-top:8px;gap:7px}
+.quickOptions legend{font-size:11px}.quickSelect{display:block;width:100%;padding:8px 5px;border:1px solid #decdbe;border-radius:7px;background:#fff;font-size:11px;color:#3e3029}
+.quickQuantity button{padding:6px}.quickButton{padding:7px;font-size:11px;min-height:36px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:750px){.eventIntro{grid-template-columns:1fr}.eventIntroMedia{max-width:100%}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cardBody{padding:8px}.cardBody h3{font-size:14px}.quickActions{flex-wrap:wrap}.quickButton{min-width:0}.filters label{min-width:100%}}
