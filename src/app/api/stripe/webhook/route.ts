@@ -14,13 +14,16 @@ export async function POST(req:Request){
  if(!ok)return NextResponse.json({error:"Invalid webhook signature"},{status:400});
  let event:any;try{event=JSON.parse(body)}catch{return NextResponse.json({error:"Invalid webhook payload"},{status:400})}
  const type=event.type,session=event.data?.object;
+ // Shared merchant account: Yumorilnik ticket events are processed by its own webhook.
+ if(session?.object==="checkout.session"&&session.metadata?.site==="yumorilnik")return NextResponse.json({received:true,ignored:true});
+ if(session?.object==="checkout.session"&&session.metadata?.site&&session.metadata.site!=="matryoshka")return NextResponse.json({received:true,ignored:true});
  if(!session||typeof session.id!=="string")return NextResponse.json({received:true});
  try{
   const db=serviceClient();
   if(["checkout.session.completed","checkout.session.async_payment_succeeded"].includes(type)){
    if(session.payment_status!=="paid")return NextResponse.json({received:true});
    const {data:order}=await db.from("food_orders").select("id,subtotal_cents,payment_status").eq("stripe_session_id",session.id).maybeSingle();
-   if(!order)return NextResponse.json({error:"Order not found"},{status:409});
+   if(!order)return NextResponse.json({received:true,ignored:true});
    if(session.currency!=="nzd"||session.amount_total!==order.subtotal_cents||session.metadata?.order_id!==order.id)return NextResponse.json({error:"Payment data mismatch"},{status:409});
    if(order.payment_status!=="paid"){
     const {error}=await db.from("food_orders").update({status:"confirmed",payment_status:"paid",paid_at:new Date().toISOString(),stripe_payment_intent_id:typeof session.payment_intent==="string"?session.payment_intent:null,updated_at:new Date().toISOString()}).eq("id",order.id).eq("payment_status","pending");
