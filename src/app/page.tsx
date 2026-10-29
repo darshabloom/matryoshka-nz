@@ -6,6 +6,7 @@ import { useLanguage } from "@/components/i18n/LanguageProvider";
 import type { Vendor } from "@/lib/types";
 import type {EventMenuData,CustomerDish} from "@/lib/customer-types";
 import EventMenuQuickAdd from "./events/[slug]/EventMenuQuickAdd";
+import {customerPriceCents} from "@/lib/customer-pricing";
 import styles from "./page.module.css";
 
 type Dish = {id:string;name_en:string;name_ru:string;description_en:string;description_ru:string;price_cents:number;chef:string;chef_slug:string;chef_photo:string|null;image:string|null;categories:{slug:string;label_en:string;label_ru:string|null}[];ready:boolean};
@@ -93,7 +94,7 @@ export default function HomePage(){
      <div className={styles.dishImage}>{d.image?<img src={d.image} alt={title} loading="lazy"/>:<span aria-hidden="true">✿</span>}</div>
      <div className={styles.dishInfo}><Link href={`/chef/${d.chef_slug}`} className={styles.chefTag}>{d.chef_photo?<img src={d.chef_photo} alt=""/>:null}{d.chef}</Link>
       <h3>{title}</h3><p>{ru?d.description_ru||d.description_en:d.description_en||d.description_ru}</p>
-      <div className={styles.dishBottom}><strong>{new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(d.price_cents/100)}</strong><span>{ru?"От":"From"}</span></div>
+      <div className={styles.dishBottom}><strong>{new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(d.price_cents)/100)}</strong><span>{ru?"От":"From"}</span></div>
       {offer?<><EventMenuQuickAdd dish={offer.dish} event={offer.event}/><Link className={styles.dishDetailLink} href={`/events/${encodeURIComponent(offer.event.slug)}/dish/${d.id}`}>{ru?"Состав и описание":"Ingredients & details"} →</Link></>
        :<div className={styles.preparing}>{d.ready?(ru?"Доступно при открытии заказа на событие":"Available when event ordering opens"):(ru?"Готовим к продаже · уточняем состав":"Preparing for sale · ingredients under review")}</div>}
      </div></article>
