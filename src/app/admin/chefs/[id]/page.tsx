@@ -2,6 +2,8 @@ import Link from "next/link";
 import {redirect,notFound} from "next/navigation";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import ChefDetailEditor from "./ChefDetailEditor";
+import ChefPhotoUpload from "./ChefPhotoUpload";
+import styles from "./chef-editor.module.css";
 export const dynamic="force-dynamic";
 export default async function ChefDetailPage({params}:{params:Promise<{id:string}>}){
  const {id}=await params;
@@ -15,8 +17,8 @@ export default async function ChefDetailPage({params}:{params:Promise<{id:string
   db.from("menu_items").select("id,vendor_id,approval_status,menu_item_translations(lang,name)").is("vendor_id",null).order("created_at",{ascending:false})
  ]);
  if(!chefResult.data)notFound();
- return <main className="min-h-screen bg-[#faf6ef] p-5 text-[#2e2420]"><div className="mx-auto max-w-5xl">
+ return <main className={styles.page}><div className={styles.container}>
  <Link href="/admin?tab=chefs" className="text-[#9d302a] underline">← Back to chefs</Link>
- <ChefDetailEditor chef={chefResult.data as any} dishes={(dishesResult.data??[]) as any} available={(availableResult.data??[]) as any}/>
+ <ChefPhotoUpload vendorId={id} name={chefResult.data.display_name} image={chefResult.data.hero_image_url}/><ChefDetailEditor chef={chefResult.data as any} dishes={(dishesResult.data??[]) as any} available={(availableResult.data??[]) as any}/>
  </div></main>;
 }
