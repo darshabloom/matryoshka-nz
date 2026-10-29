@@ -1,6 +1,7 @@
 import { getChefBySlug, listChefs } from "@/lib/data/chefs";
 import ChefTemplate from "@/components/ChefTemplate/ChefTemplate";
 
+export const dynamic="force-dynamic";
 export async function generateStaticParams() {
     const all = await listChefs({ lang: "en", q: "", area: "all", cuisine: "all" });
     return all.map((chef) => ({ slug: chef.slug }));
