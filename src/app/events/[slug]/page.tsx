@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useMemo,useState} from "react";
+import {Fragment,useEffect,useMemo,useState} from "react";
 import {useParams} from "next/navigation";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {useBasket} from "@/components/cart/BasketProvider";
@@ -21,6 +21,7 @@ export default function EventFoodPage(){
  const chefs=useMemo(()=>[...new Set(data?.dishes.map(d=>d.vendor_name)??[])].sort(),[data]);
  const categories=useMemo(()=>Array.from(new Map((data?.dishes??[]).flatMap(d=>d.categories).map(c=>[c.slug,c])).values()),[data]);
  const dishes=useMemo(()=>data?.dishes.filter(d=>(chef==="all"||d.vendor_name===chef)&&(category==="all"||d.categories.some(c=>c.slug===category))&&[d.title_en,d.title_ru,d.vendor_name,d.description_en,d.description_ru].join(" ").toLowerCase().includes(search.toLowerCase().trim()))??[],[data,chef,category,search]);
+ const orderedDishes=useMemo(()=>[...dishes].sort((a,b)=>{const ai=categories.findIndex(c=>c.slug===a.categories[0]?.slug),bi=categories.findIndex(c=>c.slug===b.categories[0]?.slug);return ai-bi}),[dishes,categories]);
  const e=data?.event,open=e?.ordering_open??false;
  const inEvent=items[0]?.eventId===e?.id;
  return <main className={styles.page}><div className={styles.wrap}>
@@ -35,13 +36,13 @@ export default function EventFoodPage(){
  </section>
  <section className={styles.shop}><div className={styles.sectionHead}><div><span className={styles.menuLabel}>{t("Available for this event","Доступно на мероприятии")}</span></div>{inEvent&&count>0&&<Link className={styles.basketButton} href="/basket">🛒 {t("View basket","Корзина")} ({count}) →</Link>}</div>
  <div className={styles.filters}><label>{t("Search food","Поиск блюд")}<input type="search" value={search} onChange={x=>setSearch(x.target.value)} placeholder={t("Dish or chef…","Блюдо или повар…")}/></label><label>{t("Category","Категория")}<select value={category} onChange={x=>setCategory(x.target.value)}><option value="all">{t("All categories","Все категории")}</option>{categories.map(c=><option key={c.slug} value={c.slug}>{label(c.label_en,c.label_ru,ru)}</option>)}</select></label><label>{t("Chef","Повар")}<select value={chef} onChange={x=>setChef(x.target.value)}><option value="all">{t("All chefs","Все повара")}</option>{chefs.map(c=><option key={c} value={c}>{c}</option>)}</select></label></div>
- {dishes.length===0?<div className={styles.empty}>{data.dishes.length?t("No dishes match those filters.","По вашему запросу блюд не найдено."):t("The chefs are preparing this menu. Check back later.","Повара готовят меню. Загляните позже.")}</div>:<div className={styles.grid}>{dishes.map((d:CustomerDish)=><article key={d.menu_item_id} className={styles.card}>
+ {dishes.length===0?<div className={styles.empty}>{data.dishes.length?t("No dishes match those filters.","По вашему запросу блюд не найдено."):t("The chefs are preparing this menu. Check back later.","Повара готовят меню. Загляните позже.")}</div>:<div className={styles.grid}>{orderedDishes.map((d:CustomerDish,i)=><Fragment key={d.menu_item_id}>{(i===0||orderedDishes[i-1].categories[0]?.slug!==d.categories[0]?.slug)&&<h3 className={styles.categoryHeading}>{d.categories[0]?label(d.categories[0].label_en,d.categories[0].label_ru,ru):t("Other dishes","Другие блюда")}</h3>}<article className={styles.card}>
  <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} className={styles.image} aria-label={t("View details: ","Подробнее: ")+label(d.title_en,d.title_ru,ru)}>{d.images[0]?<img src={d.images[0]} alt={label(d.title_en,d.title_ru,ru)}/>:<span>✿</span>}</Link>
  <div className={styles.cardBody}>
  <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`}><h3>{label(d.title_en,d.title_ru,ru)}</h3></Link>
 
  <div className={styles.cardBottom}><strong>{t("From ","От ")}{dollars(customerPriceCents(d.price_cents))}</strong></div>
- <EventMenuQuickAdd dish={d} event={e}/></div></article>)}</div>}
+ <EventMenuQuickAdd dish={d} event={e}/></div></article></Fragment>)}</div>}
  </section></>}
  </div></main>
 }
