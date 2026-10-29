@@ -4,6 +4,7 @@ import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
+import {customerPriceCents} from "@/lib/customer-pricing";
 import styles from "./editor.module.css";
 type Translation={lang:string;name:string;description:string|null};
 type Image={id:string;image_url:string;sort_order:number};
@@ -123,7 +124,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
      <label className={styles.compactLabel}>{t("Russian Description","Описание на русском")}<textarea disabled={!canEdit} rows={3} value={descriptionRu} onChange={e=>setDescriptionRu(e.target.value)}/></label>
     </div>
     <section className={styles.sizes}><h2>{t("Size and price","Размер и цена")}</h2><div className={styles.sizesHeader}><span>{t("Size (e.g. 300g, 1kg)","Размер (300 г, 1 кг)")}</span><span>{t("Price (NZD)","Цена (NZD)")}</span></div>
-      {sizes.map((s,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} disabled={!canEdit} placeholder="300g / 1kg" maxLength={45} value={s.size} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,size:e.target.value}:p))}/><input aria-label={t("Price NZD","Цена NZD")} disabled={!canEdit} type="number" min="0" step=".01" placeholder="0.00" value={s.price} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,price:e.target.value}:p))}/><button type="button" disabled={!canEdit||sizes.length===1} onClick={()=>setSizes(old=>old.filter((_,j)=>j!==i))} aria-label={t("Remove","Удалить")}>×</button></div>)}
+      {sizes.map((s,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} disabled={!canEdit} placeholder="300g / 1kg" maxLength={45} value={s.size} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,size:e.target.value}:p))}/><input aria-label={t("Price NZD","Цена NZD")} disabled={!canEdit} type="number" min="0" step=".01" placeholder="0.00" value={s.price} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,price:e.target.value}:p))}/><button type="button" disabled={!canEdit||sizes.length===1} onClick={()=>setSizes(old=>old.filter((_,j)=>j!==i))} aria-label={t("Remove","Удалить")}>×</button><small style={{gridColumn:"1 / -1",fontSize:12,color:"#2d6840",fontWeight:750,marginBottom:5}}>{t("Customer sees","Покупатель видит")} {s.price!==""&&Number.isFinite(Number(s.price))?new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(Math.round(Number(s.price)*100))/100):"—"} (+10%)</small></div>)}
       {canEdit&&<button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(old=>[...old,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>}
     </section>
     <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2>
