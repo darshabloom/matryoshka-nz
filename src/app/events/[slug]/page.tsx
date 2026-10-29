@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 
-type Dish = { menu_item_id:string; price_cents:number; title_en:string; title_ru:string|null; description_en:string|null; description_ru:string|null; vendor_name:string };
+type Dish = { menu_item_id:string; price_cents:number; title_en:string; title_ru:string|null; description_en:string|null; description_ru:string|null; vendor_name:string; size_options:{id:string;label_en:string;label_ru:string;price_cents:number}[] };
 type EventDetails = { title_en:string;title_ru:string|null; description_en:string|null; description_ru:string|null; starts_at:string; location_text:string|null };
 export default function EventFoodPage() {
  const { lang } = useLanguage();
@@ -14,6 +14,7 @@ export default function EventFoodPage() {
  const [event,setEvent] = useState<EventDetails|null>(null);
  const [dishes,setDishes] = useState<Dish[]>([]);
  const [loading,setLoading] = useState(true);
+ const [selectedSizes,setSelectedSizes] = useState<Record<string,string>>({});
  const [error,setError] = useState(false);
  useEffect(()=>{
   if (!slug) return;
@@ -40,7 +41,14 @@ export default function EventFoodPage() {
      <h3>{pick(d.title_en,d.title_ru)}</h3>
      <p>{d.vendor_name}</p>
      <p>{pick(d.description_en,d.description_ru)}</p>
-     <strong>{new Intl.NumberFormat(lang==="ru"?"ru-NZ":"en-NZ",{style:"currency",currency:"NZD"}).format(d.price_cents/100)}</strong>
+     {d.size_options?.length ? <label style={{display:"grid",gap:6,marginTop:12}}>
+      <span>{lang==="ru"?"Размер":"Size"}</span>
+      <select required value={selectedSizes[d.menu_item_id]??""} onChange={e=>setSelectedSizes(prev=>({...prev,[d.menu_item_id]:e.target.value}))} style={{padding:10,border:"1px solid #aaa",borderRadius:8,width:"100%"}}>
+       <option value="" disabled>{lang==="ru"?"Пожалуйста, выберите размер":"Please choose a size"}</option>
+       {d.size_options.map(size=><option key={size.id} value={size.id}>{lang==="ru"?(size.label_ru||size.label_en):size.label_en} — {new Intl.NumberFormat(lang==="ru"?"ru-NZ":"en-NZ",{style:"currency",currency:"NZD"}).format(size.price_cents/100)}</option>)}
+      </select>
+     </label> : null}
+     <strong>{new Intl.NumberFormat(lang==="ru"?"ru-NZ":"en-NZ",{style:"currency",currency:"NZD"}).format((d.size_options?.find(size=>size.id===selectedSizes[d.menu_item_id])?.price_cents??d.price_cents)/100)}</strong>
     </article>)}
    </div>
    <p style={{marginTop:30,opacity:.75}}>{lang==="ru"?"Онлайн-заказы скоро откроются.":"Online ordering coming soon."}</p>
