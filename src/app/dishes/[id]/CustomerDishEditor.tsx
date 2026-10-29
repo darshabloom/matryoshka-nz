@@ -20,6 +20,11 @@ export default function CustomerDishEditor({dish,isAdmin,assignmentControl,optio
  const [active,setActive]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [status,setStatus]=useState(dish.approval_status);
  const canEdit=isAdmin||["draft","changes_requested"].includes(status);
+ const weightOption=options.find((o:any)=>o.label_en==="Weight"&&o.required&&o.max_select===1);
+ const weightValues=(weightOption?.menu_item_option_values??[]).slice().sort((a:any,b:any)=>a.sort_order-b.sort_order);
+ const [selectedWeight,setSelectedWeight]=useState<string>("");
+ const chosenWeight=weightValues.find((v:any)=>v.id===selectedWeight)??weightValues[0];
+ const currentPrice=Number(price||0)+(chosenWeight?.price_delta_cents??0)/100;
  async function save(){
   setBusy(true);setError("");setNotice("");
   try{const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:dish.id,action:"edit",name,description,language,price,ingredients,allergens,crossContact,portion,allergenConfirmed})});const result=await response.json();if(!response.ok)throw Error(result.error||"Unable to save");
@@ -74,7 +79,12 @@ export default function CustomerDishEditor({dish,isAdmin,assignmentControl,optio
  <label className={styles.nameLabel}>{t("Dish name","Название блюда")}<input disabled={!canEdit} className={styles.name} value={name} onChange={e=>setName(e.target.value)}/></label>
  <label className={styles.inputLabel}>{t("Writing language","Язык описания")}<select disabled={!canEdit} value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label>
  <label className={styles.inputLabel}>{t("Description","Описание")}<textarea disabled={!canEdit} rows={4} value={description} onChange={e=>setDescription(e.target.value)}/></label>
- <h2>{t("Choose an option","Выберите вариант")}</h2><div className={styles.option}><span>◉ {t("Standard serving","Стандартная порция")}</span><label>NZ$ <input disabled={!canEdit} type="number" min="0" step=".01" value={price} onChange={e=>setPrice(e.target.value)}/></label></div>
+ <h2>{t("Choose an option","Выберите вариант")}</h2>
+ {weightValues.length>0&&<label className={styles.inputLabel}>{t("Weight and price","Вес и цена")}
+ <select value={chosenWeight?.id??""} onChange={e=>setSelectedWeight(e.target.value)}>
+ {weightValues.map((v:any)=><option key={v.id} value={v.id}>{ru?(v.label_ru||v.label_en):v.label_en} — NZ$ {(Number(price||0)+v.price_delta_cents/100).toFixed(2)}</option>)}
+ </select></label>}
+ <div className={styles.option}><span>◉ {weightValues.length>0?t("Selected portion","Выбранная порция"):t("Standard serving","Стандартная порция")}</span><label>NZ$ {weightValues.length>0?<strong>{currentPrice.toFixed(2)}</strong>:<input disabled={!canEdit} type="number" min="0" step=".01" value={price} onChange={e=>setPrice(e.target.value)}/>}</label></div>
  <section className={styles.safetyEditor}><h2>{t("Ingredients & food safety","Состав и безопасность")}</h2><label>{t("Portion or package size","Размер порции или упаковки")}<input disabled={!canEdit} value={portion} onChange={e=>setPortion(e.target.value)} placeholder={t("e.g. 500 g","Например, 500 г")}/></label>
  <label>{t("Full ingredient list (required)","Полный состав (обязательно)")}<textarea disabled={!canEdit} value={ingredients} onChange={e=>{setIngredients(e.target.value);setAllergenConfirmed(false)}} rows={3}/></label>
  <label>{t("Allergens present, or explicitly state none known (required)","Аллергены или прямое указание их отсутствия (обязательно)")}<textarea disabled={!canEdit} value={allergens} onChange={e=>{setAllergens(e.target.value);setAllergenConfirmed(false)}} rows={3} placeholder={t("e.g. Contains eggs, dairy and wheat","Например, содержит яйца, молоко и пшеницу")}/></label>
