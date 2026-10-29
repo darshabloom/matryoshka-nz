@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
-import {serviceClient,isCheckoutConfigured,checkTicket} from "@/lib/server/checkout-security";
+import {serviceClient,isCheckoutConfigured,checkTicket,verifyStripeMerchantAccount} from "@/lib/server/checkout-security";
 import {POST as validateQuote} from "../quote/route";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(req:Request){
@@ -22,6 +22,7 @@ export async function POST(req:Request){
   try{bookingId=await checkTicket(service,body.eventId,email,body.ticketReference)}catch{return NextResponse.json({error:"Ticket verification is temporarily unavailable"},{status:503})}
   if(!bookingId)return NextResponse.json({error:"Unable to verify this event ticket and booking email. Check your confirmation details."},{status:403});
  }
+ try{await verifyStripeMerchantAccount()}catch{return NextResponse.json({error:"The approved Stripe merchant account is not ready. No payment has been taken."},{status:503})}
  const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();
  const {data:orderId,error:reserveError}=await service.rpc("reserve_food_order",{
   p_event_id:body.eventId,p_user_id:user?.id??null,p_email:email,p_booking_id:bookingId,
