@@ -7,6 +7,7 @@ import {useBasket} from "@/components/cart/BasketProvider";
 import type {CustomerDish,EventMenuData} from "@/lib/customer-types";
 import {dollars,label} from "@/lib/customer-types";
 import styles from "./product.module.css";
+import {customerPriceCents} from "@/lib/customer-pricing";
 export default function ProductPage(){
  const {slug,id}=useParams<{slug:string;id:string}>(),router=useRouter();
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,r:string)=>ru?r:en;
