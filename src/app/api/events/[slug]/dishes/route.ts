@@ -19,7 +19,15 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
    .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors!inner(display_name,hero_image_url))")
    .eq("event_id",event.id).eq("is_available",true).eq("menu_items.is_active",true).eq("menu_items.approval_status","approved").order("sort_order");
   if(oe)throw oe;
-  const eligible=(offers??[]).filter((o:any)=>o.menu_items?.allergen_review_complete&&o.menu_items?.ingredients_text?.trim()&&o.menu_items?.allergen_statement?.trim());
+  // A previously approved dish must disappear if its chef is no longer
+  // accepted for this event. Database reservations enforce the same rule.
+  const {data:accepted,error:acceptedError}=await db.from("chef_event_applications")
+   .select("vendor_id").eq("event_id",event.id).eq("status","approved");
+  if(acceptedError)throw acceptedError;
+  const chefIds=new Set((accepted??[]).map(x=>x.vendor_id));
+  const eligible=(offers??[]).filter((o:any)=>
+   o.menu_items?.allergen_review_complete&&o.menu_items?.ingredients_text?.trim()&&
+   o.menu_items?.allergen_statement?.trim()&&chefIds.has(o.menu_items.vendor_id));
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
    db.from("menu_item_images").select("menu_item_id,image_url,sort_order").in("menu_item_id",ids).order("sort_order"),
