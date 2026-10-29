@@ -1,4 +1,5 @@
 import ChefAssignmentQueue from "./ChefAssignmentQueue";
+import ChefPhotoUpload from "../admin/chefs/[id]/ChefPhotoUpload";
 import Link from "next/link";
 import {redirect} from "next/navigation";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
@@ -17,13 +18,14 @@ export default async function ChefDashboard({searchParams}:{searchParams:Promise
  const pendingDishes=dishes?.filter(d=>d.approval_status==="pending").length??0;
  const drafts=dishes?.filter(d=>d.approval_status==="draft"||d.approval_status==="changes_requested").length??0;
  const pendingApps=apps?.filter(a=>a.status==="pending").length??0;
- const [vendors,events,includes,ordersResult,assignmentResult]=await Promise.all([db.from("vendors").select("id,display_name").eq("id",vendorId),db.from("events").select("id,title_en,title_ru,starts_at,ends_at,location_text,chef_applications_open,chef_application_deadline,chef_fulfilment_options").gt("ends_at",new Date().toISOString()).order("starts_at"),db.from("event_menu_items").select("event_id,menu_item_id"),db.rpc("get_chef_paid_order_lines",{p_vendor:vendorId}),db.rpc("my_pending_dish_assignments")]);
+ const [vendors,events,includes,ordersResult,assignmentResult]=await Promise.all([db.from("vendors").select("id,display_name,hero_image_url").eq("id",vendorId),db.from("events").select("id,title_en,title_ru,starts_at,ends_at,location_text,chef_applications_open,chef_application_deadline,chef_fulfilment_options").gt("ends_at",new Date().toISOString()).order("starts_at"),db.from("event_menu_items").select("event_id,menu_item_id"),db.rpc("get_chef_paid_order_lines",{p_vendor:vendorId}),db.rpc("my_pending_dish_assignments")]);
  const committed=ordersResult.data??[];
  const production=new Map<string,number>();for(const line of committed){const key=line.dish_name_snapshot+" "+JSON.stringify(line.option_snapshot);production.set(key,(production.get(key)??0)+line.quantity)}
  const eventList=events.data??[],approvedEvents=eventList.filter(e=>apps?.some(a=>a.event_id===e.id&&a.status==="approved"));
  const title=tab==="dishes"?"My Dishes":tab==="events"?"My Events":tab==="orders"?"My Orders":"Welcome to your kitchen";
  const subtitle=tab==="dishes"?"Create, edit and include dishes in your events.":tab==="events"?"Your participating events, applications and new opportunities.":tab==="orders"?"Track customer orders and preparation when ordering opens.":"Your kitchen at a glance.";
  return <main className={styles.page}><div className={styles.wrap}><span className={styles.kicker}>MATRYOSHKA · MY KITCHEN</span><div className={styles.welcome}><div><h1>{title}</h1><p>{subtitle}</p></div><span className={styles.flower}>✿</span></div>
+ {vendors.data?.[0]&&<ChefPhotoUpload vendorId={vendorId} name={vendors.data[0].display_name} image={vendors.data[0].hero_image_url??null}/>}
  <nav className={styles.tabs}><Link className={tab==="overview"?styles.activeTab:styles.tab} href="/chef-dashboard?tab=overview">Overview</Link><Link className={tab==="dishes"?styles.activeTab:styles.tab} href="/chef-dashboard?tab=dishes">My Dishes</Link><Link className={tab==="events"?styles.activeTab:styles.tab} href="/chef-dashboard?tab=events">My Events</Link><Link className={tab==="orders"?styles.activeTab:styles.tab} href="/chef-dashboard?tab=orders">Orders</Link></nav>
  {tab==="dishes"?<><ChefAssignmentQueue initial={(assignmentResult.data??[]) as any}/><DishManager embedded isAdmin={false} vendors={vendors.data??[]} dishes={(dishes??[]) as any} events={approvedEvents} inclusions={includes.data??[]} initialError=""/></>:
  tab==="events"?<EventsBoard vendorId={vendorId} events={eventList} applications={apps??[]}/>:
