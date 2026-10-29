@@ -1,59 +1,87 @@
 "use client";
 import {useState} from "react";
 import Link from "next/link";
-import {useSearchParams} from "next/navigation";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
-export default function NewDishEditor(){
+import {createSupabaseBrowserClient} from "@/lib/supabase/client";
+import styles from "../[id]/editor.module.css";
+type Vendor={id:string;display_name:string;hero_image_url:string|null};
+type Event={id:string;title_en:string;title_ru:string|null};
+type Size={size:string;price:string};
+export default function NewDishEditor({vendors,events,initialChefId,initialEventId}:{vendors:Vendor[];events:Event[];initialChefId:string;initialEventId:string}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
- const assignedChef=useSearchParams().get("chef");
- const [name,setName]=useState(""),[description,setDescription]=useState(""),[language,setLanguage]=useState<"en"|"ru">(ru?"ru":"en");
- const [price,setPrice]=useState(""),[ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[portion,setPortion]=useState(""),[confirmed,setConfirmed]=useState(false);
+ const [chefId,setChefId]=useState(initialChefId),[eventId,setEventId]=useState(initialEventId);
+ const [nameEn,setNameEn]=useState(""),[nameRu,setNameRu]=useState("");
+ const [descriptionEn,setDescriptionEn]=useState(""),[descriptionRu,setDescriptionRu]=useState("");
+ const [sizes,setSizes]=useState<Size[]>([{size:"",price:""}]);
+ const [ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[confirmed,setConfirmed]=useState(false);
+ const [photos,setPhotos]=useState<File[]>([]),[createdId,setCreatedId]=useState("");
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
- const [byWeight,setByWeight]=useState(false),[portions,setPortions]=useState([{grams:"250",price:""},{grams:"500",price:""}]);
- const basePrice=byWeight?Math.min(...portions.map(p=>Number(p.price||0))):Number(price||0);
- const [previewWeight,setPreviewWeight]=useState(0);
- async function save(){
-  setBusy(true);setError("");
+ const chef=vendors.find(v=>v.id===chefId);
+ async function api(url:string,method:"POST"|"PATCH",body:object){
+  const r=await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to save");return d;
+ }
+ async function save(draftOnly=false){
+  setError("");setBusy(true);
   try{
-   if(byWeight){
-    if(portions.length<2||portions.some(p=>!p.grams||!p.price||Number(p.grams)<=0||Number(p.price)<0)||new Set(portions.map(p=>Number(p.grams))).size!==portions.length)
-     throw Error(t("Add at least two unique weights and valid prices.","Добавьте минимум два разных веса и корректные цены."));
+   if(!nameEn.trim()||!nameRu.trim())throw Error(t("Enter both English and Russian dish names.","Укажите название блюда на английском и русском."));
+   if(!sizes.length||sizes.some(s=>!s.size.trim()||s.price.trim()===""||!Number.isFinite(Number(s.price))||Number(s.price)<0)||new Set(sizes.map(s=>s.size.trim().toLowerCase())).size!==sizes.length)
+    throw Error(t("Enter unique sizes and valid prices.","Укажите уникальные размеры и правильные цены."));
+   if(!draftOnly&&(!chefId||!ingredients.trim()||!allergens.trim()||!confirmed))
+    throw Error(t("Choose the chef, complete ingredients and allergens, and confirm the information before Done. Or save a draft.","Назначьте повара, заполните состав и аллергены, подтвердите данные. Или сохраните черновик."));
+   const price=Math.min(...sizes.map(s=>Number(s.price)));
+   let id=createdId;
+   if(!id){
+    const created=await api("/api/dishes","POST",{name:nameEn,description:descriptionEn,language:"en",price:String(price),vendor_id:chefId||null});
+    id=created.id;setCreatedId(id);
    }
-   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,description,language,price:byWeight?String(basePrice):price,vendor_id:assignedChef||null})});
-   const result=await response.json() as {id?:string;error?:string};
-   if(!response.ok||!result.id)throw Error(result.error||"Unable to create dish");
-   const update=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:result.id,action:"edit",name,description,language,price:byWeight?String(basePrice):price,ingredients,allergens,crossContact,portion,allergenConfirmed:confirmed})});
-   if(!update.ok){const detail=await update.json() as {error?:string};throw Error((detail.error||"Could not save full details")+" — dish draft was created. Find it in Food & Menus.");}
-   if(byWeight){
-    const variants=await fetch("/api/dishes/weight-options",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dishId:result.id,portions})});
-    const variantResult=await variants.json() as {error?:string};
-    if(!variants.ok)throw Error((variantResult.error||"Unable to save weight choices")+" — dish draft has been saved. Open it from Food & Menus.");
+   await api("/api/dishes","PATCH",{id,action:"edit",name:nameEn,description:descriptionEn,language:"en",nameEn,nameRu,descriptionEn,descriptionRu,price:String(price),ingredients,allergens,crossContact,portion:"",allergenConfirmed:confirmed});
+   await api("/api/dishes/size-prices","POST",{dishId:id,sizes});
+   const sb=createSupabaseBrowserClient();
+   for(let i=0;i<photos.length;i++){
+    const file=photos[i];
+    const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+    const key=`${id}/${crypto.randomUUID()}.${ext}`;
+    const {error:uploadError}=await sb.storage.from("dish-photos").upload(key,file,{contentType:file.type,upsert:false});
+    if(uploadError)throw Error(uploadError.message);
+    const url=sb.storage.from("dish-photos").getPublicUrl(key).data.publicUrl;
+    const {error:saveError}=await sb.from("menu_item_images").insert({menu_item_id:id,image_url:url,sort_order:i});
+    if(saveError)throw Error(saveError.message);
    }
-   window.location.assign("/dishes/"+result.id);
+   setPhotos([]);
+   if(!draftOnly)await api("/api/admin/dishes/quick-finish","POST",{dishId:id,vendorId:chefId||null,eventId:eventId||null,action:"finish"});
+   window.location.assign(!draftOnly&&eventId?`/admin/events/${eventId}?tab=menu`:`/dishes/${id}`);
   }catch(e){setError(e instanceof Error?e.message:"Unable to save dish");setBusy(false)}
  }
- const field="w-full rounded-lg border border-[#cdbdb1] bg-white p-3 text-[#292320]";
- return <main className="min-h-screen bg-[#faf2e9] px-4 py-8 text-[#292320]"><div className="mx-auto max-w-5xl">
-  <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link className="underline" href="/admin?tab=food">← {t("Food & Menus","Блюда и меню")}</Link><span className="text-sm">{t("Customer preview · New dish","Предпросмотр для покупателей · Новое блюдо")}</span></div>
-  <h1 className="mb-3 text-4xl font-bold text-[#932c27]">{t("Create a dish","Создать блюдо")}</h1><p className="mb-7 text-sm">{t("Enter the full product details here. After saving, the product page opens for photography, options and final review.","Заполните карточку блюда. После сохранения откроется полная страница для фотографий, опций и проверки.")}</p>
-  <div className="grid gap-8 rounded-2xl bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-8">
-   <section className="space-y-4"><div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-[#f4e6da] text-center text-[#8d7162]"><div>✿<p>{t("Photo gallery available after first save","Фото можно добавить после первого сохранения")}</p></div></div>
-    <h2 className="break-words text-3xl font-bold">{name||t("Your dish name","Название блюда")}</h2><p className="text-2xl font-semibold text-[#992c28]">NZ$ {(byWeight?Number(portions[previewWeight]?.price||basePrice):Number(price||0)).toFixed(2)}</p>{byWeight&&<label className="block text-sm font-semibold">{t("Choose weight","Выберите вес")}<select className="mt-2 w-full rounded-lg border border-[#cdbdb1] bg-white p-3" value={previewWeight} onChange={e=>setPreviewWeight(Number(e.target.value))}>{portions.map((p,i)=><option key={i} value={i}>{p.grams||"?"} {ru?"г":"g"} — NZ$ {Number(p.price||0).toFixed(2)}</option>)}</select></label>}<p className="whitespace-pre-wrap">{description||t("Description preview","Предпросмотр описания")}</p><p className="text-sm text-[#6f6258]">{portion}</p>
-    <p className="text-sm"><strong>{t("Ingredients","Состав")}:</strong> {ingredients||"—"}</p><p className="text-sm"><strong>{t("Allergens","Аллергены")}:</strong> {allergens||"—"}</p>
+ const label=(name:string,child:React.ReactNode)=><label className={styles.compactLabel}>{name}{child}</label>;
+ return <main className={styles.page}><div className={styles.wrap}>
+  <div className={styles.top}><Link href={eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food"}>← {t("Dishes","Блюда")}</Link><strong>{t("New dish","Новое блюдо")}</strong><button type="button" className={styles.doneButton} onClick={()=>void save(false)} disabled={busy}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button></div>
+  <div className={styles.product}><section className={styles.gallery}>
+   <div className={styles.heroPhoto}>{photos.length?<img src={URL.createObjectURL(photos[0])} alt={t("Dish photo","Фото блюда")}/>:<div className={styles.placeholder}>✿<small>{t("Dish photo","Фото блюда")}</small></div>}</div>
+   <label className={styles.addPhoto} style={{width:"100%",height:65,marginTop:10}}>＋ {t("Choose photos","Выбрать фото")}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={e=>{const files=Array.from(e.target.files??[]).filter(f=>f.size<=5242880&&["image/jpeg","image/png","image/webp"].includes(f.type)).slice(0,3);setPhotos(files)}}/></label>
+   <p className={styles.hint}>{t("Up to 3 JPG, PNG or WebP photos, 5 MB each.","До 3 фото JPG, PNG или WebP, по 5 МБ.")}</p>
+  </section><section className={styles.details}>
+   <div className={styles.chef}>{chef?.hero_image_url?<img className={styles.avatar} alt={chef.display_name} src={chef.hero_image_url}/>:<span className={styles.avatar}>{(chef?.display_name??"M")[0]}</span>}
+    {label(t("Chef","Повар"),<select value={chefId} onChange={e=>setChefId(e.target.value)}><option value="">{t("Assign chef","Назначить повара")}</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.display_name}</option>)}</select>)}
+    {label(t("Event","Событие"),<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">{t("No event selected","Без события")}</option>{events.map(e=><option key={e.id} value={e.id}>{ru?e.title_ru||e.title_en:e.title_en}</option>)}</select>)}
+   </div>
+   <div className={styles.languageGrid}>
+    {label(t("English name","Название на английском"),<input maxLength={160} value={nameEn} onChange={e=>setNameEn(e.target.value)}/>)}
+    {label(t("Russian name","Название на русском"),<input maxLength={160} value={nameRu} onChange={e=>setNameRu(e.target.value)}/>)}
+    {label(t("English Description","Описание на английском"),<textarea rows={3} value={descriptionEn} onChange={e=>setDescriptionEn(e.target.value)}/>)}
+    {label(t("Russian Description","Описание на русском"),<textarea rows={3} value={descriptionRu} onChange={e=>setDescriptionRu(e.target.value)}/>)}
+   </div>
+   <section className={styles.sizes}><h2>{t("Size and price","Размер и цена")}</h2><div className={styles.sizesHeader}><span>{t("Size (e.g. 300g, 1kg)","Размер (300 г, 1 кг)")}</span><span>{t("Price (NZD)","Цена (NZD)")}</span></div>
+    {sizes.map((row,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} placeholder="300g / 1kg" value={row.size} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,size:e.target.value}:x))}/><input aria-label={t("Price","Цена")} type="number" min="0" step=".01" placeholder="0.00" value={row.price} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/><button type="button" disabled={sizes.length===1} onClick={()=>setSizes(v=>v.filter((_,j)=>j!==i))}>×</button></div>)}
+    <button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(v=>[...v,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>
    </section>
-   <form className="space-y-4" onSubmit={e=>{e.preventDefault();void save()}}>
-    <label className="block font-semibold">{t("Dish name","Название блюда")}<input required maxLength={160} className={field} value={name} onChange={e=>setName(e.target.value)}/></label>
-    <label className="block font-semibold">{t("Language","Язык")}<select className={field} value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label>
-    <label className="flex items-center gap-3 rounded-lg border border-[#e3d0c2] bg-[#fff7ee] p-3 font-semibold"><input type="checkbox" checked={byWeight} onChange={e=>{setByWeight(e.target.checked);setPreviewWeight(0)}}/>{t("Sell by weight — different prices for different grams","Продавать по весу — разные цены за разное количество граммов")}</label>
-    {byWeight?<section className="space-y-3 rounded-lg border border-[#e3d0c2] p-4"><h2 className="font-bold">{t("Weight and price options","Варианты веса и цены")}</h2><p className="text-sm text-[#76675c]">{t("Customers will choose one weight from a dropdown.","Покупатели смогут выбрать вес из выпадающего списка.")}</p>{portions.map((portion,i)=><div key={i} className="flex flex-wrap items-end gap-3"><label className="min-w-[100px] flex-1 text-sm">{t("Grams","Граммы")}<input required type="number" min="1" step="1" className={field} value={portion.grams} onChange={e=>setPortions(old=>old.map((x,j)=>j===i?{...x,grams:e.target.value}:x))}/></label><label className="min-w-[120px] flex-1 text-sm">{t("Price (NZD)","Цена (NZD)")}<input required type="number" min="0" max="100000" step=".01" className={field} value={portion.price} onChange={e=>setPortions(old=>old.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/></label><button type="button" disabled={portions.length<=2} className="rounded-lg border px-3 py-3 disabled:opacity-40" onClick={()=>{setPortions(old=>old.filter((_,j)=>j!==i));setPreviewWeight(0)}} aria-label={t("Remove weight","Удалить вес")}>×</button></div>)}<button type="button" className="rounded-lg border border-[#982d29] px-4 py-2 font-semibold text-[#982d29]" onClick={()=>setPortions(old=>[...old,{grams:"",price:""}])} disabled={portions.length>=12}>＋ {t("Add another weight","Добавить ещё один вес")}</button></section>:<label className="block font-semibold">{t("Price (NZD)","Цена (NZD)")}<input required min="0" max="100000" step="0.01" type="number" className={field} value={price} onChange={e=>setPrice(e.target.value)}/></label>}
-    <label className="block font-semibold">{t("Description","Описание")}<textarea rows={3} className={field} value={description} onChange={e=>setDescription(e.target.value)}/></label>
-    <label className="block font-semibold">{t("Ingredients","Состав")}<textarea rows={3} className={field} value={ingredients} onChange={e=>setIngredients(e.target.value)}/></label>
-    <label className="block font-semibold">{t("Allergen statement","Информация об аллергенах")}<textarea rows={2} className={field} value={allergens} onChange={e=>setAllergens(e.target.value)}/></label>
-    <label className="block font-semibold">{t("Cross-contact information","Перекрёстный контакт")}<textarea rows={2} className={field} value={crossContact} onChange={e=>setCrossContact(e.target.value)}/></label>
-    <label className="block font-semibold">{t("Portion / serving size","Размер порции")}<input className={field} value={portion} onChange={e=>setPortion(e.target.value)}/></label>
-    <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("I have reviewed the ingredient and allergen information.","Я проверила информацию о составе и аллергенах.")}</label>
-    {error&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
-    <button disabled={busy} className="w-full rounded-xl bg-[#982d29] px-5 py-4 font-bold text-white disabled:opacity-50">{busy?t("Saving…","Сохраняем…"):t("Save draft & open full editor","Сохранить и открыть полную карточку")}</button>
-   </form>
-  </div></div></main>;
+   <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2><div className={styles.safetyGrid}>
+    <label>{t("Ingredients","Состав")}<textarea rows={2} value={ingredients} onChange={e=>{setIngredients(e.target.value);setConfirmed(false)}}/></label>
+    <label>{t("Allergens (or explicitly none)","Аллергены (или явно нет)")}<textarea rows={2} value={allergens} onChange={e=>{setAllergens(e.target.value);setConfirmed(false)}}/></label>
+   </div><label>{t("Cross-contact information","Перекрёстный контакт")}<input value={crossContact} onChange={e=>{setCrossContact(e.target.value);setConfirmed(false)}}/></label>
+   <label className={styles.safetyCheck}><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("I confirm that the food-safety information is accurate.","Подтверждаю точность сведений о составе и аллергенах.")}</label></section>
+   {error&&<p role="alert" className={styles.error}>{error}{createdId&&<> · <Link href={`/dishes/${createdId}`}>{t("Open saved draft","Открыть сохранённый черновик")}</Link></>}</p>}
+   <div className={styles.editActions}><button type="button" disabled={busy} className={styles.saveDraft} onClick={()=>void save(true)}>{t("Save draft","Сохранить черновик")}</button><button type="button" disabled={busy} className={styles.submitApproval} onClick={()=>void save(false)}>{busy?t("Saving…","Сохраняем…"):t("✓ Done · Approve","✓ Готово · Одобрить")}</button></div>
+  </section></div>
+ </div></main>;
 }
