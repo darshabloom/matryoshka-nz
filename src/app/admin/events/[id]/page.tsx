@@ -34,7 +34,22 @@ export default async function EventWorkspace({params,searchParams}:{params:Promi
  <nav className={styles.dashboardTabs}>{tabs.map(([key,label])=><Link key={key} href={`/admin/events/${id}?tab=${key}`} className={tab===key?styles.dashboardTabActive:styles.dashboardTab}>{label}</Link>)}</nav>
  {tab==="menu"?<EventMenuManager eventId={id} dishes={(dishes??[]) as any} vendors={vendors??[]} initialOffers={offers??[]} acceptedChefIds={approved.map(a=>a.vendor_id)}/>:
  tab==="chefs"?<section><div style={{display:"flex",justifyContent:"space-between",gap:15,alignItems:"center",flexWrap:"wrap"}}><h2 style={{font:"bold 29px Georgia,serif"}}>Participating chefs ({approved.length})</h2><Link href="/admin?tab=applications" className={styles.panelButton}>All applications →</Link></div><EventChefQuickAdd eventId={id} chefs={vendors??[]} approvedIds={approved.map(a=>a.vendor_id)}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:15}}>{approved.map(a=><div key={a.id} className={styles.dashboardPanel}><strong style={{font:"bold 22px Georgia,serif"}}>{(a.vendors as any)?.display_name||"Kitchen"}</strong><p style={{color:"#287441",fontSize:13}}>✓ Accepted for this event</p><Link href={`/admin/events/${id}?tab=menu`} style={{color:"#a32b27",fontWeight:800}}>View event dishes →</Link></div>)}</div><h2 style={{font:"bold 28px Georgia,serif",margin:"32px 0 0"}}>Applications & decisions ({apps?.length??0})</h2><ReviewBoard initial={(apps??[]) as any}/></section>:
- tab==="orders"?<section className={styles.dashboardPanel}><h2 style={{font:"bold 29px Georgia,serif"}}>Food orders</h2><p>{paid.length} paid orders. Draft or failed payment attempts are not sales.</p>{!orders?.length?<p>No orders yet.</p>:(orders??[]).map(o=><div key={o.id} className={styles.activityRow}><div><strong>#{o.id.slice(0,8).toUpperCase()}</strong><p>{o.email} · {o.status}</p>{o.allergy_declaration==="declared"&&<strong style={{color:"#a32323",background:"#ffe6e1",padding:"4px 7px",borderRadius:5}}>⚠ ALLERGY</strong>}{o.allergy_details&&<p>{o.allergy_details}</p>}{o.special_requests&&<p>📝 {o.special_requests}</p></div><div><strong>NZ$ {(o.subtotal_cents/100).toFixed(2)}</strong><p>{o.payment_status}</p></div></div>)}<Link href="/admin?tab=orders" className={styles.panelButton}>Full order management & refunds →</Link></section>:
+ tab==="orders"?<section className={styles.dashboardPanel}>
+  <h2 style={{font:"bold 29px Georgia,serif"}}>Food orders</h2>
+  <p>{paid.length} paid orders. Pending orders are not sales.</p>
+  {!orders?.length?<p>No orders yet.</p>:
+   (orders??[]).map(o=><div key={o.id} className={styles.activityRow}>
+    <div>
+     <strong>#{o.id.slice(0,8).toUpperCase()}</strong>
+     <p>{o.email} · {o.status}</p>
+     {o.allergy_declaration==="declared"?<strong style={{color:"#a32323",background:"#ffe6e1",padding:7,borderRadius:5}}>⚠ ALLERGY</strong>:null}
+     {o.allergy_details?<p>{o.allergy_details}</p>:null}
+     {o.special_requests?<p>📝 {o.special_requests}</p>:null}
+    </div>
+    <div><strong>{new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(o.subtotal_cents/100)}</strong><p>{o.payment_status}</p></div>
+   </div>)}
+  <Link href="/admin?tab=orders" className={styles.panelButton}>Full order management →</Link>
+ </section>:
  tab==="settings"?<div style={{display:"grid",gap:22}}><EventPhotos eventId={id} initialCover={event.cover_image_url} initialGallery={Array.isArray(event.gallery_image_urls)?event.gallery_image_urls:[]}/><EventSettings event={event as any}/><div className={styles.dashboardPanel}><h2 style={{font:"bold 26px Georgia,serif"}}>Ticket verification & payments</h2><p>Verify tickets for this event and configure Stripe separately before opening food ordering.</p><Link className={styles.panelButton} href="/admin?tab=tickets">Manage verified bookings →</Link><Link className={styles.panelButtonSecondary} href="/admin?tab=payments">Stripe settings →</Link></div></div>:
  <><div className={styles.overviewStats}><div><small>Accepted chefs</small><strong>{approved.length}</strong></div><div><small>Pending applications</small><strong>{pending.length}</strong></div><div><small>Dishes included</small><strong>{offers?.length??0}</strong></div><div><small>Ready dishes</small><strong>{ready.counts.readyDishes}</strong></div><div><small>Paid orders</small><strong>{paid.length}</strong></div><div><small>Verified tickets</small><strong>{ready.counts.bookings}</strong></div></div>
  <div className={styles.overviewGrid}><EventControls eventId={id} published={event.is_published} orderingEnabled={event.ordering_enabled} publishReady={ready.publishReady} orderingReady={ready.orderingReady} checks={ready.checks}/>
