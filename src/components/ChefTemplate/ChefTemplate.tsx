@@ -19,6 +19,7 @@ export default function ChefTemplate(chef: Vendor) {
 
     const {
         name,
+        heroImage,
         tagline,
         description,
         cuisine,
@@ -33,6 +34,7 @@ export default function ChefTemplate(chef: Vendor) {
     return (
         <main className={styles.wrap}>
             <header className={styles.header}>
+                {heroImage?<img src={heroImage} alt={name} style={{width:150,height:150,objectFit:"cover",borderRadius:"50%",border:"5px solid #f4e6d8",marginBottom:20,boxShadow:"0 5px 19px #4c24121d"}}/>:<div aria-hidden="true" style={{width:110,height:110,display:"grid",placeItems:"center",background:"#ecddcc",borderRadius:"50%",font:"700 44px Georgia,serif",color:"#a42d28",marginBottom:20}}>{name.slice(0,1)}</div>}
                 <h1 className={styles.title}>{name}</h1>
 
                 {tagline ? <p className={styles.tagline}>{pick(tagline)}</p> : null}
