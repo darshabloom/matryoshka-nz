@@ -47,7 +47,7 @@ export async function POST(req:Request){
  if(!origin.startsWith("https://"))return NextResponse.json({error:"Secure payment URL is not configured"},{status:503});
  const form=new URLSearchParams();
  form.set("mode","payment");form.set("customer_email",email);form.set("client_reference_id",orderId);
- form.set("payment_method_types[0]","card");form.set("metadata[order_id]",orderId);
+ form.set("payment_method_types[0]","card");form.set("metadata[order_id]",orderId);form.set("metadata[site]","matryoshka");form.set("metadata[payment_kind]","food_order");
  // Stock reservations stay pending for 30 minutes. Avoid Stripe's default 24-hour
  // Checkout lifetime: the payment window must stay close to the stock hold.
  form.set("expires_at",String(Math.floor(Date.now()/1000)+30*60+5));
