@@ -2,6 +2,7 @@ import Link from "next/link";
 import {redirect} from "next/navigation";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import SignOut from "./sign-out";
+import AdminProfilePhoto from "./AdminProfilePhoto";
 import styles from "./dashboard.module.css";
 export const dynamic="force-dynamic";
 export default async function Account({searchParams}:{searchParams:Promise<{tab?:string}>}){
@@ -11,6 +12,7 @@ export default async function Account({searchParams}:{searchParams:Promise<{tab?
  return <main className={styles.page}><div className={styles.inner}>
  <span className={styles.eyebrow}>MATRYOSHKA · YOUR SPACE</span>
  <div className={styles.heading}><div><h1>Welcome to Matryoshka</h1><p>Your customer dashboard · Личный кабинет покупателя</p></div><span className={styles.avatar}>{(user.email??"M")[0].toUpperCase()}</span></div>
+ {a.data&&<AdminProfilePhoto image={typeof user.user_metadata?.avatar_url==="string"?user.user_metadata.avatar_url:null}/>}
  <nav className={styles.accountTabs}><Link href="/account?tab=overview" className={tab==="overview"?styles.currentTab:styles.accountTab}>Overview</Link><Link href="/account?tab=events" className={tab==="events"?styles.currentTab:styles.accountTab}>Events</Link><Link href="/account?tab=orders" className={tab==="orders"?styles.currentTab:styles.accountTab}>Orders</Link></nav>
  {tab==="overview"&&<><div className={styles.sectionHead}><h2>What would you like to do?</h2><p>Choose where you'd like to go next.</p></div>
  <div className={styles.grid}>
