@@ -41,11 +41,13 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
  return <div className={styles.quickAdd}>
   {dish.options.map(group=><fieldset key={group.id} className={styles.quickOptions}>
    <legend>{label(group.label_en,group.label_ru,ru)}{(group.required||group.min_select>0)?" *":""}</legend>
-   <div className={styles.quickChoices}>{group.values.map(value=><label key={value.id} className={styles.quickOption}>
-    <input type={group.max_select===1?"radio":"checkbox"} name={dish.menu_item_id+group.id}
-     checked={(selected[group.id]??[]).includes(value.id)} onChange={()=>toggle(group.id,value.id,group.max_select)}/>
-    <span>{label(value.label_en,value.label_ru,ru)}{(group.label_en==="Size"||group.label_en==="Weight")?(" · "+dollars(customerPriceCents(dish.price_cents+value.price_delta_cents))):value.price_delta_cents?(" · +"+dollars(value.price_delta_cents)):""}</span>
-   </label>)}</div>
+   {group.max_select===1?<select className={styles.quickSelect} aria-label={label(group.label_en,group.label_ru,ru)} required={group.required||group.min_select>0} value={(selected[group.id]??[])[0]??""} onChange={e=>{setSelected(old=>({...old,[group.id]:e.target.value?[e.target.value]:[]}));setNotice("");}}>
+    <option value="">{t("Please choose a size","Пожалуйста, выберите размер")}</option>
+    {group.values.map(value=><option key={value.id} value={value.id}>{label(value.label_en,value.label_ru,ru)} · {dollars(customerPriceCents(dish.price_cents+value.price_delta_cents))}</option>)}
+   </select>:<div className={styles.quickChoices}>{group.values.map(value=><label key={value.id} className={styles.quickOption}>
+    <input type="checkbox" checked={(selected[group.id]??[]).includes(value.id)} onChange={()=>toggle(group.id,value.id,group.max_select)}/>
+    <span>{label(value.label_en,value.label_ru,ru)}{value.price_delta_cents?(" · +"+dollars(customerPriceCents(value.price_delta_cents))):""}</span>
+   </label>)}</div>}
    {group.max_select>1&&<small>{t("Choose up to ","Можно выбрать до ")}{group.max_select}</small>}
   </fieldset>)}
   <div className={styles.quickActions}>
