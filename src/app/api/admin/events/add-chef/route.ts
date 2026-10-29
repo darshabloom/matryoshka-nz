@@ -14,6 +14,10 @@ export async function POST(req:Request){
   db.from("vendors").select("id").eq("id",body.vendorId).maybeSingle()
  ]);
  if(!event||!chef)return NextResponse.json({error:"Event or chef not found"},{status:404});
+ const {data:already,error:readError}=await db.from("chef_event_applications")
+  .select("status").eq("event_id",event.id).eq("vendor_id",chef.id).maybeSingle();
+ if(readError)return NextResponse.json({error:"Unable to check chef participation"},{status:503});
+ if(already?.status==="approved")return NextResponse.json({ok:true,alreadyApproved:true});
  const {error}=await db.from("chef_event_applications").upsert({
   event_id:event.id,vendor_id:chef.id,status:"approved",
   message:"Invited directly by organiser",review_note:"Added by organiser",
