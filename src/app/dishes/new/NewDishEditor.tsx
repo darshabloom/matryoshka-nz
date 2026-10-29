@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
@@ -15,6 +15,8 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
  const [sizes,setSizes]=useState<Size[]>([{size:"",price:""}]);
  const [ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[confirmed,setConfirmed]=useState(false);
  const [photos,setPhotos]=useState<File[]>([]),[createdId,setCreatedId]=useState("");
+ const [preview,setPreview]=useState("");
+ useEffect(()=>{if(!photos[0]){setPreview("");return};const url=URL.createObjectURL(photos[0]);setPreview(url);return()=>URL.revokeObjectURL(url)},[photos]);
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
  const chef=vendors.find(v=>v.id===chefId);
  async function api(url:string,method:"POST"|"PATCH",body:object){
@@ -50,14 +52,14 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
    }
    setPhotos([]);
    if(!draftOnly)await api("/api/admin/dishes/quick-finish","POST",{dishId:id,vendorId:chefId||null,eventId:eventId||null,action:"finish"});
-   window.location.assign(!draftOnly&&eventId?`/admin/events/${eventId}?tab=menu`:`/dishes/${id}`);
+   window.location.assign(draftOnly?`/dishes/${id}`:eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food");
   }catch(e){setError(e instanceof Error?e.message:"Unable to save dish");setBusy(false)}
  }
  const label=(name:string,child:React.ReactNode)=><label className={styles.compactLabel}>{name}{child}</label>;
  return <main className={styles.page}><div className={styles.wrap}>
   <div className={styles.top}><Link href={eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food"}>← {t("Dishes","Блюда")}</Link><strong>{t("New dish","Новое блюдо")}</strong><button type="button" className={styles.doneButton} onClick={()=>void save(false)} disabled={busy}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button></div>
   <div className={styles.product}><section className={styles.gallery}>
-   <div className={styles.heroPhoto}>{photos.length?<img src={URL.createObjectURL(photos[0])} alt={t("Dish photo","Фото блюда")}/>:<div className={styles.placeholder}>✿<small>{t("Dish photo","Фото блюда")}</small></div>}</div>
+   <div className={styles.heroPhoto}>{preview?<img src={preview} alt={t("Dish photo","Фото блюда")}/>:<div className={styles.placeholder}>✿<small>{t("Dish photo","Фото блюда")}</small></div>}</div>
    <label className={styles.addPhoto} style={{width:"100%",height:65,marginTop:10}}>＋ {t("Choose photos","Выбрать фото")}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={e=>{const files=Array.from(e.target.files??[]).filter(f=>f.size<=5242880&&["image/jpeg","image/png","image/webp"].includes(f.type)).slice(0,3);setPhotos(files)}}/></label>
    <p className={styles.hint}>{t("Up to 3 JPG, PNG or WebP photos, 5 MB each.","До 3 фото JPG, PNG или WebP, по 5 МБ.")}</p>
   </section><section className={styles.details}>
