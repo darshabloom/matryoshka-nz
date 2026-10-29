@@ -2,7 +2,7 @@
 import {createContext,useContext,useEffect,useMemo,useState} from "react";
 export type BasketSelection={id:string;dishId:string;eventId:string;eventSlug:string;eventName:string;name:string;chef:string;photo:string|null;unitPriceCents:number;optionIds:string[];optionSummary:string;quantity:number};
 type BasketApi={items:BasketSelection[];ready:boolean;count:number;subtotal:number;add:(item:Omit<BasketSelection,"id">)=>boolean;setQuantity:(id:string,quantity:number)=>void;remove:(id:string)=>void;clear:()=>void};
-const BasketContext=createContext<BasketApi|null>(null);const KEY="matryoshka-event-basket-v1";
+const BasketContext=createContext<BasketApi|null>(null);const KEY="matryoshka-event-basket-v2"; // Reset stale pre-markup basket prices when customer pricing changed.
 export function BasketProvider({children}:{children:React.ReactNode}){
  const [items,setItems]=useState<BasketSelection[]>([]),[ready,setReady]=useState(false);
  useEffect(()=>{try{const stored=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(stored)){const clean=stored.filter(x=>x&&typeof x.dishId==="string"&&typeof x.eventId==="string"&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&x.quantity<=100&&Array.isArray(x.optionIds)).slice(0,100);setItems(clean)}}catch{}setReady(true)},[]);
