@@ -7,14 +7,26 @@ export default function NewDishEditor(){
  const [name,setName]=useState(""),[description,setDescription]=useState(""),[language,setLanguage]=useState<"en"|"ru">(ru?"ru":"en");
  const [price,setPrice]=useState(""),[ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[portion,setPortion]=useState(""),[confirmed,setConfirmed]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
+ const [byWeight,setByWeight]=useState(false),[portions,setPortions]=useState([{grams:"250",price:""},{grams:"500",price:""}]);
+ const basePrice=byWeight?Math.min(...portions.map(p=>Number(p.price||0))):Number(price||0);
+ const [previewWeight,setPreviewWeight]=useState(0);
  async function save(){
   setBusy(true);setError("");
   try{
-   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,description,language,price,vendor_id:null})});
+   if(byWeight){
+    if(portions.length<2||portions.some(p=>!p.grams||!p.price||Number(p.grams)<=0||Number(p.price)<0)||new Set(portions.map(p=>Number(p.grams))).size!==portions.length)
+     throw Error(t("Add at least two unique weights and valid prices.","Добавьте минимум два разных веса и корректные цены."));
+   }
+   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,description,language,price:byWeight?String(basePrice):price,vendor_id:null})});
    const result=await response.json() as {id?:string;error?:string};
    if(!response.ok||!result.id)throw Error(result.error||"Unable to create dish");
-   const update=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:result.id,action:"edit",name,description,language,price,ingredients,allergens,crossContact,portion,allergenConfirmed:confirmed})});
+   const update=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:result.id,action:"edit",name,description,language,price:byWeight?String(basePrice):price,ingredients,allergens,crossContact,portion,allergenConfirmed:confirmed})});
    if(!update.ok){const detail=await update.json() as {error?:string};throw Error((detail.error||"Could not save full details")+" — dish draft was created. Find it in Food & Menus.");}
+   if(byWeight){
+    const variants=await fetch("/api/dishes/weight-options",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dishId:result.id,portions})});
+    const variantResult=await variants.json() as {error?:string};
+    if(!variants.ok)throw Error((variantResult.error||"Unable to save weight choices")+" — dish draft has been saved. Open it from Food & Menus.");
+   }
    window.location.assign("/dishes/"+result.id);
   }catch(e){setError(e instanceof Error?e.message:"Unable to save dish");setBusy(false)}
  }
@@ -24,13 +36,14 @@ export default function NewDishEditor(){
   <h1 className="mb-3 text-4xl font-bold text-[#932c27]">{t("Create a dish","Создать блюдо")}</h1><p className="mb-7 text-sm">{t("Enter the full product details here. After saving, the product page opens for photography, options and final review.","Заполните карточку блюда. После сохранения откроется полная страница для фотографий, опций и проверки.")}</p>
   <div className="grid gap-8 rounded-2xl bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-8">
    <section className="space-y-4"><div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-[#f4e6da] text-center text-[#8d7162]"><div>✿<p>{t("Photo gallery available after first save","Фото можно добавить после первого сохранения")}</p></div></div>
-    <h2 className="break-words text-3xl font-bold">{name||t("Your dish name","Название блюда")}</h2><p className="text-2xl font-semibold text-[#992c28]">NZ$ {Number(price||0).toFixed(2)}</p><p className="whitespace-pre-wrap">{description||t("Description preview","Предпросмотр описания")}</p><p className="text-sm text-[#6f6258]">{portion}</p>
+    <h2 className="break-words text-3xl font-bold">{name||t("Your dish name","Название блюда")}</h2><p className="text-2xl font-semibold text-[#992c28]">NZ$ {(byWeight?Number(portions[previewWeight]?.price||basePrice):Number(price||0)).toFixed(2)}</p>{byWeight&&<label className="block text-sm font-semibold">{t("Choose weight","Выберите вес")}<select className="mt-2 w-full rounded-lg border border-[#cdbdb1] bg-white p-3" value={previewWeight} onChange={e=>setPreviewWeight(Number(e.target.value))}>{portions.map((p,i)=><option key={i} value={i}>{p.grams||"?"} {ru?"г":"g"} — NZ$ {Number(p.price||0).toFixed(2)}</option>)}</select></label>}<p className="whitespace-pre-wrap">{description||t("Description preview","Предпросмотр описания")}</p><p className="text-sm text-[#6f6258]">{portion}</p>
     <p className="text-sm"><strong>{t("Ingredients","Состав")}:</strong> {ingredients||"—"}</p><p className="text-sm"><strong>{t("Allergens","Аллергены")}:</strong> {allergens||"—"}</p>
    </section>
    <form className="space-y-4" onSubmit={e=>{e.preventDefault();void save()}}>
     <label className="block font-semibold">{t("Dish name","Название блюда")}<input required maxLength={160} className={field} value={name} onChange={e=>setName(e.target.value)}/></label>
     <label className="block font-semibold">{t("Language","Язык")}<select className={field} value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label>
-    <label className="block font-semibold">{t("Price (NZD)","Цена (NZD)")}<input required min="0" max="100000" step="0.01" type="number" className={field} value={price} onChange={e=>setPrice(e.target.value)}/></label>
+    <label className="flex items-center gap-3 rounded-lg border border-[#e3d0c2] bg-[#fff7ee] p-3 font-semibold"><input type="checkbox" checked={byWeight} onChange={e=>{setByWeight(e.target.checked);setPreviewWeight(0)}}/>{t("Sell by weight — different prices for different grams","Продавать по весу — разные цены за разное количество граммов")}</label>
+    {byWeight?<section className="space-y-3 rounded-lg border border-[#e3d0c2] p-4"><h2 className="font-bold">{t("Weight and price options","Варианты веса и цены")}</h2><p className="text-sm text-[#76675c]">{t("Customers will choose one weight from a dropdown.","Покупатели смогут выбрать вес из выпадающего списка.")}</p>{portions.map((portion,i)=><div key={i} className="flex flex-wrap items-end gap-3"><label className="min-w-[100px] flex-1 text-sm">{t("Grams","Граммы")}<input required type="number" min="1" step="1" className={field} value={portion.grams} onChange={e=>setPortions(old=>old.map((x,j)=>j===i?{...x,grams:e.target.value}:x))}/></label><label className="min-w-[120px] flex-1 text-sm">{t("Price (NZD)","Цена (NZD)")}<input required type="number" min="0" max="100000" step=".01" className={field} value={portion.price} onChange={e=>setPortions(old=>old.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/></label><button type="button" disabled={portions.length<=2} className="rounded-lg border px-3 py-3 disabled:opacity-40" onClick={()=>{setPortions(old=>old.filter((_,j)=>j!==i));setPreviewWeight(0)}} aria-label={t("Remove weight","Удалить вес")}>×</button></div>)}<button type="button" className="rounded-lg border border-[#982d29] px-4 py-2 font-semibold text-[#982d29]" onClick={()=>setPortions(old=>[...old,{grams:"",price:""}])} disabled={portions.length>=12}>＋ {t("Add another weight","Добавить ещё один вес")}</button></section>:<label className="block font-semibold">{t("Price (NZD)","Цена (NZD)")}<input required min="0" max="100000" step="0.01" type="number" className={field} value={price} onChange={e=>setPrice(e.target.value)}/></label>}
     <label className="block font-semibold">{t("Description","Описание")}<textarea rows={3} className={field} value={description} onChange={e=>setDescription(e.target.value)}/></label>
     <label className="block font-semibold">{t("Ingredients","Состав")}<textarea rows={3} className={field} value={ingredients} onChange={e=>setIngredients(e.target.value)}/></label>
     <label className="block font-semibold">{t("Allergen statement","Информация об аллергенах")}<textarea rows={2} className={field} value={allergens} onChange={e=>setAllergens(e.target.value)}/></label>
