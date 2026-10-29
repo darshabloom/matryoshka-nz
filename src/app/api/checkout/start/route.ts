@@ -14,7 +14,8 @@ export async function POST(req:Request){
  const quoteResponse=await validateQuote(new Request(req.url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:body.eventId,items:body.items})}));
  const quote=await quoteResponse.json();if(!quoteResponse.ok)return NextResponse.json({error:quote.error||"Your basket needs updating"},{status:quoteResponse.status});
  const service=serviceClient();let bookingId:null|string=null;
- if(quote.event.ticketRequired){
+ // All event food orders require a verified event ticket; browsing stays public.
+ {
   if(typeof body.ticketReference!=="string")return NextResponse.json({error:"A valid event ticket is required"},{status:400});
   try{bookingId=await checkTicket(service,body.eventId,email,body.ticketReference)}catch{return NextResponse.json({error:"Ticket verification is temporarily unavailable"},{status:503})}
   if(!bookingId)return NextResponse.json({error:"Unable to verify this event ticket and booking email. Check your confirmation details."},{status:403});
