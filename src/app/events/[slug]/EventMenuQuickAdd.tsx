@@ -42,7 +42,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
    <div className={styles.quickChoices}>{group.values.map(value=><label key={value.id} className={styles.quickOption}>
     <input type={group.max_select===1?"radio":"checkbox"} name={dish.menu_item_id+group.id}
      checked={(selected[group.id]??[]).includes(value.id)} onChange={()=>toggle(group.id,value.id,group.max_select)}/>
-    <span>{label(value.label_en,value.label_ru,ru)}{value.price_delta_cents?(" · +"+dollars(value.price_delta_cents)):""}</span>
+    <span>{label(value.label_en,value.label_ru,ru)}{(group.label_en==="Size"||group.label_en==="Weight")?(" · "+dollars(dish.price_cents+value.price_delta_cents)):value.price_delta_cents?(" · +"+dollars(value.price_delta_cents)):""}</span>
    </label>)}</div>
    {group.max_select>1&&<small>{t("Choose up to ","Можно выбрать до ")}{group.max_select}</small>}
   </fieldset>)}
