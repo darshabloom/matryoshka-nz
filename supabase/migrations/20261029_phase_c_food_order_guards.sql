@@ -63,7 +63,7 @@ begin
  if v_subtotal<=0 or v_subtotal>100000000 then raise exception 'Invalid total';end if;
  update public.food_orders set subtotal_cents=v_subtotal::integer where id=v_order;
  return v_order;
-end $function$
+end $function$;
 
 REVOKE ALL ON FUNCTION public.reserve_food_order(uuid,uuid,text,uuid,text,text,jsonb,uuid)
  FROM PUBLIC,anon,authenticated;
