@@ -37,6 +37,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
    unitPriceCents:price,optionIds:chosen.map(v=>v.id),optionSummary:summary,quantity});
   if(ok)setNotice(t("Added to basket","Добавлено в корзину"));
  }
+ if(dish.sale_ready===false)return <div className={styles.quickAdd}><p style={{color:"#976a45",fontSize:12,fontWeight:700}}>{t("This dish is being prepared for ordering.","Блюдо готовится к заказу.")}</p></div>;
  return <div className={styles.quickAdd}>
   {dish.options.map(group=><fieldset key={group.id} className={styles.quickOptions}>
    <legend>{label(group.label_en,group.label_ru,ru)}{(group.required||group.min_select>0)?" *":""}</legend>
