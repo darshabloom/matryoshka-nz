@@ -39,8 +39,17 @@ export async function POST(req:Request){
   return response({error:"Enter the Russian and English dish names first"},409);
  const eventId=typeof x.eventId==="string"&&UUID.test(x.eventId)?x.eventId:null;
  if(eventId){
-  const {data:accepted,error:acceptedError}=await db.from("chef_event_applications").select("status").eq("event_id",eventId).eq("vendor_id",vendorId).maybeSingle();
-  if(acceptedError||accepted?.status!=="approved")return response({error:"Add the chef to this event first (Event → Chefs), then finish the dish."},409);
+  const {data:event,error:eventError}=await db.from("events").select("id").eq("id",eventId).maybeSingle();
+  if(eventError||!event)return response({error:"Event not found"},404);
+  // A direct organiser assignment also accepts the chef for the event,
+  // without making Marina repeat an application review workflow.
+  const {error:joinError}=await db.from("chef_event_applications").upsert({
+   event_id:eventId,vendor_id:vendorId,status:"approved",
+   reviewed_by:user.id,reviewed_at:new Date().toISOString(),
+   message:"Added by event organiser",review_note:"Approved directly by organiser",
+   fulfilment:"at_event"
+  },{onConflict:"event_id,vendor_id"});
+  if(joinError)return response({error:"Unable to attach chef to this event"},503);
  }
  const {error:approve}=await db.from("menu_items").update({approval_status:"approved",is_active:true,approved_at:new Date().toISOString(),approved_by:user.id,review_note:null,updated_at:new Date().toISOString()}).eq("id",item.id);
  if(approve)return response({error:"Could not approve dish"},500);
