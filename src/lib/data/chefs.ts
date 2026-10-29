@@ -129,7 +129,7 @@ export async function listChefs(input: ListChefsInput): Promise<Vendor[]> {
             const tr = menuTransMap.get(mi.id) ?? {};
             const names = [tr.en?.name, tr.ru?.name].join(" ");
             return mi.allergen_review_complete && !!mi.ingredients_text?.trim() && !!mi.allergen_statement?.trim() &&
-                !/test\\s*only|not\\s*for\\s*sale|\\[тест\\]|не прода/i.test(names);
+                !/TEST ONLY|NOT FOR SALE|ТЕСТ|не прода/i.test(names);
         }).map((mi) => {
             const tr = menuTransMap.get(mi.id) ?? {};
             return {
@@ -257,7 +257,7 @@ export async function getChefBySlug(slug: string): Promise<Vendor | null> {
             const tr = transMap.get(mi.id) ?? {};
             const names = [tr.en?.name, tr.ru?.name].join(" ");
             return mi.allergen_review_complete && !!mi.ingredients_text?.trim() && !!mi.allergen_statement?.trim() &&
-                !/test\\s*only|not\\s*for\\s*sale|\\[тест\\]|не прода/i.test(names);
+                !/TEST ONLY|NOT FOR SALE|ТЕСТ|не прода/i.test(names);
         }).map((mi) => {
         const tr = transMap.get(mi.id) ?? {};
         return {
