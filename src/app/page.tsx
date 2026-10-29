@@ -11,7 +11,7 @@ import styles from "./page.module.css";
 
 type Dish = {id:string;name_en:string;name_ru:string;description_en:string;description_ru:string;price_cents:number;chef:string;chef_slug:string;chef_photo:string|null;image:string|null;categories:{slug:string;label_en:string;label_ru:string|null}[];ready:boolean};
 type ShopDish={dish:CustomerDish;event:EventMenuData["event"]};
-type PublicEvent = { id:string;slug:string; title_en:string;title_ru:string|null;starts_at:string };
+type PublicEvent = { id:string;slug:string; title_en:string;title_ru:string|null;starts_at:string;location_text?:string|null;cover_image_url?:string|null };
 const photos = {
  hero:"https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg",
  sets:"https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
@@ -78,7 +78,7 @@ export default function HomePage(){
   </section>
   <section className={styles.section} id="events">
    <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"Закажите еду к событию":"Order Food for an Event"}</h2><p>{ru?"Выберите событие, чтобы увидеть доступные блюда.":"Choose your event to see the food available for it."}</p></div>
-   {events.length>0?<div className={styles.eventRow}>{events.map(e=><Link key={e.id} className={styles.eventCard} href={`/events/${e.slug}`}><strong>{ru?(e.title_ru||e.title_en):e.title_en}</strong><span>{new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{day:"numeric",month:"long",year:"numeric",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span><span className={styles.eventAction}>{ru?"Посмотреть меню":"Browse event menu"} →</span></Link>)}</div>:<div className={styles.empty}>{ru?"Новые события скоро появятся.":"Upcoming events will appear here soon."} <Link href="/events">{ru?"Все события":"All events"} →</Link></div>}
+   {events.length>0?<div className={styles.eventRow}>{events.map(e=><Link key={e.id} className={styles.eventCard} href={`/events/${e.slug}`}>{e.cover_image_url&&<img src={e.cover_image_url} alt="" style={{width:"100%",height:185,objectFit:"cover",borderRadius:10,marginBottom:13}}/>}<strong>{ru?(e.title_ru||e.title_en):e.title_en}</strong><span>{new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{day:"numeric",month:"long",year:"numeric",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span>{e.location_text&&<span>⌖ {e.location_text}</span>}<span className={styles.eventAction}>{ru?"Посмотреть меню":"Browse event menu"} →</span></Link>)}</div>:<div className={styles.empty}>{ru?"Новые события скоро появятся.":"Upcoming events will appear here soon."} <Link href="/events">{ru?"Все события":"All events"} →</Link></div>}
   </section>
   <section className={styles.section} id="menu">
    <div className={styles.heading}><span className={styles.flourish}>❧</span><h2>{ru?"Наше меню":"Our Menu"}</h2><p>{ru?"Откройте для себя домашние блюда от наших поваров.":"Explore homemade dishes prepared by our talented chefs."}</p></div>
