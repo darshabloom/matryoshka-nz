@@ -27,15 +27,34 @@ export async function PATCH(req:Request){
  if(!admin){const {data:m}=await db.from("vendor_users").select("vendor_id").eq("vendor_id",item.vendor_id).eq("user_id",user.id).maybeSingle();if(!m)return NextResponse.json({error:"Not your dish"},{status:403})}
  if(x.action==="edit"){
   const name=typeof x.name==="string"?x.name.trim():"";const description=typeof x.description==="string"?x.description.trim().slice(0,4000):"";const lang=x.language==="ru"?"ru":"en";const cents=Math.round(Number(x.price)*100);
-  if(!name||name.length>160||!Number.isSafeInteger(cents)||cents<0||cents>10000000)return NextResponse.json({error:"Invalid dish details"},{status:400});
+  const bilingual=typeof x.nameEn==="string"&&typeof x.nameRu==="string";
+  const bilingualRows=bilingual?[
+   {lang:"en",name:x.nameEn.trim().slice(0,160),description:String(x.descriptionEn??"").slice(0,4000)},
+   {lang:"ru",name:x.nameRu.trim().slice(0,160),description:String(x.descriptionRu??"").slice(0,4000)}
+  ]:[];
+  if(bilingual&&(!bilingualRows[0].name||!bilingualRows[1].name))
+   return NextResponse.json({error:"Enter both English and Russian dish names"},{status:400});
+  if((!name&&!bilingual)||name.length>160||!Number.isSafeInteger(cents)||cents<0||cents>10000000)return NextResponse.json({error:"Invalid dish details"},{status:400});
   if(!admin){
    const {error}=await db.rpc("save_chef_dish_draft",{p_id:item.id,p_name:name,p_description:description,p_lang:lang,p_price_cents:cents,p_ingredients:String(x.ingredients??""),p_allergens:String(x.allergens??""),p_cross_contact:String(x.crossContact??""),p_portion:String(x.portion??""),p_food_safety_confirmed:x.allergenConfirmed===true});
-   return error?NextResponse.json({error:"Only your unpublished draft may be edited"},{status:403}):NextResponse.json({ok:true});
+   if(error)return NextResponse.json({error:"Only your unpublished draft may be edited"},{status:403});
+   if(bilingual){
+    const other=bilingualRows.find(row=>row.lang!==lang)!;
+    const {error:second}=await db.rpc("save_chef_dish_draft",{
+     p_id:item.id,p_name:other.name,p_description:other.description,p_lang:other.lang,
+     p_price_cents:cents,p_ingredients:String(x.ingredients??""),
+     p_allergens:String(x.allergens??""),p_cross_contact:String(x.crossContact??""),
+     p_portion:String(x.portion??""),p_food_safety_confirmed:x.allergenConfirmed===true
+    });
+    if(second)return NextResponse.json({error:"One language saved; could not save second description"},{status:503});
+   }
+   return NextResponse.json({ok:true});
   }
   const {error:up}=await db.from("menu_items").update({price_cents:cents,ingredients_text:String(x.ingredients??"").slice(0,4000),allergen_statement:String(x.allergens??"").slice(0,2000),cross_contact_statement:String(x.crossContact??"").slice(0,2000),portion_label:String(x.portion??"").slice(0,150),allergen_review_complete:x.allergenConfirmed===true,updated_at:new Date().toISOString()}).eq("id",item.id);
   if(up)return NextResponse.json({error:"Unable to update dish price"},{status:500});
-  const {error:tr}=await db.from("menu_item_translations").upsert({menu_item_id:item.id,lang,name,description},{onConflict:"menu_item_id,lang"});
-  return tr?NextResponse.json({error:"Price updated, but translation could not be saved"},{status:500}):NextResponse.json({ok:true});
+  const translations=bilingual?bilingualRows.map(row=>({menu_item_id:item.id,...row})):[{menu_item_id:item.id,lang,name,description}];
+  const {error:tr}=await db.from("menu_item_translations").upsert(translations,{onConflict:"menu_item_id,lang"});
+  return tr?NextResponse.json({error:"Details saved, but translation could not be saved"},{status:500}):NextResponse.json({ok:true});
  }
  if(x.action==="submit"){
   if(admin)return NextResponse.json({error:"Admin can approve directly"},{status:400});
