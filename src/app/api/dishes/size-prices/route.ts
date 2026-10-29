@@ -31,7 +31,12 @@ export async function POST(req:Request){
  const {data:groups,error:groupsError}=await db.from("menu_item_options").select("id,label_en").eq("menu_item_id",dish.id);
  if(groupsError)return NextResponse.json({error:"Unable to inspect sizes"},{status:500});
  const weight=groups?.find(g=>g.label_en==="Weight"||g.label_en==="Size");
- if((groups??[]).some(g=>g.id!==weight?.id))return NextResponse.json({error:"This dish still has older extra-option groups. Please contact the organiser before switching to size-only prices."},{status:409});
+ for(const oldGroup of (groups??[]).filter(g=>g.id!==weight?.id)){
+  const {count,error}=await db.from("menu_item_option_values").select("id",{count:"exact",head:true}).eq("option_id",oldGroup.id);
+  if(error||count!==0)return NextResponse.json({error:"This dish has existing custom options. Review them before switching to size-only prices."},{status:409});
+  const {error:removeError}=await db.from("menu_item_options").delete().eq("id",oldGroup.id);
+  if(removeError)return NextResponse.json({error:"Unable to replace empty legacy options"},{status:503});
+ }
  let groupId=weight?.id;
  if(!groupId){
   const {data:created,error}=await db.from("menu_item_options").insert({menu_item_id:dish.id,label_en:"Size",label_ru:"Размер",required:true,min_select:1,max_select:1,sort_order:0}).select("id").single();
