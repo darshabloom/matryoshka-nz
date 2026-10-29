@@ -46,23 +46,17 @@ export async function POST(req:Request){
   }
  }
  if(x.action==="assign")return response({ok:true,assigned:vendorId});
- if(!vendorId)return response({error:"Choose a chef before completing the dish"},409);
- const {data:fresh}=await db.from("menu_items").select("ingredients_text,allergen_statement,allergen_review_complete").eq("id",item.id).single();
- if(!fresh?.ingredients_text?.trim()||!fresh?.allergen_statement?.trim()||!fresh.allergen_review_complete)
-  return response({error:"Save the real ingredient list and allergen statement, then tick the confirmation box before completing."},409);
- const {data:translations,error:transError}=await db.from("menu_item_translations").select("lang,name").eq("menu_item_id",item.id);
- if(transError||!translations?.find(t=>t.lang==="en"&&t.name?.trim())||!translations?.find(t=>t.lang==="ru"&&t.name?.trim()))
-  return response({error:"Enter the Russian and English dish names first"},409);
+
  const eventId=typeof x.eventId==="string"&&UUID.test(x.eventId)?x.eventId:null;
  if(eventId){
   const {data:event,error:eventError}=await db.from("events").select("id").eq("id",eventId).maybeSingle();
   if(eventError||!event)return response({error:"Event not found"},404);
   // A direct organiser assignment also accepts the chef for the event,
   // without making Marina repeat an application review workflow.
-  const {data:existing,error:checkError}=await db.from("chef_event_applications")
-   .select("status").eq("event_id",eventId).eq("vendor_id",vendorId).maybeSingle();
+  const {data:existing,error:checkError}=vendorId?await db.from("chef_event_applications")
+   .select("status").eq("event_id",eventId).eq("vendor_id",vendorId).maybeSingle():{data:null,error:null};
   if(checkError)return response({error:"Unable to check event chef participation"},503);
-  if(existing?.status!=="approved"){
+  if(vendorId&&existing?.status!=="approved"){
    const {error:joinError}=await db.from("chef_event_applications").upsert({
     event_id:eventId,vendor_id:vendorId,status:"approved",
     reviewed_by:user.id,reviewed_at:new Date().toISOString(),
