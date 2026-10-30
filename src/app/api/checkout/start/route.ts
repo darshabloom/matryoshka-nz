@@ -7,6 +7,8 @@ export async function POST(req:Request){
  if(!isCheckoutConfigured())return NextResponse.json({error:"Secure checkout is being configured. No payment has been taken."},{status:503});
  let body:any;try{body=await req.json()}catch{return NextResponse.json({error:"Invalid request"},{status:400})}
  const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
+ const phone=typeof body.phone==="string"?body.phone.trim():"";
+ if(phone.length<6||phone.length>32||!/^\+?[\d\s().-]+$/.test(phone))return NextResponse.json({error:"Enter a valid contact phone number"},{status:400});
  if(email.length<6||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:"Enter a valid booking email address"},{status:400});
  if(!UUID.test(body.idempotencyKey??"")||!UUID.test(body.eventId??""))return NextResponse.json({error:"Invalid checkout session"},{status:400});
  if(body.allergyDeclaration!=="none"&&body.allergyDeclaration!=="declared")return NextResponse.json({error:"Please complete the allergy declaration"},{status:400});
@@ -30,6 +32,8 @@ export async function POST(req:Request){
   p_items:body.items,p_idempotency_key:body.idempotencyKey
  });
  if(reserveError||!orderId)return NextResponse.json({error:"Could not reserve this order. Please review availability and try again."},{status:409});
+ const {error:phoneError}=await service.from("food_orders").update({contact_phone:phone}).eq("id",orderId).eq("email",email).eq("status","pending_payment");
+ if(phoneError)return NextResponse.json({error:"Could not save the contact phone number. No payment was started."},{status:503});
  const {data:existing}=await service.from("food_orders").select("id,stripe_session_id,payment_status,subtotal_cents").eq("id",orderId).single();
  if(existing?.payment_status==="paid")return NextResponse.json({error:"This order has already been paid"},{status:409});
  const secret=process.env.STRIPE_SECRET_KEY!;
