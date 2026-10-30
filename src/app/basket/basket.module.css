@@ -30,3 +30,29 @@
 .drawerPage .empty h2{font-size:22px}
 .drawerPage .primary{width:100%;cursor:pointer;font:800 13px Arial,sans-serif}
 .drawerPage .bottomActions{padding:14px 0}
+
+
+/* Fixed order-summary footer in the slide-over basket.
+   The list itself scrolls instead of the entire drawer. */
+.page.drawerPage{
+ display:flex;flex-direction:column;box-sizing:border-box;
+ flex:1;min-width:0;min-height:0;height:100%;max-height:100%;
+ overflow:hidden;padding:12px 13px 12px;
+}
+.drawerPage .wrap{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0}
+.drawerPage .columns{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;gap:11px}
+.drawerPage .lines{
+ flex:1 1 0;min-height:0;min-width:0;
+ overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;
+ scrollbar-gutter:stable;
+}
+.drawerPage .summary{
+ position:relative;top:auto;flex:0 0 auto;min-width:0;
+ max-height:min(43dvh,290px);overflow-y:auto;overscroll-behavior:contain;
+ border-color:#e7cbbc;box-shadow:0 -5px 22px #6a3c1916;
+}
+.drawerPage .bottomActions{margin-top:1px}
+@media(max-width:690px){
+ .page.drawerPage{padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px))}
+ .drawerPage .summary{max-height:min(45dvh,290px)}
+}
