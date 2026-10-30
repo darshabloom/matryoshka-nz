@@ -7,3 +7,20 @@
 .primary,.pay{background:linear-gradient(125deg,#b14e43,#942b26);transition:background .15s}
 .primary:hover,.pay:hover:not(:disabled){background:#7e251f}
 .summary,.panel,.lines,.empty{box-shadow:0 9px 29px #6541250d}
+
+/* Full food-checkout sequence stays in the same right-side overlay. */
+.page.drawerPage{padding:15px 15px 40px;min-height:0;background:transparent;overflow:visible}
+.drawerPage:before{display:none}
+.drawerPage .wrap{max-width:none}
+.drawerPage .back{font:750 12px Arial,sans-serif;background:none;border:0;padding:0;cursor:pointer;margin-bottom:13px}
+.drawerPage .eyebrow{display:none}
+.drawerPage h1{font-size:27px;margin:6px 0 19px}
+.drawerPage .columns{display:flex;flex-direction:column;gap:17px}
+.drawerPage .forms,.drawerPage .summary{width:100%;min-width:0}
+.drawerPage .forms{gap:13px}
+.drawerPage .panel,.drawerPage .summary{padding:17px 15px}
+.drawerPage .panel h2,.drawerPage .summary h2{font-size:21px;margin-bottom:11px}
+.drawerPage .panel label{margin-top:11px}
+.drawerPage .panel input:not([type=radio]),.drawerPage .panel textarea{font-size:14px;min-height:43px}
+.drawerPage .summary{position:static;gap:12px}
+.drawerPage .pay{min-height:49px;font-size:13px}
