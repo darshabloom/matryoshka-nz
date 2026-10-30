@@ -17,9 +17,11 @@ import styles from "./ShoppingDrawer.module.css";
  */
 export default function ShoppingDrawer(){
  const {open,step,sessionId,openBasket,openPaymentResult,close,backToBasket}=useCartDrawer();
- const {count,subtotal}=useBasket();
+ const {items,count,subtotal}=useBasket();
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
  const pathname=usePathname();
+ const eventName=items[0]?.eventName??(pathname.startsWith("/events/novogodnik26")?
+  "New Years 2026":t("Event menu","Меню мероприятия"));
  const dialog=useRef<HTMLElement>(null);
  const closeButton=useRef<HTMLButtonElement>(null);
  const previousFocus=useRef<HTMLElement|null>(null);
@@ -90,13 +92,13 @@ export default function ShoppingDrawer(){
      {step==="checkout"?<button type="button" className={styles.backButton}
         onClick={backToBasket} aria-label={t("Back to cart","Назад в корзину")}>←</button>:<span className={styles.ornament} aria-hidden="true">✿</span>}
      <div className={styles.headerTitle}>
-      <span className={styles.eyebrow}>MATRYOSHKA · {t("YOUR ORDER","ВАШ ЗАКАЗ")}</span>
+      <span className={styles.eyebrow}>MATRYOSHKA · {eventName}</span>
       <h2 id="matryoshka-drawer-heading">{step==="basket"?t("My cart","Моя корзина"):step==="checkout"?t("Checkout","Оформление заказа"):t("Order status","Статус заказа")}</h2>
      </div>
      <button type="button" ref={closeButton} className={styles.close}
       onClick={dismiss} aria-label={t("Close shopping panel","Закрыть панель")}>✕</button>
     </header>
-    <div className={styles.content} key={step}>
+    <div className={`${styles.content} ${step==="basket"?styles.basketContent:""}`} key={step}>
      {step==="basket"?<BasketPage inDrawer/>:step==="checkout"?<Checkout inDrawer/>:<PaymentReturn inDrawer sessionId={sessionId}/>}
     </div>
    </section>
