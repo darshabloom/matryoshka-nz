@@ -17,9 +17,6 @@ export default function Checkout(){
   try{
    const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+eventId);
    if(saved&&/^YMR-[A-Z0-9-]{5,80}$/.test(saved))setTicket(current=>current||saved);
-   const verifiedEmail=sessionStorage.getItem("matryoshka:ticket_email:"+eventId);
-   if(verifiedEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verifiedEmail))
-    setEmail(current=>current||verifiedEmail);
   }catch{}
  },[eventId]);
  useEffect(()=>{fetch("/api/checkout/status",{cache:"no-store"}).then(r=>r.json()).then(setStatus).catch(()=>setStatus({enabled:false,reason:"Secure checkout is unavailable"}))},[]);
