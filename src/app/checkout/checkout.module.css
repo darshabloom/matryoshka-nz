@@ -24,3 +24,8 @@
 .drawerPage .panel input:not([type=radio]),.drawerPage .panel textarea{font-size:14px;min-height:43px}
 .drawerPage .summary{position:static;gap:12px}
 .drawerPage .pay{min-height:49px;font-size:13px}
+
+.eventFulfilment{display:block;background:#f6eade;border:1px solid #edd9c7;border-radius:10px;
+ padding:12px 14px;color:#775348;font-size:13px;font-weight:650;line-height:1.4;margin:0 0 4px}
+.drawerPage .eventFulfilment{margin:0 0 3px;padding:11px 13px;font-size:12px}
+.drawerPage .forms{gap:11px}
