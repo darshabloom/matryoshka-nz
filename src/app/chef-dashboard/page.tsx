@@ -19,7 +19,7 @@ export default async function ChefDashboard({searchParams}:{searchParams:Promise
  const drafts=dishes?.filter(d=>d.approval_status==="draft"||d.approval_status==="changes_requested").length??0;
  const pendingApps=apps?.filter(a=>a.status==="pending").length??0;
  const [vendors,events,includes,ordersResult,assignmentResult]=await Promise.all([db.from("vendors").select("id,display_name,hero_image_url").eq("id",vendorId),db.from("events").select("id,title_en,title_ru,starts_at,ends_at,location_text,chef_applications_open,chef_application_deadline,chef_fulfilment_options").gt("ends_at",new Date().toISOString()).order("starts_at"),db.from("event_menu_items").select("event_id,menu_item_id"),db.rpc("get_chef_paid_order_details",{p_vendor:vendorId}),db.rpc("my_pending_dish_assignments")]);
- const committed=(Array.isArray(ordersResult.data)?ordersResult.data:[]) as {order_id:string;dish_name_snapshot:string;quantity:number;option_snapshot:unknown;allergy:boolean;allergy_note:string|null;special_requests:string;order_created_at:string}[];
+ const committed=(Array.isArray(ordersResult.data)?ordersResult.data:[]) as {order_id:string;dish_name_snapshot:string;quantity:number;option_snapshot:unknown;allergy:boolean;allergy_note:string|null;special_requests:string;dish_note:string;order_created_at:string}[];
  const production=new Map<string,number>();for(const line of committed){const key=line.dish_name_snapshot+" "+JSON.stringify(line.option_snapshot);production.set(key,(production.get(key)??0)+line.quantity)}
  const eventList=events.data??[],approvedEvents=eventList.filter(e=>apps?.some(a=>a.event_id===e.id&&a.status==="approved"));
  const title=tab==="dishes"?"My Dishes":tab==="events"?"My Events":tab==="orders"?"My Orders":"Welcome to your kitchen";
@@ -34,6 +34,7 @@ export default async function ChefDashboard({searchParams}:{searchParams:Promise
  <div style={{display:"flex",justifyContent:"space-between",gap:13,flexWrap:"wrap"}}><strong>{line.dish_name_snapshot} · {line.quantity} portions</strong><small>#{line.order_id.slice(0,8)}</small></div>
  {line.allergy&&<strong style={{background:"#ffe2dd",color:"#9d2620",padding:"8px 11px",borderRadius:7,display:"inline-block",width:"fit-content"}}>⚠ ALLERGY / АЛЛЕРГИЯ</strong>}
  {line.allergy_note&&<p style={{fontWeight:700,color:"#9d2620"}}>{line.allergy_note}</p>}
+ {line.dish_note&&<p style={{fontWeight:750,padding:"9px 11px",background:"#fff0e7",color:"#813629",borderLeft:"3px solid #a94236",borderRadius:7,whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}><strong>💬 Dish note / Пожелание к блюду:</strong> {line.dish_note}</p>}
  {line.special_requests&&<p><strong>Customer request / Пожелания:</strong> {line.special_requests}</p>}
  <small style={{color:"#7a6659"}}>{new Intl.DateTimeFormat("en-NZ",{dateStyle:"medium",timeStyle:"short",timeZone:"Pacific/Auckland"}).format(new Date(line.order_created_at))}</small>
  </article>)}</div></section>:
