@@ -13,6 +13,13 @@ export async function POST(req:Request){
  if(!UUID.test(body.idempotencyKey??"")||!UUID.test(body.eventId??""))return NextResponse.json({error:"Invalid checkout session"},{status:400});
  if(body.allergyDeclaration!=="none"&&body.allergyDeclaration!=="declared")return NextResponse.json({error:"Please complete the allergy declaration"},{status:400});
  if(body.allergyDeclaration==="declared"&&(typeof body.allergyDetails!=="string"||!body.allergyDetails.trim()||body.allergyDetails.length>2000))return NextResponse.json({error:"Please describe the allergy for the kitchen."},{status:400});
+ if(!Array.isArray(body.items)||body.items.length>40||body.items.length<1||
+    body.items.some((item:unknown)=>{
+      if(!item||typeof item!=="object")return true;
+      const line=item as {note?:unknown};
+      return line.note!==undefined&&(typeof line.note!=="string"||line.note.length>300);
+    }))
+  return NextResponse.json({error:"Each dish note must be 300 characters or fewer"},{status:400});
  const specialRequests=typeof body.specialRequests==="string"?body.specialRequests.trim():"";
  if(specialRequests.length>500)return NextResponse.json({error:"Please keep comments under 500 characters"},{status:400});
  const quoteResponse=await validateQuote(new Request(req.url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:body.eventId,items:body.items})}));
