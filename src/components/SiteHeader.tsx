@@ -44,7 +44,6 @@ export default function SiteHeader({account}:{account:ReactNode}){
     </div>
    </div>
    <div className={styles.mobileActions}>
-    <span className={styles.mobileBasket}><BasketLink/></span>
     <button type="button" className={styles.menuToggle} aria-label={expanded?(ru?"Закрыть меню":"Close menu"):(ru?"Открыть меню":"Open menu")}
      aria-expanded={expanded} aria-controls="matryoshka-mobile-navigation" onClick={()=>setExpanded(v=>!v)}>
      {expanded?<svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
