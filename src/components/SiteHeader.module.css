@@ -39,7 +39,7 @@
  .navLinks{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;font-size:14px}
  .navLinks a{border:1px solid #eadbcf;border-radius:9px;background:#fff;min-height:44px;display:flex;align-items:center;padding:10px 13px}
  .actions{gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-top:1px solid #e9d8c9;padding-top:14px}
- .desktopBasket{display:none}
+ .desktopBasket{display:flex}
  .desktopLanguage{display:flex}
  .account{margin-left:auto}
  .account a{font-size:13px!important}
