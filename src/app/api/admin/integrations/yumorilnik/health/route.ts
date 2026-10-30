@@ -21,7 +21,7 @@ export async function GET(){
   explanation:"Private Yumorilnik verification is not configured"
  },503);
  try{
-  const response=await fetch("https://yumorilnik.com/api/internal/validate-paid-ticket",{
+  const response=await fetch("https://www.yumorilnik.com/api/internal/validate-paid-ticket",{
    method:"POST",
    headers:{"Content-Type":"application/json","Authorization":"Bearer "+secret},
    body:JSON.stringify({
