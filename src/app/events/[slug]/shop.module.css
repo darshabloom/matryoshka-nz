@@ -200,3 +200,41 @@
  .eventFacts span{font-size:10px;padding:5px 7px}
  .filters{gap:7px;padding:10px}
 }
+
+
+/* Mobile: two scannable dish cards per row, with details on tap. */
+@media(max-width:640px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;column-gap:10px;align-items:stretch}
+ .categoryHeading{gap:9px;font-size:clamp(22px,5.6vw,27px);margin:18px 0 2px}
+ .card{min-width:0;border-radius:12px;box-shadow:0 4px 12px #6e412210}
+ .card:hover{transform:none}
+ .image{aspect-ratio:1.2/1}
+ .cardBody{padding:10px 9px 11px;min-width:0}
+ .cardTitle{min-height:39px}
+ .cardTitle h3{font-size:clamp(13px,3.65vw,16px);line-height:1.18}
+ .cardDescription{display:none}
+ .cardBottom{font-size:14px;padding:7px 0 5px}
+ .chefBadge{max-width:calc(100% - 12px);top:6px;left:6px;gap:4px;
+  padding:3px 6px 3px 3px;box-shadow:0 2px 5px #34190a19}
+ .chefAvatar{width:23px;height:23px;border-width:1px;font-size:12px}
+ .chefName small{font-size:8px}
+ .chefName strong{font-size:9px;max-width:95px}
+ .quickAdd{gap:7px;margin-top:3px}
+ .quickOptions legend{font-size:10px}
+ .quickSelect{width:100%;min-width:0;min-height:39px;padding:7px 22px 7px 7px;border-radius:8px;font-size:11px}
+ .quickActions{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+ .quickQuantity{min-height:39px;grid-template-columns:1fr 30px 1fr}
+ .quickQuantity button{font-size:18px}
+ .quickQuantity strong{font-size:13px}
+ .quickButton{min-height:42px;width:100%;font-size:11px;padding:9px 6px;border-radius:8px}
+ .quickChoices{gap:4px}
+ .quickOption{font-size:10px;padding:6px 7px}
+ .quickHint,.quickSuccess{font-size:10px}
+}
+@media(max-width:375px){
+ .grid{column-gap:8px;row-gap:10px}
+ .cardBody{padding:8px 7px 10px}
+ .cardTitle h3{font-size:13px}
+ .quickButton{font-size:10px}
+ .chefName strong{max-width:82px}
+}
