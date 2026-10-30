@@ -56,3 +56,17 @@
  .page.drawerPage{padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px))}
  .drawerPage .summary{max-height:min(45dvh,290px)}
 }
+
+/* Clear cart item actions and meaningful product links. */
+.dishLink{color:inherit;text-decoration:none}
+.dishLink:hover,.dishLink:focus-visible{color:#a5362d;text-decoration:underline;text-underline-offset:3px}
+.photo{display:block}
+.photo:hover,.photo:focus-visible{outline:2px solid #b96250;outline-offset:2px}
+.lineTotal{display:block;color:#3b2b26;font-size:14px;font-weight:850;white-space:nowrap}
+.adjust{align-self:stretch;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:11px}
+.adjust .remove{margin:0;display:block;align-self:flex-end;font-size:11px}
+.adjust .lineTotal{margin-top:auto}
+.drawerPage .adjust{gap:9px;min-width:88px}
+.drawerPage .adjust .lineTotal{margin-top:auto;text-align:right;font-size:13px;color:#422b24}
+.drawerPage .summary .secureNotice{white-space:nowrap;font-size:10px;line-height:1.25;letter-spacing:-.015em;color:#897469}
+@media(max-width:390px){.drawerPage .summary .secureNotice{font-size:9px}}
