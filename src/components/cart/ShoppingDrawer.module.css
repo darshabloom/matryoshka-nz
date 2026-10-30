@@ -30,3 +30,8 @@
 @media(max-width:690px){.drawer{width:100vw}.header{min-height:70px;padding:12px 15px}.headerTitle h2{font-size:24px}
  .floatingCart{right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));min-height:58px;padding:11px 15px 11px 13px}}
 @media(prefers-reduced-motion:reduce){.floatingCart,.drawer,.backdrop{transition:none;animation:none}}
+
+
+/* Basket is a contained flex column: only dishes scroll, totals stay in view. */
+.basketContent{display:flex;flex-direction:column;overflow:hidden;scrollbar-gutter:auto}
+.basketContent>main{flex:1;min-height:0;min-width:0}
