@@ -6,6 +6,8 @@ import LanguageToggle from "@/components/LanguageToggle/LanguageToggle";
 import NavDashboardLink from "@/components/NavDashboardLink";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
 import {BasketProvider,BasketLink} from "@/components/cart/BasketProvider";
+import {CartDrawerProvider} from "@/components/cart/CartDrawerContext";
+import ShoppingDrawer from "@/components/cart/ShoppingDrawer";
 
 
 const geistSans = Geist({
@@ -30,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <LanguageProvider>
           <BasketProvider>
+          <CartDrawerProvider>
           <header style={{ background: "#fffaf4", borderBottom: "1px solid #e8dfd2", position: "sticky", top: 0, zIndex: 40 }}>
             <nav style={{ maxWidth: 1160, margin: "0 auto", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap" }}>
               <Link href="/" style={{ textDecoration: "none", color: "#9d2622", fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 27, whiteSpace: "nowrap" }}>
@@ -50,6 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
 
           {children}
+          <ShoppingDrawer />
+          </CartDrawerProvider>
         </BasketProvider>
         </LanguageProvider>
       </body>
