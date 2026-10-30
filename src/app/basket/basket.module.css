@@ -7,3 +7,26 @@
 .primary,.pay{background:linear-gradient(125deg,#b14e43,#942b26);transition:background .15s}
 .primary:hover,.pay:hover:not(:disabled){background:#7e251f}
 .summary,.panel,.lines,.empty{box-shadow:0 9px 29px #6541250d}
+
+/* Basket nested in the persistent one-third-screen cart drawer. */
+.page.drawerPage{padding:15px 15px 28px;min-height:0;background:transparent;overflow:visible}
+.drawerPage:before{display:none}
+.drawerPage .wrap{max-width:none}
+.drawerPage .eyebrow{display:none}
+.drawerPage h1{font-size:27px;margin:5px 0 17px}
+.drawerPage .event{font-size:12px;padding:12px;gap:7px;margin-bottom:16px}
+.drawerPage .columns{display:flex;flex-direction:column;gap:15px}
+.drawerPage .lines,.drawerPage .summary{width:100%;min-width:0}
+.drawerPage .lines{padding:2px 12px}
+.drawerPage .line{gap:9px;padding:14px 0}
+.drawerPage .photo{width:55px;height:63px}
+.drawerPage .lineMain h2{font-size:17px;margin:0 0 5px}
+.drawerPage .lineMain p{font-size:11px}
+.drawerPage .adjust{gap:10px;font-size:11px;min-width:78px}
+.drawerPage .qty{gap:1px}.drawerPage .qty button{padding:7px}
+.drawerPage .summary{position:static;gap:15px;padding:19px 16px}
+.drawerPage .summary h2{font-size:23px}
+.drawerPage .empty{padding:32px 15px}
+.drawerPage .empty h2{font-size:22px}
+.drawerPage .primary{width:100%;cursor:pointer;font:800 13px Arial,sans-serif}
+.drawerPage .bottomActions{padding:14px 0}
