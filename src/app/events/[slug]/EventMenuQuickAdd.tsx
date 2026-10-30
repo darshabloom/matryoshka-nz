@@ -15,7 +15,8 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
   .map(id=>group.values.find(v=>v.id===id)).filter((v):v is NonNullable<typeof v>=>!!v)),[dish.options,selected]);
  const ready=dish.options.every(group=>{
   const n=(selected[group.id]??[]).length;
-  return n>=Math.max(group.min_select,group.required?1:0)&&n<=group.max_select;
+  const size=/^(size|weight|размер|вес)$/i.test(group.label_en.trim())||/^(размер|вес)$/i.test((group.label_ru??"").trim());
+  return n>=Math.max(group.min_select,(group.required||size)?1:0)&&n<=group.max_select;
  });
  const limit=Math.max(0,Math.min(100,dish.max_quantity??100));
  // Guests can plan baskets while menus are being finalised. The server
