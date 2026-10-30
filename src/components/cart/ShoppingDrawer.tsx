@@ -7,6 +7,7 @@ import {dollars} from "@/lib/customer-types";
 import {useCartDrawer} from "./CartDrawerContext";
 import BasketPage from "@/app/basket/page";
 import Checkout from "@/app/checkout/page";
+import PaymentReturn from "@/app/checkout/success/page";
 import styles from "./ShoppingDrawer.module.css";
 
 /**
@@ -15,7 +16,7 @@ import styles from "./ShoppingDrawer.module.css";
  * Stripe Hosted Checkout still requires a secure external Stripe redirect.
  */
 export default function ShoppingDrawer(){
- const {open,step,openBasket,close,backToBasket}=useCartDrawer();
+ const {open,step,sessionId,openBasket,openPaymentResult,close,backToBasket}=useCartDrawer();
  const {count,subtotal}=useBasket();
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
  const pathname=usePathname();
@@ -25,6 +26,25 @@ export default function ShoppingDrawer(){
  const publicRoute=pathname==="/"||pathname==="/events"||pathname.startsWith("/events/")||
   pathname==="/basket"||pathname==="/checkout";
  useEffect(()=>{
+  // Stripe returns to the event menu with a result session, rather than
+  // dumping the customer on a separate payment-result page.
+  if(!pathname.startsWith("/events/"))return;
+  const params=new URLSearchParams(window.location.search);
+  const paid=params.get("cart_status")??"";
+  if(/^cs_(live|test)_[A-Za-z0-9_]{12,200}$/.test(paid))openPaymentResult(paid);
+  else if(params.get("cart_open")==="1")openBasket();
+ },[pathname,openPaymentResult,openBasket]);
+ function dismiss(){
+  // Closing a return panel also removes its one-time URL instruction, so
+  // reloading the menu does not unexpectedly reopen the drawer.
+  const url=new URL(window.location.href);
+  if(url.searchParams.has("cart_status")||url.searchParams.has("cart_open")){
+   url.searchParams.delete("cart_status");url.searchParams.delete("cart_open");
+   window.history.replaceState(window.history.state,"",url.pathname+url.search+url.hash);
+  }
+  close();
+ }
+ useEffect(()=>{
   if(!open)return;
   previousFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
   const oldOverflow=document.body.style.overflow;
@@ -32,7 +52,7 @@ export default function ShoppingDrawer(){
   // Let the dialog mount before focusing the close button.
   closeButton.current?.focus();
   const onKey=(e:KeyboardEvent)=>{
-   if(e.key==="Escape"){e.preventDefault();close();return;}
+   if(e.key==="Escape"){e.preventDefault();dismiss();return;}
    if(e.key!=="Tab"||!dialog.current)return;
    const all=Array.from(dialog.current.querySelectorAll<HTMLElement>(
     'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])'
@@ -63,7 +83,7 @@ export default function ShoppingDrawer(){
     <small>{count?dollars(subtotal):t("View basket","Открыть")}</small></span>
   </button>}
   {open&&<>
-   <div className={styles.backdrop} aria-hidden="true" onClick={close}/>
+   <div className={styles.backdrop} aria-hidden="true" onClick={dismiss}/>
    <section ref={dialog} className={styles.drawer} role="dialog" aria-modal="true"
     aria-labelledby="matryoshka-drawer-heading" tabIndex={-1}>
     <header className={styles.header}>
@@ -71,13 +91,13 @@ export default function ShoppingDrawer(){
         onClick={backToBasket} aria-label={t("Back to cart","Назад в корзину")}>←</button>:<span className={styles.ornament} aria-hidden="true">✿</span>}
      <div className={styles.headerTitle}>
       <span className={styles.eyebrow}>MATRYOSHKA · {t("YOUR ORDER","ВАШ ЗАКАЗ")}</span>
-      <h2 id="matryoshka-drawer-heading">{step==="basket"?t("My cart","Моя корзина"):t("Checkout","Оформление заказа")}</h2>
+      <h2 id="matryoshka-drawer-heading">{step==="basket"?t("My cart","Моя корзина"):step==="checkout"?t("Checkout","Оформление заказа"):t("Order status","Статус заказа")}</h2>
      </div>
      <button type="button" ref={closeButton} className={styles.close}
-      onClick={close} aria-label={t("Close shopping panel","Закрыть панель")}>✕</button>
+      onClick={dismiss} aria-label={t("Close shopping panel","Закрыть панель")}>✕</button>
     </header>
     <div className={styles.content} key={step}>
-     {step==="basket"?<BasketPage inDrawer/>:<Checkout inDrawer/>}
+     {step==="basket"?<BasketPage inDrawer/>:step==="checkout"?<Checkout inDrawer/>:<PaymentReturn inDrawer sessionId={sessionId}/>}
     </div>
    </section>
   </>}
