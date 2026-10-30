@@ -60,8 +60,11 @@ export async function POST(req:Request){
  // Stock reservations stay pending for 30 minutes. Avoid Stripe's default 24-hour
  // Checkout lifetime: the payment window must stay close to the stock hold.
  form.set("expires_at",String(Math.floor(Date.now()/1000)+30*60+5));
- form.set("success_url",`${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
- form.set("cancel_url",`${origin}/basket`);
+ // Hosted Stripe payment is external for PCI safety, but returns to the
+ // food menu with the order-result drawer open instead of a new page.
+ const returnToMenu=`${origin}/events/${encodeURIComponent(quote.event.slug)}`;
+ form.set("success_url",`${returnToMenu}?cart_status={CHECKOUT_SESSION_ID}`);
+ form.set("cancel_url",`${returnToMenu}?cart_open=1`);
  for(const [i,line] of lines.entries()){
   form.set(`line_items[${i}][price_data][currency]`,"nzd");
   form.set(`line_items[${i}][price_data][unit_amount]`,String(line.unit_price_cents));
