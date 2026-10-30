@@ -1,5 +1,6 @@
 "use client";
 import {createContext,useContext,useEffect,useMemo,useState} from "react";
+import {useCartDrawer} from "./CartDrawerContext";
 export type BasketSelection={id:string;dishId:string;eventId:string;eventSlug:string;eventName:string;name:string;chef:string;photo:string|null;unitPriceCents:number;optionIds:string[];optionSummary:string;quantity:number};
 type BasketApi={items:BasketSelection[];ready:boolean;count:number;subtotal:number;add:(item:Omit<BasketSelection,"id">)=>boolean;setQuantity:(id:string,quantity:number)=>void;remove:(id:string)=>void;clear:()=>void};
 const BasketContext=createContext<BasketApi|null>(null);const KEY="matryoshka-event-basket-v2"; // Reset stale pre-markup basket prices when customer pricing changed.
@@ -21,4 +22,4 @@ export function BasketProvider({children}:{children:React.ReactNode}){
  return <BasketContext.Provider value={val}>{children}</BasketContext.Provider>;
 }
 export function useBasket(){const c=useContext(BasketContext);if(!c)throw Error("Missing BasketProvider");return c}
-export function BasketLink(){const {count}=useBasket();return <a href="/basket" aria-label={`Basket with ${count} items`} style={{display:"inline-flex",gap:7,alignItems:"center",background:"#fff0e8",border:"1px solid #e7c3b3",padding:"10px 13px",borderRadius:9,color:"#a12c27",fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>🛒 {count>0?`Basket (${count})`:"Basket"}</a>}
+export function BasketLink(){const {count}=useBasket(),{openBasket}=useCartDrawer();return <button type="button" onClick={openBasket} aria-haspopup="dialog" aria-label={`Open basket with ${count} items`} style={{display:"inline-flex",gap:7,alignItems:"center",background:"#fff0e8",border:"1px solid #e7c3b3",padding:"10px 13px",borderRadius:9,color:"#a12c27",fontWeight:800,textDecoration:"none",whiteSpace:"nowrap",font:"inherit",fontSize:13,cursor:"pointer"}}>🛒 {count>0?`Basket (${count})`:"Basket"}</button>}
