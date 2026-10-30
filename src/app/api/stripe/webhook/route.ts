@@ -1,4 +1,5 @@
-import {NextResponse} from "next/server";
+import {after,NextResponse} from "next/server";
+import {dispatchPaidFoodEmails} from "@/lib/server/food-order-emails";
 import {createHmac,timingSafeEqual} from "node:crypto";
 import {serviceClient} from "@/lib/server/checkout-security";
 export const runtime="nodejs";
@@ -25,6 +26,12 @@ export async function POST(req:Request){
    const {data:order}=await db.from("food_orders").select("id,subtotal_cents,payment_status").eq("stripe_session_id",session.id).maybeSingle();
    if(!order)return NextResponse.json({received:true,ignored:true});
    if(session.currency!=="nzd"||session.amount_total!==order.subtotal_cents||session.metadata?.order_id!==order.id)return NextResponse.json({error:"Payment data mismatch"},{status:409});
+   // Existing paid orders may still have unsent notifications.
+   // The database outbox is unique per recipient, and dispatch is claimed
+   // idempotently even if Stripe retries this event.
+   after(async()=>{try{await dispatchPaidFoodEmails(order.id)}catch(e){
+    console.error("Food order email dispatch failed",e instanceof Error?e.message:"unknown");
+   }});
    if(order.payment_status!=="paid"){
     const {error}=await db.from("food_orders").update({status:"confirmed",payment_status:"paid",paid_at:new Date().toISOString(),stripe_payment_intent_id:typeof session.payment_intent==="string"?session.payment_intent:null,updated_at:new Date().toISOString()}).eq("id",order.id).eq("payment_status","pending");
     if(error)throw error;
