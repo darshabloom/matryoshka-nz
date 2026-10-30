@@ -6,7 +6,7 @@ export async function GET(req:Request){
  if(!/^cs_(test_|live_)[a-zA-Z0-9_]{10,250}$/.test(sessionId))return NextResponse.json({error:"Invalid session"},{status:400});
  if(!process.env.SUPABASE_SERVICE_ROLE_KEY)return NextResponse.json({error:"Service unavailable"},{status:503});
  const db=serviceClient();
- const {data,error}=await db.from("food_orders").select("id,payment_status,status,created_at,paid_at,master_order_reference,subtotal_cents").eq("stripe_session_id",sessionId).maybeSingle();
+ const {data,error}=await db.from("food_orders").select("id,payment_status,status,created_at,paid_at,master_order_reference,subtotal_cents,events(title_en,location_text,starts_at)").eq("stripe_session_id",sessionId).maybeSingle();
  if(error||!data)return NextResponse.json({error:"Order not found"},{status:404});
  // The Stripe session ID is an unguessable receipt token provided only
  // to the customer by the successful checkout redirect. Never expose
@@ -27,6 +27,7 @@ export async function GET(req:Request){
   }
  }
  return NextResponse.json({id:data.id,paymentStatus:data.payment_status,status:data.status,paidAt:data.paid_at,
+  event:data.payment_status==="paid"?data.events:null,
   masterReference:data.payment_status==="paid"?data.master_order_reference:null,
   totalCents:data.payment_status==="paid"?data.subtotal_cents:null,
   chefOrders:chefs},{headers:{"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
