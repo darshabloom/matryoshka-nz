@@ -8,7 +8,7 @@ import styles from "./checkout.module.css";
 type Quote={event:{id:string;slug:string;title:string;ticketRequired:boolean;fulfilmentMode:string};lines:{dishId:string;name:string;chef:string;quantity:number;unitPriceCents:number;totalCents:number;optionSummary:string[]}[];subtotalCents:number};
 export default function Checkout(){
  const {items,ready,clear}=useBasket(),{lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
- const [email,setEmail]=useState(""),[ticket,setTicket]=useState(""),[allergy,setAllergy]=useState<"none"|"declared"|null>(null),[allergyDetails,setAllergyDetails]=useState("");
+ const [email,setEmail]=useState(""),[phone,setPhone]=useState(""),[ticket,setTicket]=useState(""),[allergy,setAllergy]=useState<"none"|"declared"|null>(null),[allergyDetails,setAllergyDetails]=useState("");
  const [specialRequests,setSpecialRequests]=useState("");
  const [quote,setQuote]=useState<Quote|null>(null),[quoting,setQuoting]=useState(false),[problem,setProblem]=useState(""),[paying,setPaying]=useState(false),[status,setStatus]=useState<{enabled:boolean;reason:string|null}|null>(null);
  const eventId=items[0]?.eventId;const basketSignature=useMemo(()=>JSON.stringify(items.map(x=>[x.dishId,x.quantity,x.optionIds])),[items]);
@@ -24,11 +24,11 @@ export default function Checkout(){
   fetch("/api/checkout/quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId,items:items.map(x=>({dishId:x.dishId,quantity:x.quantity,optionIds:x.optionIds}))}),signal:ac.signal}).then(async r=>{const x=await r.json();if(!r.ok)throw Error(x.error||"Unable to check prices");return x}).then(x=>setQuote(x)).catch(e=>{if(!ac.signal.aborted){setQuote(null);setProblem(e.message)}}).finally(()=>{if(!ac.signal.aborted)setQuoting(false)});return ()=>ac.abort();
  },[eventId,basketSignature,ready]);
  const allergyValid=allergy==="none"||(allergy==="declared"&&allergyDetails.trim().length>0);
- const canPay=ready&&!!quote&&!!status?.enabled&&!!email.trim()&&allergyValid&&ticket.trim().length>2&&!paying;
+ const canPay=ready&&!!quote&&!!status?.enabled&&!!email.trim()&&phone.trim().length>=6&&allergyValid&&ticket.trim().length>2&&!paying;
  async function checkout(){
   if(!canPay||!quote)return;
   setPaying(true);setProblem("");
-  try{const r=await fetch("/api/checkout/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:quote.event.id,items:items.map(x=>({dishId:x.dishId,quantity:x.quantity,optionIds:x.optionIds})),email,ticketReference:ticket,allergyDeclaration:allergy,allergyDetails:allergy==="declared"?allergyDetails.trim():"",specialRequests:specialRequests.trim(),idempotencyKey:crypto.randomUUID()})});const body=await r.json();if(!r.ok)throw Error(body.error||"Could not start secure payment");if(!body.url?.startsWith("https://checkout.stripe.com/"))throw Error("Payment connection unavailable");window.location.assign(body.url);
+  try{const r=await fetch("/api/checkout/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:quote.event.id,items:items.map(x=>({dishId:x.dishId,quantity:x.quantity,optionIds:x.optionIds})),email,phone,ticketReference:ticket,allergyDeclaration:allergy,allergyDetails:allergy==="declared"?allergyDetails.trim():"",specialRequests:specialRequests.trim(),idempotencyKey:crypto.randomUUID()})});const body=await r.json();if(!r.ok)throw Error(body.error||"Could not start secure payment");if(!body.url?.startsWith("https://checkout.stripe.com/"))throw Error("Payment connection unavailable");window.location.assign(body.url);
   }catch(e){setProblem(e instanceof Error?e.message:"Payment unavailable");setPaying(false)}
  }
  return <main className={styles.page}><div className={styles.wrap}><Link href="/basket" className={styles.back}>← {t("Back to basket","Назад в корзину")}</Link><span className={styles.eyebrow}>MATRYOSHKA · CHECKOUT</span><h1>{t("Complete your order","Оформление заказа")}</h1>
@@ -37,6 +37,7 @@ export default function Checkout(){
  <section className={styles.panel}><h2>2. {t("Your contact and event booking","Ваши контакты и бронь")}</h2>
   <p>{t("If someone booked several adult tickets, each adult can order food separately using the same booking reference and their own email from the guest list. No additional verification step is needed.","Если кто-то купил билеты для нескольких взрослых, каждый может заказать еду отдельно по общему номеру брони, используя свой email из списка гостей. Дополнительная проверка заранее не требуется.")}</p>
   <label>{t("Your email (must match an adult listed on the Yumorilnik booking)","Ваш email (должен совпадать с email одного из взрослых в брони Юморильника)")}<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="email"/></label>
+  <label>{t("Your contact phone number","Ваш контактный телефон")}<input type="tel" required maxLength={32} value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+64…" autoComplete="tel"/></label>
   <label>{t("Yumorilnik booking reference","Номер бронирования Юморильника")}<input value={ticket} maxLength={100} onChange={e=>setTicket(e.target.value.toUpperCase())} placeholder="YMR-…" autoComplete="off"/></label>
   <small>{t("We'll check that the booking is paid, valid and includes your email before any food payment. The booking number alone is not enough.","Перед оплатой еды мы проверим, что бронь оплачена и действительна, а ваш email есть в списке взрослых. Одного номера брони недостаточно.")}</small>
  </section>
