@@ -42,7 +42,7 @@ export default function EventFoodPage(){
   if(!e?.id||ticketCheck==="checking")return;
   const reference=linkedTicketRef.trim().toUpperCase();
   const email=bookingEmail.trim().toLowerCase();
-  if(!/^YMR-[A-Z0-9-]{5,80}$/.test(reference)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+  if(!/^YMR-[A-Z0-9-]{5,80}$/.test(reference)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
    setTicketCheck("invalid");return;
   }
   setTicketCheck("checking");
