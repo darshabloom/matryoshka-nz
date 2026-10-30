@@ -1,1 +1,59 @@
-.page{background:#faf6ef;min-height:86vh;padding:40px 18px 90px;color:#382a24}.wrap{max-width:1130px;margin:0 auto}.back{text-decoration:none;color:#a52e28;font-size:13px;font-weight:800}.product{display:grid;grid-template-columns:1.05fr 1fr;gap:45px;margin-top:34px}.photo{aspect-ratio:4/5;background:#f0e1d1;border-radius:14px;overflow:hidden;display:grid;place-items:center}.photo img{width:100%;height:100%;object-fit:cover}.photo span{font:700 110px Georgia,serif;color:#c68074}.thumbs{display:flex;gap:12px;margin-top:15px}.thumbs button{height:86px;width:91px;border:2px solid transparent;border-radius:10px;padding:0;overflow:hidden;background:#f0ddd0;cursor:pointer}.thumbs button[aria-pressed=true]{border-color:#9d3029}.thumbs img{width:100%;height:100%;object-fit:cover}.chef{display:flex;align-items:center;gap:10px;font-size:13px;margin:4px 0 24px}.avatar{display:grid;place-items:center;border-radius:50%;height:43px;width:43px;background:#edd6c8;color:#9e342a;font:700 22px Georgia,serif}.eyebrow{font-size:10px;letter-spacing:.19em;font-weight:800;color:#a12d27}.detail h1{font:700 clamp(37px,5vw,54px)/1.15 Georgia,serif;margin:13px 0;color:#412924}.description{line-height:1.75;color:#74665a;font-size:15px}.price{font:700 28px Georgia,serif;color:#a32d27;margin:18px 0}.portion{font-size:13px;color:#756355}.options{border:0;padding:0;margin-top:26px;min-width:0}.options legend{font-weight:800;color:#44352e;font-size:14px;margin-bottom:10px}.options legend span{color:#a43127;font-size:11px}.optionGrid{display:grid;gap:10px}.option,.chosen{display:flex;align-items:center;gap:12px;background:white;border:1px solid #e4d5c5;border-radius:10px;padding:14px;cursor:pointer}.chosen{border:2px solid #b15d4c;background:#fff5ee}.option input,.chosen input{accent-color:#a52e28;width:18px;height:18px}.option strong,.chosen strong{font-size:13px;flex:1}.option small,.chosen small{font-size:12px;color:#a52e28;font-weight:700}.small{font-size:11px;color:#847164}.purchase{display:flex;align-items:stretch;gap:13px;margin-top:26px}.counter{display:flex;border:1px solid #d6c4b7;border-radius:9px;background:white;align-items:center}.counter button{padding:13px 15px;background:transparent;border:0;cursor:pointer;font-size:21px;color:#a52d28}.counter strong{min-width:25px;text-align:center}.addButton{flex:1;border:0;border-radius:9px;background:#a42e29;color:white;font-weight:800;padding:16px;cursor:pointer}.addButton:disabled{opacity:.6;cursor:not-allowed}.hint{font-size:12px;color:#8c7769;margin-top:13px}.foodSafety{margin-top:50px;padding:28px;background:#fff;border:1px solid #e9d8c9;border-radius:14px}.foodSafety h2{font:700 30px Georgia,serif}.safetyColumns{display:grid;grid-template-columns:1fr 1fr;gap:30px}.foodSafety h3{color:#9b302b;font-size:15px}.foodSafety p{font-size:14px;color:#675a50;line-height:1.6;white-space:pre-wrap}.safetyNote{padding:16px 18px;background:#fff5ec;border-left:3px solid #b15f47}.error{padding:13px;border-radius:9px;background:#ffebe7;color:#b22920}@media(max-width:800px){.product{grid-template-columns:1fr;gap:25px}.page{padding:25px 15px 60px}.photo{aspect-ratio:5/4}.safetyColumns{grid-template-columns:1fr}}
+
+.page{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(155deg,#fffaf3,#f8f1e8);
+ min-height:88vh;padding:40px 20px 100px;color:#443129}
+.page:before{content:"";position:absolute;top:0;right:0;width:min(50vw,650px);height:560px;
+ background:url("/images/matryoshka-folk-floral.svg") no-repeat top right/contain;opacity:.25;z-index:0;pointer-events:none}
+.wrap{max-width:1180px;margin:0 auto;position:relative;z-index:1}
+.back{display:inline-block;color:#932e29;text-decoration:none;font-size:13px;font-weight:800}
+.back:hover{text-decoration:underline}
+.product{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:46px;margin-top:28px;align-items:start}
+.photo{aspect-ratio:4/4.5;max-height:620px;border-radius:18px;background:linear-gradient(145deg,#edd9c9,#f8e9de);
+ border:1px solid #e6d3c4;overflow:hidden;display:grid;place-items:center;box-shadow:0 12px 40px #6f46221a}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo span{font:700 116px Georgia,serif;color:#be8272}
+.thumbs{display:flex;gap:10px;margin-top:14px}
+.thumbs button{height:83px;width:88px;overflow:hidden;padding:0;border:2px solid transparent;
+ border-radius:11px;background:#eadccc;cursor:pointer}
+.thumbs button[aria-pressed=true]{border-color:#a64136}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.detail{background:#fffaf5e8;border:1px solid #edddce;border-radius:17px;padding:28px 30px 31px;box-shadow:0 8px 30px #6a442113}
+.chef{display:flex;align-items:center;gap:10px;font-size:13px;margin:0 0 24px}
+.avatar{display:grid;place-items:center;flex:none;border-radius:50%;height:42px;width:42px;overflow:hidden;border:2px solid #fff;
+ background:#ae6650;color:#fff;font:700 22px Georgia,serif;box-shadow:0 2px 8px #0001}
+.eyebrow{font-size:10px;letter-spacing:.2em;font-weight:850;color:#a02f29}
+.detail h1{font:700 clamp(34px,4.6vw,52px)/1.12 Georgia,serif;color:#472b25;margin:10px 0 14px}
+.description{line-height:1.7;color:#766054;font-size:14px;margin:0}
+.price{font:700 28px Georgia,serif;color:#a3342c;margin:18px 0}
+.portion{font-size:13px;color:#7c6454}
+.options{margin-top:23px;min-width:0;border:0;padding:0}
+.options legend{font-size:14px;font-weight:800;color:#4e3931;margin-bottom:10px}
+.options legend span{font-size:11px;color:#a53229}
+.sizeDropdown{display:block;width:100%;min-height:53px;padding:13px 17px;border:1px solid #dfc8b8;
+ border-radius:12px;background:#fff;color:#47362c;font-size:15px;font-weight:650;cursor:pointer}
+.sizeDropdown:focus-visible,.counter button:focus-visible,.addButton:focus-visible{outline:2px solid #aa453d;outline-offset:3px}
+.optionGrid{display:grid;gap:9px}
+.option,.chosen{display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:10px;
+ border:1px solid #e4d5c6;background:#fff;cursor:pointer}
+.chosen{border:2px solid #ba6553;background:#fff5ee}
+.option input,.chosen input{accent-color:#a52f27;width:18px;height:18px}
+.option strong,.chosen strong{flex:1;font-size:13px}
+.option small,.chosen small{font-size:12px;color:#9d312b;font-weight:750}
+.small{display:block;margin-top:7px;font-size:11px;color:#806a60}
+.purchase{display:flex;align-items:stretch;gap:12px;margin-top:27px}
+.counter{display:flex;align-items:center;border:1px solid #d9c5b5;border-radius:10px;background:#fff}
+.counter button{border:0;background:transparent;color:#a32e28;cursor:pointer;font-size:20px;min-width:43px}
+.counter strong{text-align:center;min-width:24px;font-size:15px}
+.addButton{min-height:52px;flex:1;border:0;border-radius:10px;background:linear-gradient(130deg,#b95148,#992d28);
+ color:#fff;font-weight:850;cursor:pointer;padding:13px}
+.addButton:hover:not(:disabled){background:#852620}
+.addButton:disabled{background:#c2b4ab;color:#564c45;cursor:not-allowed}
+.hint{font-size:12px;color:#8d7568;margin:12px 0 0}
+.foodSafety{margin-top:45px;padding:26px 30px;border:1px solid #e5cfbd;background:#fffaf4d9;border-radius:16px}
+.foodSafety h2{font:700 30px Georgia,serif;color:#78342e;margin-bottom:19px}
+.safetyColumns{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+.foodSafety h3{font-size:14px;color:#a3322d;margin-bottom:8px}
+.foodSafety p{font-size:14px;color:#675448;line-height:1.7;white-space:pre-wrap}
+.safetyNote{background:#fff2e6;border-left:3px solid #b86752;padding:15px 19px;margin-top:20px}
+.error{padding:13px;border-radius:9px;background:#ffebe7;color:#b22920}
+@media(max-width:850px){.product{grid-template-columns:1fr;gap:22px}.photo{aspect-ratio:5/4;max-height:480px}}
+@media(max-width:600px){.page{padding:24px 13px 68px}.detail{padding:22px 17px}.detail h1{font-size:34px}.foodSafety{padding:20px 15px}.foodSafety h2{font-size:25px}.safetyColumns{grid-template-columns:1fr;gap:16px}.purchase{gap:8px}}
