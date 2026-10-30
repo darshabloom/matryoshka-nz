@@ -12,6 +12,13 @@ export default function Checkout(){
  const [specialRequests,setSpecialRequests]=useState("");
  const [quote,setQuote]=useState<Quote|null>(null),[quoting,setQuoting]=useState(false),[problem,setProblem]=useState(""),[paying,setPaying]=useState(false),[status,setStatus]=useState<{enabled:boolean;reason:string|null}|null>(null);
  const eventId=items[0]?.eventId;const basketSignature=useMemo(()=>JSON.stringify(items.map(x=>[x.dishId,x.quantity,x.optionIds])),[items]);
+ useEffect(()=>{
+  if(!eventId)return;
+  try{
+   const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+eventId);
+   if(saved&&/^YMR-[A-Z0-9-]{5,80}$/.test(saved))setTicket(current=>current||saved);
+  }catch{}
+ },[eventId]);
  useEffect(()=>{fetch("/api/checkout/status",{cache:"no-store"}).then(r=>r.json()).then(setStatus).catch(()=>setStatus({enabled:false,reason:"Secure checkout is unavailable"}))},[]);
  useEffect(()=>{if(!ready||!eventId){setQuote(null);return};const ac=new AbortController();setQuoting(true);setProblem("");
   fetch("/api/checkout/quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId,items:items.map(x=>({dishId:x.dishId,quantity:x.quantity,optionIds:x.optionIds}))}),signal:ac.signal}).then(async r=>{const x=await r.json();if(!r.ok)throw Error(x.error||"Unable to check prices");return x}).then(x=>setQuote(x)).catch(e=>{if(!ac.signal.aborted){setQuote(null);setProblem(e.message)}}).finally(()=>{if(!ac.signal.aborted)setQuoting(false)});return ()=>ac.abort();
