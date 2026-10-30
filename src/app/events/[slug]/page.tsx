@@ -11,7 +11,7 @@ import EventMenuQuickAdd from "./EventMenuQuickAdd";
 import {customerPriceCents} from "@/lib/customer-pricing";
 export default function EventFoodPage(){
  const {lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
- const {slug}=useParams<{slug:string}>(),{count,items,subtotal}=useBasket();
+ const {slug}=useParams<{slug:string}>(),{count,items}=useBasket();
  const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
  const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
  const [linkedTicketRef,setLinkedTicketRef]=useState("");
@@ -39,11 +39,6 @@ export default function EventFoodPage(){
  },[e?.id,e?.slug]);
  const inEvent=items[0]?.eventId===e?.id;
  return <main className={styles.page}>
- {e&&<Link href="/basket" className={styles.floatingCart} aria-label={t("View cart, ","Открыть корзину, ")+count+t(" items"," товаров")}>
-  <span className={styles.cartIcon} aria-hidden="true">🛒{count>0&&<span className={styles.cartBadge}>{count}</span>}</span>
-  <span className={styles.cartText}><strong>{t("View cart","Корзина")}</strong><small>{count>0?dollars(subtotal):t("Your basket","Ваш заказ")}</small></span>
-  <span className={styles.cartArrow} aria-hidden="true">›</span>
- </Link>}
  <div className={styles.wrap}>
  <Link className={styles.back} href="/events">← {t("All events","Все события")}</Link>
  {busy&&<p role="status">{t("Loading event food…","Загружаем меню…")}</p>}{error&&<p role="alert" className={styles.alert}>{error}</p>}
