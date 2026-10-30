@@ -31,7 +31,7 @@ export async function checkTicket(db:ReturnType<typeof serviceClient>,eventId:st
  if(eventId==="3b7d5371-926e-408b-a4b7-af69f27b42cf"){
   const shared=process.env.CROSS_SITE_TICKET_VERIFY_SECRET;
   if(!shared||shared.length<32)throw Error("Private Yumorilnik verification is not configured");
-  const response=await fetch("https://yumorilnik.com/api/internal/validate-paid-ticket",{
+  const response=await fetch("https://www.yumorilnik.com/api/internal/validate-paid-ticket",{
    method:"POST",
    headers:{"Content-Type":"application/json","Authorization":"Bearer "+shared},
    body:JSON.stringify({eventId:"3f6fa4d1-aaca-4326-9c01-5774cffca2f5",
