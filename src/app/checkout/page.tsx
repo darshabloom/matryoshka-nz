@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
+import {useCartDrawer} from "@/components/cart/CartDrawerContext";
 import {useEffect,useMemo,useState} from "react";
 import {useBasket} from "@/components/cart/BasketProvider";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {dollars} from "@/lib/customer-types";
 import styles from "./checkout.module.css";
 type Quote={event:{id:string;slug:string;title:string;ticketRequired:boolean;fulfilmentMode:string};lines:{dishId:string;name:string;chef:string;quantity:number;unitPriceCents:number;totalCents:number;optionSummary:string[]}[];subtotalCents:number};
-export default function Checkout(){
+export default function Checkout({inDrawer=false}:{inDrawer?:boolean}={}){
+ const {backToBasket,close}=useCartDrawer();
  const {items,ready,clear}=useBasket(),{lang}=useLanguage(),ru=lang==="ru",t=(a:string,b:string)=>ru?b:a;
  const [email,setEmail]=useState(""),[phone,setPhone]=useState(""),[ticket,setTicket]=useState(""),[allergy,setAllergy]=useState<"none"|"declared"|null>(null),[allergyDetails,setAllergyDetails]=useState("");
  const [specialRequests,setSpecialRequests]=useState("");
@@ -31,8 +33,8 @@ export default function Checkout(){
   try{const r=await fetch("/api/checkout/start",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId:quote.event.id,items:items.map(x=>({dishId:x.dishId,quantity:x.quantity,optionIds:x.optionIds})),email,phone,ticketReference:ticket,allergyDeclaration:allergy,allergyDetails:allergy==="declared"?allergyDetails.trim():"",specialRequests:specialRequests.trim(),idempotencyKey:crypto.randomUUID()})});const body=await r.json();if(!r.ok)throw Error(body.error||"Could not start secure payment");if(!body.url?.startsWith("https://checkout.stripe.com/"))throw Error("Payment connection unavailable");window.location.assign(body.url);
   }catch(e){setProblem(e instanceof Error?e.message:"Payment unavailable");setPaying(false)}
  }
- return <main className={styles.page}><div className={styles.wrap}><Link href="/basket" className={styles.back}>← {t("Back to basket","Назад в корзину")}</Link><span className={styles.eyebrow}>MATRYOSHKA · CHECKOUT</span><h1>{t("Complete your order","Оформление заказа")}</h1>
- {!items.length&&ready?<section className={styles.panel}><h2>{t("Your basket is empty","Корзина пуста")}</h2><Link href="/events">{t("Explore events","Посмотреть события")} →</Link></section>:<div className={styles.columns}>
+ return <main className={`${styles.page} ${inDrawer?styles.drawerPage:""}`}><div className={styles.wrap}>{inDrawer?<button type="button" onClick={backToBasket} className={styles.back}>← {t("Back to basket","Назад в корзину")}</button>:<Link href="/basket" className={styles.back}>← {t("Back to basket","Назад в корзину")}</Link>}<span className={styles.eyebrow}>MATRYOSHKA · CHECKOUT</span><h1>{t("Complete your order","Оформление заказа")}</h1>
+ {!items.length&&ready?<section className={styles.panel}><h2>{t("Your basket is empty","Корзина пуста")}</h2><Link href="/events" onClick={inDrawer?close:undefined}>{t("Explore events","Посмотреть события")} →</Link></section>:<div className={styles.columns}>
  <div className={styles.forms}><section className={styles.panel}><h2>1. {t("Your event","Ваше событие")}</h2><div className={styles.event}><strong>{items[0]?.eventName}</strong><p>🍽 {t("Food is provided at the event. No collection or delivery address is needed.","Еда будет на мероприятии. Адрес самовывоза или доставки не нужен.")}</p></div></section>
  <section className={styles.panel}><h2>2. {t("Your contact and event booking","Ваши контакты и бронь")}</h2>
   <p>{t("If someone booked several adult tickets, each adult can order food separately using the same booking reference and their own email from the guest list. No additional verification step is needed.","Если кто-то купил билеты для нескольких взрослых, каждый может заказать еду отдельно по общему номеру брони, используя свой email из списка гостей. Дополнительная проверка заранее не требуется.")}</p>
