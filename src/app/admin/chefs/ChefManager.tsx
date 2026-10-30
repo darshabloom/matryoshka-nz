@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {useState} from "react";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 type Chef={id:string;slug:string;display_name:string;vendor_translations:{lang:string;description:string|null}[];vendor_users:{user_id:string;role:string}[]};
@@ -35,7 +36,7 @@ export default function ChefManager({initial,initialError}:{initial:Chef[];initi
   <section><h2 style={{font:"bold 29px Georgia,serif",margin:"0 0 20px"}}>{t("Your chefs","Ваши повара")} <span style={{font:"16px Arial,sans-serif",color:"#a12c27"}}>({rows.length})</span></h2>
    {rows.length===0?<div style={{padding:45,textAlign:"center",background:"white",border:"1px solid #e6d9cc",borderRadius:14,color:"#766f68"}}>{t("No chef profiles yet. Create the first one above.","Пока нет поваров. Добавьте первого выше.")}</div>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:17}}>{rows.map(c=><article key={c.id} style={{padding:24,background:"white",border:"1px solid #e6d9cc",borderRadius:14}}>
      <div style={{width:56,height:56,borderRadius:"50%",background:"#f1e0ce",color:"#9d302a",display:"grid",placeItems:"center",fontSize:29}}>✿</div>
-     <h3 style={{font:"bold 25px Georgia,serif",margin:"13px 0 5px"}}>{c.display_name}</h3><p style={{color:"#81776c",fontSize:13}}>/{c.slug}</p>
+     <h3 style={{font:"bold 25px Georgia,serif",margin:"13px 0 5px"}}><Link href={`/admin/chefs/${c.id}`} style={{color:"#a32d27",textDecoration:"underline"}}>{c.display_name}</Link></h3><p style={{color:"#81776c",fontSize:13}}>/{c.slug}</p><Link href={`/admin/chefs/${c.id}`} style={{display:"inline-block",margin:"10px 0",color:"#a32d27",fontWeight:700}}>{t("Manage profile & dishes →","Профиль и блюда →")}</Link>
      <p style={{fontSize:13,margin:"14px 0",color:c.vendor_users.length?"#32724a":"#a37230"}}>{c.vendor_users.length?t("Account linked","Аккаунт привязан"):t("Awaiting chef login","Ожидает входа повара")}</p>
      <label style={{fontSize:12}}>{t("Chef's Supabase user ID (after sign-in)","ID пользователя Supabase (после входа)")}<input style={{...field,marginTop:7,fontSize:12}} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={linkIds[c.id]??""} onChange={e=>setLinkIds(old=>({...old,[c.id]:e.target.value}))}/></label>
      <button disabled={busy||!linkIds[c.id]} style={{...btn,marginTop:12}} onClick={()=>void request("PATCH",{action:"link",vendor_id:c.id,user_id:linkIds[c.id]})}>{t("Grant chef access","Выдать доступ повару")}</button>

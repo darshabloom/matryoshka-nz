@@ -1,1 +1,240 @@
-.page{background:#faf6ef;min-height:87vh;padding:38px 18px 100px;color:#3e3029}.wrap{max-width:1130px;margin:auto}.back{text-decoration:none;color:#a32e28;font-weight:750;font-size:13px}.heading{padding:33px 0 40px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;color:#a5302b}.heading h1{font:700 clamp(40px,6vw,63px) Georgia,serif;color:#972d27;margin:16px 0}.heading>p{color:#76675d;font-size:16px;max-width:680px;line-height:1.6}.eventFacts{display:flex;flex-wrap:wrap;gap:11px;margin:24px 0}.eventFacts span{background:white;border:1px solid #e6d8c9;padding:10px 13px;border-radius:9px;color:#56433a;font-size:13px}.notice{padding:19px 23px;border-radius:11px;background:#f1e3d5;border-left:4px solid #a62f28;max-width:800px}.notice strong{font-size:14px;color:#773b30}.notice p{margin:7px 0 0;color:#67564a;font-size:13px;line-height:1.6}.shop{padding-top:24px}.sectionHead{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap}.sectionHead h2{font:700 clamp(30px,4vw,42px) Georgia,serif;margin:12px 0;color:#452f2a}.sectionHead p{color:#78695f}.basketButton{text-decoration:none;background:#a32c26;color:white;border-radius:8px;padding:14px 19px;font-weight:800;font-size:13px}.filters{display:flex;flex-wrap:wrap;gap:12px;background:#fff;border-radius:13px;border:1px solid #e6d8ca;padding:17px;margin:25px 0}.filters label{display:grid;gap:7px;min-width:170px;flex:1;font-size:12px;color:#65534a;font-weight:750}.filters input,.filters select{border-radius:8px;border:1px solid #decdbe;padding:12px;background:white;color:#382f28;width:100%}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:21px}.card{color:inherit;text-decoration:none;overflow:hidden;border:1px solid #e6d6c8;border-radius:14px;background:white;box-shadow:0 5px 20px #3921080a;display:flex;flex-direction:column;transition:transform .15s,border-color .15s}.card:hover{border-color:#bc7b69;transform:translateY(-3px)}.image{height:208px;background:linear-gradient(135deg,#ecd9c7,#f5e7de);display:grid;place-items:center;overflow:hidden}.image img{width:100%;height:100%;object-fit:cover}.image span{font:700 72px Georgia,serif;color:#c47d70}.cardBody{padding:18px 19px 22px;display:flex;flex-direction:column;flex:1}.chef{font-size:11px;color:#aa4d3d;font-weight:800}.cardBody h3{font:700 23px Georgia,serif;margin:10px 0}.cardBody>p{font-size:13px;color:#78695e;line-height:1.5;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.cardBottom{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:15px;color:#a22d27;font-size:13px;font-weight:750}.empty{border:1px dashed #cfb4a3;padding:38px;background:white;border-radius:13px;color:#7d6c62}.alert{color:#a42d28;padding:18px;background:#ffefeb;border-radius:10px}@media(max-width:650px){.page{padding:25px 15px 60px}.filters label{min-width:100%}.image{height:190px}}
+
+/* Matryoshka event food catalogue — coherent Russian-inspired shopping UI */
+.page{--wine:#972d28;--wine-dark:#75211e;--ink:#402c27;--border:#e7d5c6;
+ position:relative;isolation:isolate;min-height:90vh;overflow:hidden;
+ padding:27px 22px 116px;color:var(--ink);
+ background:radial-gradient(ellipse at 80% 8%,#fffdfa 0%,transparent 52%),linear-gradient(175deg,#fcf8f1,#f9f2e8 75%,#fff8ed)}
+.page:before{content:"";position:absolute;top:0;right:0;width:min(49vw,650px);height:570px;
+ background:url("/images/matryoshka-folk-floral.svg") no-repeat top right/contain;opacity:.31;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1420px;margin:auto}
+.back{display:inline-block;text-decoration:none;color:var(--wine);font-weight:750;font-size:13px;margin-bottom:15px}
+.back:hover,.back:focus-visible{text-decoration:underline}
+.heading{padding:10px 0 28px}
+.eventIntro{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,1fr);align-items:start;gap:32px}
+.eyebrow,.menuLabel{font-size:11px;font-weight:850;letter-spacing:.17em;color:var(--wine)}
+.eventIntroText h1{font:700 clamp(29px,3.4vw,48px)/1.12 Georgia,serif;color:#8e2b25;margin:12px 0}
+.eventIntroText>p{font-size:14px;max-width:620px;line-height:1.7;color:#755e52}
+.eventFacts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.eventFacts span{background:#fffaf4cc;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:12px;color:#5e483e}
+.eventIntroMedia{display:grid;gap:9px}
+.cover{width:100%;aspect-ratio:16/7;max-height:250px;overflow:hidden;border-radius:15px;background:#ead9cc;border:1px solid var(--border)}
+.cover img{width:100%;height:100%;object-fit:cover}
+.notice{background:#fff3e6ee;border:1px solid #ead2ba;border-left:3px solid var(--wine);
+ padding:12px 16px;border-radius:9px;font-size:12px;line-height:1.45}
+.notice strong{color:#86332b}.notice p{margin:5px 0 0;color:#70584d}
+.ticketButton{display:block;text-align:center;border-radius:9px;padding:11px 17px;color:#fff;background:var(--wine);
+ font-size:13px;font-weight:800;text-decoration:none}
+.ticketButton:hover,.ticketButton:focus-visible{background:var(--wine-dark)}
+.eventGallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:12px 0}
+.eventGallery img{width:100%;height:116px;object-fit:cover;border-radius:10px}
+.bookingReferenceNote{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+ border-radius:12px;background:#ecf6ea;border:1px solid #c2dbbc;padding:13px 17px;font-size:13px;color:#2c5e3b;margin:12px 0}
+.shop{padding:4px 0 0}
+.sectionHead{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:13px 0 24px}
+.sectionHead h2{font:700 clamp(39px,5.2vw,67px)/1.05 Georgia,serif;color:var(--wine);margin:9px 0}
+.sectionHead p{font-size:14px;line-height:1.5;color:#8a6a5d;margin:0}
+.filters{display:flex;flex-wrap:wrap;gap:13px;align-items:end;margin:15px 0 29px;padding:17px 20px;
+ border:1px solid #eadaca;border-radius:15px;background:#fffdf9d9;box-shadow:0 6px 19px #57321606}
+.filters label{display:grid;gap:7px;flex:1;min-width:160px;font-size:12px;font-weight:750;color:#624f45}
+.filters input,.filters select{width:100%;border:1px solid #dfcbb9;border-radius:9px;background:#fff;
+ min-height:43px;padding:10px 12px;font:inherit;color:#3e3029}
+.filters input:focus-visible,.filters select:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:17px;row-gap:20px}
+.categoryHeading{grid-column:1/-1;display:flex;align-items:center;gap:18px;
+ font:700 clamp(25px,2.5vw,35px)/1.2 Georgia,serif;color:#8f302b;margin:19px 0 0}
+.categoryHeading span{flex:none}.categoryHeading:after{content:"";height:1px;background:#e1c6b2;flex:1}
+.card{min-width:0;overflow:hidden;background:#fff;border:1px solid #eadacc;border-radius:15px;display:flex;flex-direction:column;
+ box-shadow:0 9px 27px #57321b0c;transition:transform .2s,box-shadow .2s,border-color .2s}
+.card:hover{transform:translateY(-3px);border-color:#d9ab94;box-shadow:0 15px 32px #57321b19}
+.card:focus-within{border-color:#bf7764}
+.imageFrame{position:relative;background:#ead8c9;overflow:hidden}
+.image{display:grid;place-items:center;width:100%;aspect-ratio:1.65/1;overflow:hidden;
+ background:linear-gradient(145deg,#ecd8cb,#f9ebe1);position:relative}
+.image:before{content:"";position:absolute;inset:0;opacity:.23;pointer-events:none;
+ background:radial-gradient(circle at 0 100%,#fff 5%,transparent 55%)}
+.image img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.card:hover .image img{transform:scale(1.04)}
+.image>span{font:700 66px Georgia,serif;color:#bd8070}
+.chefBadge{position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);min-width:0;display:flex;align-items:center;gap:8px;
+ border-radius:30px;padding:5px 11px 5px 5px;background:#fffaf1e8;box-shadow:0 3px 10px #34200c1a;
+ backdrop-filter:blur(6px);pointer-events:none}
+.chefAvatar{display:grid;place-items:center;width:34px;height:34px;flex:none;overflow:hidden;border-radius:50%;
+ border:2px solid #fff;background:#b16a54;color:#fff;font:700 17px Georgia,serif}
+.chefAvatar img{width:100%;height:100%;object-fit:cover}
+.chefName{display:flex;flex-direction:column;gap:1px;min-width:0;line-height:1.15}
+.chefName small{font-size:10px;color:#866252}.chefName strong{font-size:11px;color:#463128;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cardBody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:16px 15px 17px}
+.cardTitle{display:block;min-height:43px;color:#3f2923;text-decoration:none}
+.cardTitle h3{font:700 19px/1.18 Georgia,serif;margin:0;color:inherit}
+.cardTitle:hover,.cardTitle:focus-visible{color:var(--wine);text-decoration:underline;text-underline-offset:3px}
+.cardDescription{font-size:12px;line-height:1.45;color:#806a5e;display:-webkit-box;-webkit-line-clamp:2;
+ -webkit-box-orient:vertical;overflow:hidden;min-height:0;margin:4px 0 8px}
+.cardBottom{margin-top:auto;font:700 18px Georgia,serif;color:var(--wine);padding:8px 0}
+.quickAdd{margin-top:5px;display:grid;gap:10px}
+.quickOptions{border:0;padding:0;margin:0;min-width:0}
+.quickOptions legend{font-size:12px;font-weight:750;color:#6d5143;margin-bottom:6px}
+.quickOptions small{font-size:11px;color:#81685a}
+.quickSelect{display:block;min-height:39px;width:100%;padding:8px 29px 8px 11px;
+ border-radius:9px;border:1px solid #e5cdbb;background:#fff;color:#51372c;font-size:12px;cursor:pointer}
+.quickSelect:focus-visible,.quickQuantity button:focus-visible,.quickButton:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.quickChoices{display:flex;gap:7px;flex-wrap:wrap}
+.quickOption{display:flex;align-items:center;gap:6px;cursor:pointer;
+ font-size:11px;padding:7px 10px;background:#fffaf4;border:1px solid #e9d7c8;border-radius:8px}
+.quickOption:has(input:checked){background:#f9ede0;border-color:#b8755e}
+.quickOption input{accent-color:var(--wine)}
+.quickActions{display:grid;grid-template-columns:minmax(106px,.82fr) minmax(130px,1.35fr);gap:9px;align-items:stretch}
+.quickQuantity{display:grid;grid-template-columns:1fr 26px 1fr;align-items:center;min-height:44px;
+ border:1px solid #decbbf;border-radius:9px;overflow:hidden;background:#fff}
+.quickQuantity button{height:100%;border:0;background:transparent;color:var(--wine);font-size:20px;cursor:pointer}
+.quickQuantity button:hover:not(:disabled){background:#fff0e7}
+.quickQuantity button:disabled{opacity:.35;cursor:not-allowed}
+.quickQuantity strong{font-size:14px;text-align:center}
+.quickButton{border:none;background:linear-gradient(135deg,#b74d44,#992d29);color:#fff;
+ border-radius:9px;min-width:0;min-height:44px;font-size:12px;font-weight:800;padding:9px 8px;
+ cursor:pointer;transition:background .15s,transform .15s}
+.quickButton:hover:not(:disabled){background:#822520;transform:translateY(-1px)}
+.quickButton:disabled{background:#c5b8ae;color:#594f47;cursor:not-allowed}
+.quickHint{font-size:11px;color:#a65c45}.quickSuccess{font-size:12px;color:#216338;font-weight:800}
+.empty,.alert{background:#fff9f2;border:1px dashed #d9b9a1;padding:28px;border-radius:12px;color:#725747}
+.alert{color:var(--wine);border-color:#bf6e62;background:#fff0e9}
+/* Persistent basket for event browsing; header navigation remains accessible. */
+.floatingCart{position:fixed;z-index:42;top:111px;right:clamp(13px,2.2vw,35px);
+ display:flex;gap:12px;align-items:center;padding:13px 18px;
+ background:linear-gradient(130deg,#a5382e,#812522);border:1px solid #a1463e;border-radius:40px;
+ box-shadow:0 9px 28px #54241e45;color:#fff;text-decoration:none;min-width:174px;
+ transition:transform .18s,box-shadow .18s}
+.floatingCart:hover,.floatingCart:focus-visible{transform:translateY(-2px);box-shadow:0 12px 30px #54241e70}
+.cartIcon{position:relative;font-size:24px;line-height:1}
+.cartBadge{position:absolute;top:-11px;right:-9px;display:grid;place-items:center;
+ background:#fff;color:#963028;font-size:11px;font-weight:900;min-width:20px;height:20px;border-radius:12px;padding:0 4px}
+.cartText{display:flex;flex-direction:column;gap:2px}.cartText strong{font-size:13px}.cartText small{font-size:12px;font-weight:700}
+.cartArrow{margin-left:auto;font:700 24px Georgia,serif;opacity:.8}
+@media(max-width:1190px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){.eventIntro{grid-template-columns:1fr}.eventIntroMedia{max-width:100%}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sectionHead h2{font-size:47px}.page:before{width:70vw;opacity:.23}}
+@media(max-width:640px){.page{padding:20px 14px 85px}.heading{padding:8px 0 16px}
+ .eventFacts{gap:5px}.eventFacts span{font-size:11px}
+ .filters{padding:13px}.filters label{flex-basis:100%}
+ .grid{gap:12px}.cardBody{padding:12px 11px}.cardTitle h3{font-size:17px}
+ .image{aspect-ratio:1.2/1}.chefBadge{top:7px;left:7px;padding:3px 7px 3px 3px;gap:5px}
+ .chefAvatar{width:27px;height:27px}.chefName strong{font-size:10px}
+ .sectionHead h2{font-size:41px}.floatingCart{top:96px;right:12px;min-width:0;padding:10px 13px;gap:9px}
+ .cartIcon{font-size:19px}.cartText strong{font-size:11px}.cartText small{font-size:10px}.cartArrow{font-size:17px}}
+@media(max-width:510px){.grid{grid-template-columns:1fr;gap:14px}
+ .image{aspect-ratio:1.7/1}.cardBody{padding:15px}.cardTitle{min-height:auto}
+ .cardTitle h3{font-size:20px}.quickActions{grid-template-columns:minmax(100px,1fr) minmax(145px,1.45fr)}
+ .chefAvatar{width:32px;height:32px}.chefName strong{font-size:11px}
+ .categoryHeading{font-size:28px}
+ .floatingCart{top:104px}}
+@media(prefers-reduced-motion:reduce){.card,.card:hover,.image img,.floatingCart,.floatingCart:hover,.quickButton{transition:none;transform:none}}
+
+
+/* Smaller menu title; poster replaces the prior ordering-status callout. */
+.sectionHead h2{font-size:clamp(34px,3.6vw,49px);line-height:1.12}
+.cover{aspect-ratio:16/9;max-height:330px;border-radius:17px;box-shadow:0 12px 35px #69372626}
+.cover img{display:block;object-fit:cover;width:100%;height:100%}
+.eventIntroMedia{align-self:start}
+.quickOptions:has(.quickSelect){margin:0}
+@media(max-width:640px){.sectionHead h2{font-size:36px}}
+
+
+/* 2026 mobile shopping refresh: the event should lead with its image and menu, not a wall of text. */
+.eventIntro{grid-template-columns:minmax(0,1.35fr) minmax(310px,.95fr);grid-template-rows:auto minmax(0,1fr);row-gap:9px;column-gap:30px}
+.eventIntroText{grid-area:1/1;min-width:0}
+.eventIntroMedia{grid-area:1/2/3/3;min-width:0}
+.eventDescription{grid-area:2/1;min-width:0;color:#72594d}
+.eventDescription p{font-size:14px;line-height:1.65;max-width:650px;white-space:pre-line;overflow-wrap:anywhere}
+.readMoreButton,.exploreMenu{display:none}
+.shop{scroll-margin-top:95px}
+.bookingReferenceNote{gap:7px 13px}
+@media(max-width:850px){
+ .eventIntro{display:flex;flex-direction:column;gap:12px}
+ .eventIntroText{order:0}
+ .eventIntroMedia{order:1;width:100%}
+ .eventDescription{order:2}
+ .cover{aspect-ratio:16/9;max-height:390px}
+ .eventIntroText h1{font-size:clamp(30px,6.5vw,42px)}
+}
+@media(max-width:640px){
+ .page{padding:15px 15px 95px}
+ .back{margin-bottom:13px;font-size:12px}
+ .bookingReferenceNote{margin:4px 0 14px;padding:11px 13px;border-radius:11px;line-height:1.4;font-size:12px}
+ .bookingReferenceExplainer{display:none}
+ .heading{padding:4px 0 13px}
+ .eventIntro{gap:12px}
+ .eventIntroText h1{font-size:clamp(30px,8.2vw,37px);margin:7px 0 11px;line-height:1.13}
+ .eyebrow{font-size:10px;letter-spacing:.12em}
+ .eventFacts{display:flex;gap:7px;margin:9px 0 2px}
+ .eventFacts span{display:inline-flex;align-items:center;min-height:31px;padding:6px 9px;font-size:11px;border-radius:8px}
+ .cover{aspect-ratio:16/9;max-height:250px;border-radius:12px}
+ .eventIntroMedia{gap:9px}
+ .ticketButton{width:100%;min-height:43px;display:flex;align-items:center;justify-content:center;
+  border:1px solid #a4453c;border-radius:10px;background:#fff7ef;color:#9a332c;font-size:12px;box-shadow:none}
+ .ticketButton:hover{background:#fae8d9;color:#84231d}
+ .eventDescription{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+ .eventDescription p{font-size:12.5px;line-height:1.55}
+ .descriptionCollapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+ .descriptionExpanded{display:block}
+ .readMoreButton{display:inline-flex;border:0;background:none;color:#9b342c;font-size:12px;font-weight:800;
+  padding:3px 0;cursor:pointer;gap:5px;align-items:center}
+ .readMoreButton:focus-visible,.exploreMenu:focus-visible{outline:2px solid #98332a;outline-offset:3px}
+ .exploreMenu{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  min-height:44px;margin-top:3px;padding:9px 15px;border:1px solid #b8594b;border-radius:10px;
+  background:#9c372f;color:#fff;font-size:13px;font-weight:800;text-decoration:none}
+ .shop{padding-top:3px;scroll-margin-top:83px}
+ .sectionHead{margin:8px 0 15px}
+ .sectionHead h2{font-size:clamp(30px,7.5vw,37px);margin:7px 0 6px;line-height:1.13}
+ .sectionHead p{font-size:12px;line-height:1.45}
+ .menuLabel{font-size:10px;letter-spacing:.12em}
+ .filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  padding:12px;margin:12px 0 20px;border-radius:12px}
+ .filters label{display:grid;min-width:0;width:100%;font-size:11px;gap:5px}
+ .filters label:first-child{grid-column:1/-1}
+ .filters input,.filters select{min-width:0;width:100%;min-height:42px;font-size:12px;padding:8px}
+ .categoryHeading{margin:15px 0 0}
+}
+@media(max-width:375px){
+ .page{padding-inline:11px}
+ .eventFacts{gap:5px}
+ .eventFacts span{font-size:10px;padding:5px 7px}
+ .filters{gap:7px;padding:10px}
+}
+
+
+/* Mobile: two scannable dish cards per row, with details on tap. */
+@media(max-width:640px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;column-gap:10px;align-items:stretch}
+ .categoryHeading{gap:9px;font-size:clamp(22px,5.6vw,27px);margin:18px 0 2px}
+ .card{min-width:0;border-radius:12px;box-shadow:0 4px 12px #6e412210}
+ .card:hover{transform:none}
+ .image{aspect-ratio:1.2/1}
+ .cardBody{padding:10px 9px 11px;min-width:0}
+ .cardTitle{min-height:39px}
+ .cardTitle h3{font-size:clamp(13px,3.65vw,16px);line-height:1.18}
+ .cardDescription{display:none}
+ .cardBottom{font-size:14px;padding:7px 0 5px}
+ .chefBadge{max-width:calc(100% - 12px);top:6px;left:6px;gap:4px;
+  padding:3px 6px 3px 3px;box-shadow:0 2px 5px #34190a19}
+ .chefAvatar{width:23px;height:23px;border-width:1px;font-size:12px}
+ .chefName small{font-size:8px}
+ .chefName strong{font-size:9px;max-width:95px}
+ .quickAdd{gap:7px;margin-top:3px}
+ .quickOptions legend{font-size:10px}
+ .quickSelect{width:100%;min-width:0;min-height:39px;padding:7px 22px 7px 7px;border-radius:8px;font-size:11px}
+ .quickActions{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+ .quickQuantity{min-height:39px;grid-template-columns:1fr 30px 1fr}
+ .quickQuantity button{font-size:18px}
+ .quickQuantity strong{font-size:13px}
+ .quickButton{min-height:42px;width:100%;font-size:11px;padding:9px 6px;border-radius:8px}
+ .quickChoices{gap:4px}
+ .quickOption{font-size:10px;padding:6px 7px}
+ .quickHint,.quickSuccess{font-size:10px}
+}
+@media(max-width:375px){
+ .grid{column-gap:8px;row-gap:10px}
+ .cardBody{padding:8px 7px 10px}
+ .cardTitle h3{font-size:13px}
+ .quickButton{font-size:10px}
+ .chefName strong{max-width:82px}
+}

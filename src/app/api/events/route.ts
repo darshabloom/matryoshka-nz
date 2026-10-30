@@ -11,7 +11,7 @@ export async function GET() {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("events")
-      .select("id, slug, title_en, title_ru, description_en, description_ru, starts_at, ends_at, ordering_opens_at, ordering_closes_at, location_text, external_ticket_url")
+      .select("id, slug, title_en, title_ru, description_en, description_ru, starts_at, ends_at, ordering_opens_at, ordering_closes_at, location_text, external_ticket_url, cover_image_url, gallery_image_urls")
       .eq("is_published", true)
       .gt("ends_at", new Date().toISOString())
       .order("starts_at", { ascending: true });

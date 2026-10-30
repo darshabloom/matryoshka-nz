@@ -77,9 +77,10 @@ export async function listChefs(input: ListChefsInput): Promise<Vendor[]> {
 
     const { data: menuItems, error: miErr } = await supabase
         .from("menu_items")
-        .select("id, vendor_id, price_cents, is_active, sort_order")
+        .select("id, vendor_id, price_cents, is_active, sort_order, approval_status, allergen_review_complete, ingredients_text, allergen_statement")
         .in("vendor_id", vendorIds)
         .eq("is_active", true)
+        .eq("approval_status", "approved")
         .order("sort_order", { ascending: true });
 
     if (miErr) throw miErr;
@@ -124,7 +125,12 @@ export async function listChefs(input: ListChefsInput): Promise<Vendor[]> {
         const cuisinesRaw = cuisineMap.get(v.id) ?? [];
         const cuisine = normaliseCuisines(cuisinesRaw);
 
-        const items = (menuMap.get(v.id) ?? []).map((mi) => {
+        const items = (menuMap.get(v.id) ?? []).filter((mi) => {
+            const tr = menuTransMap.get(mi.id) ?? {};
+            const names = [tr.en?.name, tr.ru?.name].join(" ");
+            return mi.allergen_review_complete && !!mi.ingredients_text?.trim() && !!mi.allergen_statement?.trim() &&
+                !/TEST ONLY|NOT FOR SALE|ТЕСТ|не прода/i.test(names);
+        }).map((mi) => {
             const tr = menuTransMap.get(mi.id) ?? {};
             return {
                 id: mi.id,
@@ -217,9 +223,10 @@ export async function getChefBySlug(slug: string): Promise<Vendor | null> {
 
     const { data: menuItems, error: miErr } = await supabase
         .from("menu_items")
-        .select("id, vendor_id, price_cents, is_active, sort_order")
+        .select("id, vendor_id, price_cents, is_active, sort_order, approval_status, allergen_review_complete, ingredients_text, allergen_statement")
         .eq("vendor_id", vendorId)
         .eq("is_active", true)
+        .eq("approval_status", "approved")
         .order("sort_order", { ascending: true });
 
     if (miErr) throw miErr;
@@ -246,7 +253,12 @@ export async function getChefBySlug(slug: string): Promise<Vendor | null> {
         transMap.set(t.menu_item_id, cur);
     });
 
-    const items = (menuItems ?? []).map((mi) => {
+    const items = (menuItems ?? []).filter((mi) => {
+            const tr = transMap.get(mi.id) ?? {};
+            const names = [tr.en?.name, tr.ru?.name].join(" ");
+            return mi.allergen_review_complete && !!mi.ingredients_text?.trim() && !!mi.allergen_statement?.trim() &&
+                !/TEST ONLY|NOT FOR SALE|ТЕСТ|не прода/i.test(names);
+        }).map((mi) => {
         const tr = transMap.get(mi.id) ?? {};
         return {
             id: mi.id,

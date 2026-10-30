@@ -12,14 +12,25 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   const {data:{user}}=await db.auth.getUser();
   const {data:admin}=user?await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle():{data:null};
   const isAdmin=!!admin;
-  const eventQuery=db.from("events").select("id,slug,is_published,title_en,title_ru,description_en,description_ru,starts_at,ends_at,location_text,ordering_opens_at,ordering_closes_at,external_ticket_url,ticket_required,fulfilment_mode,ordering_enabled").eq("slug",slug).gt("ends_at",now);
+  const eventQuery=db.from("events").select("id,slug,is_published,title_en,title_ru,description_en,description_ru,starts_at,ends_at,location_text,ordering_opens_at,ordering_closes_at,external_ticket_url,ticket_required,fulfilment_mode,ordering_enabled,cover_image_url,gallery_image_urls").eq("slug",slug).gt("ends_at",now);
   const {data:event,error}=await (isAdmin?eventQuery:eventQuery.eq("is_published",true)).maybeSingle();
   if(error)throw error;if(!event)return NextResponse.json({error:"Event unavailable"},{status:404});
   const {data:offers,error:oe}=await db.from("event_menu_items")
-   .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors!inner(display_name))")
+   .select("menu_item_id,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,cross_contact_statement,portion_label,menu_item_translations(lang,name,description),vendors(display_name,hero_image_url))")
    .eq("event_id",event.id).eq("is_available",true).eq("menu_items.is_active",true).eq("menu_items.approval_status","approved").order("sort_order");
   if(oe)throw oe;
-  const eligible=(offers??[]).filter((o:any)=>o.menu_items?.allergen_review_complete&&o.menu_items?.ingredients_text?.trim());
+  // A previously approved dish must disappear if its chef is no longer
+  // accepted for this event. Database reservations enforce the same rule.
+  const {data:accepted,error:acceptedError}=await db.from("chef_event_applications")
+   .select("vendor_id").eq("event_id",event.id).eq("status","approved");
+  if(acceptedError)throw acceptedError;
+  const chefIds=new Set((accepted??[]).map(x=>x.vendor_id));
+  // Organiser-controlled event visibility is distinct from food checkout
+  // readiness: preview an incomplete dish, but never allow purchase.
+  const eligible=(offers??[]).filter((o:any)=>o.menu_items);
+  const canOrder=(item:any)=>!!item.vendor_id&&chefIds.has(item.vendor_id)&&
+   !!item.allergen_review_complete&&!!item.ingredients_text?.trim()&&
+   !!item.allergen_statement?.trim()&&item.is_active&&item.approval_status==="approved";
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
    db.from("menu_item_images").select("menu_item_id,image_url,sort_order").in("menu_item_id",ids).order("sort_order"),
@@ -35,7 +46,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     menu_item_id:item.id,vendor_id:item.vendor_id,
     title_en:en?.name??ru?.name??"",title_ru:ru?.name??en?.name??null,
     description_en:en?.description??ru?.description??"",description_ru:ru?.description??en?.description??"",
-    vendor_name:item.vendors.display_name,price_cents:item.price_cents,
+    vendor_name:item.vendors?.display_name??"Matryoshka",vendor_photo:item.vendors?.hero_image_url??null,price_cents:item.price_cents,sale_ready:canOrder(item),
     ingredients:item.ingredients_text,allergens:item.allergen_statement,cross_contact:item.cross_contact_statement,portion:item.portion_label,
     max_quantity:offer.max_quantity,
     categories:(cats.data??[]).filter((c:any)=>c.menu_item_id===item.id).map((c:any)=>c.food_categories).filter(Boolean),

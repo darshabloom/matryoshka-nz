@@ -9,7 +9,7 @@ export default function SignInPage() {
  const [email,setEmail]=useState("");const [password,setPassword]=useState("");
  const [mode,setMode]=useState<"login"|"register">("login");const [busy,setBusy]=useState(false);const [message,setMessage]=useState("");const [error,setError]=useState("");
  const supabase=createSupabaseBrowserClient();
- const redirectTo=typeof window==="undefined"?"":window.location.origin+"/auth/callback";
+ const redirectTo=typeof window==="undefined"?"":((window.location.hostname==="localhost"||window.location.hostname==="127.0.0.1")?window.location.origin:"https://matryoshka.nz")+"/auth/callback";
  async function google(){setBusy(true);setError("");const {error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo}});if(error){setError(error.message);setBusy(false);}}
  async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setMessage("");
   const result=mode==="register"

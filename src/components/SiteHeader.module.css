@@ -1,0 +1,48 @@
+.header{position:sticky;top:0;z-index:70;background:#fffaf4;border-bottom:1px solid #eadbce;box-shadow:0 2px 9px #43261c0b}
+.nav{max-width:1220px;margin:0 auto;padding:13px 22px;min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:26px}
+.brand{display:flex;flex:none;flex-direction:column;justify-content:center;color:#9d2825;text-decoration:none;line-height:1.02;white-space:nowrap}
+.brandName{font:700 clamp(24px,2.3vw,32px)/1.07 Georgia,serif;letter-spacing:-.018em}
+.brandTagline{font:700 10px Georgia,serif;color:#846452;letter-spacing:.17em;margin:1px 0 0 25px}
+.navigation{display:flex;min-width:0;align-items:center;justify-content:flex-end;gap:22px;flex:1}
+.navLinks{display:flex;gap:clamp(10px,1.5vw,23px);align-items:center;white-space:nowrap;font-size:13px;color:#4b372e}
+.navLinks a{padding:10px 0;transition:color .16s}
+.navLinks a:hover,.navLinks a:focus-visible{color:#a5322b;text-decoration:underline;text-underline-offset:4px}
+.actions{display:flex;align-items:center;gap:12px;white-space:nowrap;flex:none}
+.desktopLanguage,.desktopBasket,.account{display:flex;align-items:center}
+.account a{font-size:12px!important;padding:11px 14px!important}
+.mobileActions{display:none}
+@media(max-width:1050px){
+ .nav{gap:15px;padding:12px 17px}
+ .navigation{gap:12px}
+ .navLinks{gap:12px;font-size:12px}
+ .actions{gap:8px}
+ .brandName{font-size:25px}
+ .account a{padding:10px 11px!important}
+}
+@media(max-width:800px){
+ .nav{min-height:66px;padding:9px 15px;gap:10px;position:relative}
+ .brandName{font-size:clamp(22px,5.8vw,29px)}
+ .brandTagline{font-size:8px;margin-left:23px}
+ .mobileActions{display:flex;align-items:center;gap:8px;margin-left:auto}
+ .mobileBasket{display:flex}
+ .mobileBasket button{font-size:0!important;gap:0!important;min-height:43px;min-width:45px;
+  padding:10px!important;justify-content:center!important;border-radius:11px!important}
+ .mobileBasket button::first-letter{font-size:20px}
+ .menuToggle{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid #e4c8b9;border-radius:11px;
+  background:#fffdfa;color:#942e29;cursor:pointer}
+ .menuToggle:hover,.menuToggle[aria-expanded=true]{background:#fbebdf}
+ .menuToggle:focus-visible{outline:2px solid #9b3c32;outline-offset:2px}
+ .navigation{display:none;position:absolute;top:100%;left:0;right:0;z-index:75;
+  background:#fffaf4;border-bottom:1px solid #dec6b8;box-shadow:0 14px 25px #361f1426;
+  padding:14px 17px 19px;max-height:calc(100dvh - 70px);overflow-y:auto}
+ .navigation[data-open=true]{display:flex;flex-direction:column;align-items:stretch;gap:17px}
+ .navLinks{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;font-size:14px}
+ .navLinks a{border:1px solid #eadbcf;border-radius:9px;background:#fff;min-height:44px;display:flex;align-items:center;padding:10px 13px}
+ .actions{gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-top:1px solid #e9d8c9;padding-top:14px}
+ .desktopBasket{display:flex}
+ .desktopLanguage{display:flex}
+ .account{margin-left:auto}
+ .account a{font-size:13px!important}
+}
+@media(max-width:370px){.brandName{font-size:22px}.brandTagline{font-size:7px}.nav{padding:8px 12px}.mobileActions{gap:5px}}
+@media(prefers-reduced-motion:reduce){.navLinks a{transition:none}}

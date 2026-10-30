@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="570" viewBox="0 0 580 570">
+<defs><g id="petal"><ellipse cx="0" cy="-28" rx="13" ry="32" fill="#e8c5a9" opacity=".64"/></g>
+<g id="bloom"><use href="#petal"/><use href="#petal" transform="rotate(45)"/><use href="#petal" transform="rotate(90)"/><use href="#petal" transform="rotate(135)"/><use href="#petal" transform="rotate(180)"/><use href="#petal" transform="rotate(225)"/><use href="#petal" transform="rotate(270)"/><use href="#petal" transform="rotate(315)"/><circle r="11" fill="#d5a680"/><circle r="5" fill="#f9e9d4"/></g>
+<g id="leaf"><path d="M0,0C15,-29 32,-35 45,-35C41,-16 18,-2 0,0Z" fill="#e6be9d" opacity=".75"/><path d="M2,0Q23,-23 43,-32" fill="none" stroke="#cfa17e" stroke-width="1.5" opacity=".45"/></g></defs>
+<g fill="none" stroke="#dcb394" stroke-width="3" stroke-linecap="round" opacity=".45">
+<path d="M535,-30Q562,85 468,160T424,330Q400,418 526,547"/><path d="M562,60Q487,40 447,96"/><path d="M468,163Q507,227 568,236"/><path d="M420,330Q355,351 307,420"/>
+<path d="M565,382Q515,418 472,450"/></g>
+<g transform="translate(438 122) scale(1.1)"><use href="#bloom"/></g>
+<g transform="translate(532 270) scale(.82)"><use href="#bloom"/></g>
+<g transform="translate(366 397) scale(.62)"><use href="#bloom"/></g>
+<g transform="translate(522 520) scale(.96)"><use href="#bloom"/></g>
+<g transform="translate(482 175) rotate(-25)"><use href="#leaf"/></g>
+<g transform="translate(441 222) rotate(128)"><use href="#leaf"/></g>
+<g transform="translate(427 320) rotate(-70)"><use href="#leaf"/></g>
+<g transform="translate(482 458) rotate(27)"><use href="#leaf"/></g>
+<g transform="translate(539 365) rotate(145)"><use href="#leaf"/></g>
+<g transform="translate(490 75) rotate(170) scale(.7)"><use href="#leaf"/></g>
+<g transform="translate(311 350) rotate(20) scale(.55)"><use href="#leaf"/></g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title">
+<title id="title">Festive New Year's Eve event artwork in red and gold</title>
+<defs>
+<radialGradient id="bg"><stop stop-color="#aa3b36"/><stop offset="1" stop-color="#621f29"/></radialGradient>
+<linearGradient id="gold" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffecad"/><stop offset=".6" stop-color="#eab862"/><stop offset="1" stop-color="#b67b36"/></linearGradient>
+<g id="burst" stroke="url(#gold)" fill="none" stroke-width="3" stroke-linecap="round">
+<path d="M0,-30V-108 M0,30V108 M-30,0H-108 M30,0H108 M-21,-21L-77,-77 M21,21L77,77 M21,-21L77,-77 M-21,21L-77,77"/>
+<circle r="17"/><circle r="43" stroke-dasharray="2 12"/>
+</g>
+<g id="filigree" fill="none" stroke="#e7b768" stroke-width="5" stroke-linecap="round"><path d="M0,210Q180,30 325,200Q435,320 310,383Q229,422 186,330Q149,244 228,204Q289,171 333,219M40,80Q160,121 80,210Q30,251 17,211"/></g>
+</defs>
+<rect width="1120" height="640" fill="url(#bg)"/>
+<rect x="19" y="19" width="1082" height="602" rx="15" fill="none" stroke="#e9c57b" stroke-width="3" opacity=".85"/>
+<rect x="35" y="35" width="1050" height="570" rx="12" fill="none" stroke="#e9c57b" opacity=".3"/>
+<use href="#filigree" transform="translate(-65,-80) scale(.7)" opacity=".42"/>
+<use href="#filigree" transform="translate(1177,710) rotate(180) scale(.7)" opacity=".42"/>
+<use href="#burst" transform="translate(220,174) scale(.72)" opacity=".8"/>
+<use href="#burst" transform="translate(884,164) scale(.88)" opacity=".83"/>
+<use href="#burst" transform="translate(933,451) scale(.44)" opacity=".7"/>
+<use href="#burst" transform="translate(174,469) scale(.46)" opacity=".6"/>
+<g fill="#f8d99d" opacity=".75"><circle cx="333" cy="87" r="5"/><circle cx="765" cy="95" r="4"/><circle cx="712" cy="515" r="5"/><circle cx="374" cy="524" r="4"/>
+<circle cx="993" cy="289" r="3"/><circle cx="108" cy="347" r="4"/></g>
+<path d="M410 195Q560 135 710 195" stroke="url(#gold)" stroke-width="3" fill="none" opacity=".8"/>
+<path d="M410 462Q560 522 710 462" stroke="url(#gold)" stroke-width="3" fill="none" opacity=".8"/>
+<text x="560" y="266" font-family="Georgia,serif" font-size="31" font-weight="bold" text-anchor="middle" letter-spacing="7" fill="#ffe4ae">MATRYOSHKA</text>
+<text x="560" y="344" font-family="Georgia,serif" font-size="76" font-weight="bold" text-anchor="middle" fill="url(#gold)">New Year's Eve</text>
+<text x="560" y="404" font-family="Georgia,serif" font-size="30" text-anchor="middle" fill="#ffe6af" letter-spacing="4">31 DECEMBER • ALBANY</text>
+</svg>

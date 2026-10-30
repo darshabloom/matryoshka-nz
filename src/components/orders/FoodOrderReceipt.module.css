@@ -1,0 +1,24 @@
+.receipt{font-family:Arial,sans-serif;text-align:left;color:#382a25;max-width:740px;margin:16px auto;background:white;border:1px solid #e8d8c9;border-radius:13px;overflow:hidden}
+.header{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #ecd7c9;padding:19px 20px}
+.brand{font:bold 20px Georgia,serif;letter-spacing:-.015em;color:#a13029}
+.brand span{display:block;font:bold 8px Arial,sans-serif;letter-spacing:.16em;margin:3px 0 0 19px;color:#865d51}
+.type{font:bold 10px Arial,sans-serif;letter-spacing:.09em;color:#9b6652}
+.master{padding:24px 22px;text-align:center;background:#fff4e8;border-bottom:1px solid #ead6c7}
+.master small{font-size:10px;font-weight:900;letter-spacing:.1em;color:#945749}
+.master strong{display:block;margin:10px 0 12px;font:bold clamp(30px,6vw,43px) Georgia,serif;color:#962c26;letter-spacing:.025em}
+.master p{font-size:12px;line-height:1.5;margin:3px 0;color:#71594e}
+.sections{padding:20px}
+.sections h2{font:bold 19px Georgia,serif;color:#652c28;margin:0 0 16px}
+.chef{break-inside:avoid;border:1px solid #e4cec0;border-radius:10px;padding:13px 14px;margin:0 0 12px}
+.chefHeading{display:flex;justify-content:space-between;gap:9px;align-items:center;padding-bottom:10px;border-bottom:1px solid #eee0d7}
+.chefHeading small{font-size:9px;letter-spacing:.1em;color:#89675d;font-weight:800}
+.chefHeading h3{font:bold 16px Georgia,serif;margin:4px 0;color:#412e29}
+.chefHeading>strong{font:bold 20px Arial,sans-serif;color:#a12e28;white-space:nowrap}
+.item{padding:9px 0;font-size:12px;line-height:1.5;border-bottom:1px dotted #ead7c9}
+.item:last-child{border:0}
+.item em{font-style:normal;color:#8c4435;display:block;margin:3px 0 0 16px;white-space:pre-line}
+.footer{padding:18px 20px;border-top:1px solid #eddbd0;text-align:center}
+.footer strong{color:#853128;font-size:15px}
+.footer p,.footer small{display:block;font-size:11px;line-height:1.5;color:#776055;margin:7px 0}
+@media(max-width:520px){.header{padding:14px 12px}.brand{font-size:17px}.type{font-size:8px}.master{padding:20px 12px}.sections{padding:13px}.chef{padding:10px}.chefHeading>strong{font-size:17px}}
+@media print{@page{size:A4;margin:15mm}.receipt{border:0;border-radius:0;box-shadow:none;max-width:none;width:100%;margin:0}.chef{break-inside:avoid}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
