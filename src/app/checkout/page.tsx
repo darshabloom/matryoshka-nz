@@ -18,7 +18,7 @@ export default function Checkout(){
    const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+eventId);
    if(saved&&/^YMR-[A-Z0-9-]{5,80}$/.test(saved))setTicket(current=>current||saved);
    const verifiedEmail=sessionStorage.getItem("matryoshka:ticket_email:"+eventId);
-   if(verifiedEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(verifiedEmail))
+   if(verifiedEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verifiedEmail))
     setEmail(current=>current||verifiedEmail);
   }catch{}
  },[eventId]);
