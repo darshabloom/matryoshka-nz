@@ -29,8 +29,9 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
   return n>=Math.max(group.min_select,group.required?1:0)&&n<=group.max_select;
  });
  const limit=Math.max(0,Math.min(100,dish.max_quantity??100));
- const available=dish.sale_ready!==false;
- const canAdd=available&&ready&&limit>=1&&quantity<=limit;
+ // Guests can plan baskets while menus are being finalised. The server
+ // still enforces chef approvals, allergen review and payment readiness.
+ const canAdd=ready&&limit>=1&&quantity<=limit;
  const price=customerPriceCents(dish.price_cents+chosen.reduce((sum,v)=>sum+v.price_delta_cents,0));
  function toggle(groupId:string,id:string,max:number){
   setNotice("");setSelected(old=>{
@@ -68,11 +69,11 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
     <strong>{quantity}</strong>
     <button type="button" disabled={quantity>=limit} onClick={()=>setQuantity(q=>Math.min(limit,q+1))} aria-label={t("Increase","Больше")}>+</button>
    </div>
-   <button type="button" className={styles.quickButton} disabled={!canAdd} onClick={addDish} title={!available?t("Not available for purchase yet","Пока недоступно для заказа"):undefined}>
-    <span aria-hidden="true">🛒</span> {limit===0?t("Sold out","Распродано"):!available?t("Unavailable","Недоступно"):t("Add to cart","В корзину")}
+   <button type="button" className={styles.quickButton} disabled={!canAdd} onClick={addDish}>
+    <span aria-hidden="true">🛒</span> {limit===0?t("Sold out","Распродано"):t("Add to cart","В корзину")}
    </button>
   </div>
-  {!ready&&available&&<small className={styles.quickHint}>{t("Choose the required options above.","Выберите обязательные варианты выше.")}</small>}
+  {!ready&&<small className={styles.quickHint}>{t("Choose the required options above.","Выберите обязательные варианты выше.")}</small>}
   {notice&&<span role="status" className={styles.quickSuccess}>{notice}</span>}
  </div>;
 }
