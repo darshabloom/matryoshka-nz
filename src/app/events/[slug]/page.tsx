@@ -14,6 +14,7 @@ export default function EventFoodPage(){
  const {slug}=useParams<{slug:string}>(),{count,items}=useBasket();
  const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
  const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
+ const [linkedTicketRef,setLinkedTicketRef]=useState("");
  useEffect(()=>{const controller=new AbortController();if(!slug)return;
   setBusy(true);fetch(`/api/events/${encodeURIComponent(slug)}/dishes`,{signal:controller.signal}).then(async r=>{const x=await r.json();if(!r.ok)throw Error(x.error||"Cannot load menu");return x}).then(x=>setData(x)).catch(e=>{if(!controller.signal.aborted)setError(e.message)}).finally(()=>{if(!controller.signal.aborted)setBusy(false)});
   return ()=>controller.abort();
@@ -23,11 +24,23 @@ export default function EventFoodPage(){
  const dishes=useMemo(()=>data?.dishes.filter(d=>(chef==="all"||d.vendor_name===chef)&&(category==="all"||d.categories.some(c=>c.slug===category))&&[d.title_en,d.title_ru,d.vendor_name,d.description_en,d.description_ru].join(" ").toLowerCase().includes(search.toLowerCase().trim()))??[],[data,chef,category,search]);
  const orderedDishes=useMemo(()=>[...dishes].sort((a,b)=>{const ai=categories.findIndex(c=>c.slug===a.categories[0]?.slug),bi=categories.findIndex(c=>c.slug===b.categories[0]?.slug);return ai-bi}),[dishes,categories]);
  const e=data?.event,open=e?.ordering_open??false;
+ useEffect(()=>{
+  if(!e?.id||e.slug!=="novogodnik26")return;
+  try{
+   const param=new URLSearchParams(window.location.search).get("ticket_ref")?.trim().toUpperCase()??"";
+   const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+e.id)??"";
+   const ref=/^YMR-[A-Z0-9-]{5,80}$/.test(param)?param:saved;
+   if(/^YMR-[A-Z0-9-]{5,80}$/.test(ref)){
+    sessionStorage.setItem("matryoshka:ticket_ref:"+e.id,ref);
+    setLinkedTicketRef(ref);
+   }
+  }catch{}
+ },[e?.id,e?.slug]);
  const inEvent=items[0]?.eventId===e?.id;
  return <main className={styles.page}><div className={styles.wrap}>
  <Link className={styles.back} href="/events">← {t("All events","Все события")}</Link>
  {busy&&<p role="status">{t("Loading event food…","Загружаем меню…")}</p>}{error&&<p role="alert" className={styles.alert}>{error}</p>}
- {e&&<><section className={styles.heading}>
+ {e&&<>{linkedTicketRef&&<aside role="status" className="mb-4 rounded-lg border border-green-500 bg-green-50 p-4 text-sm text-green-900"><strong>{t("Your Yumorilnik booking reference has been carried over","Номер бронирования Юморильника перенесён")}:</strong> {linkedTicketRef}. {t("Enter your booking email at checkout so Matryoshka can verify your ticket.","Укажите email бронирования при оформлении заказа, чтобы Матрёшка проверила билет.")}</aside>}<section className={styles.heading}>
  <div className={styles.eventIntro}>
  <div className={styles.eventIntroText}><span className={styles.eyebrow}>MATRYOSHKA · {t("EVENT MENU","МЕНЮ СОБЫТИЯ")}</span><h1>{label(e.title_en,e.title_ru,ru)}</h1><p>{label(e.description_en,e.description_ru,ru)}</p><div className={styles.eventFacts}><span>📅 {new Intl.DateTimeFormat(ru?"ru-NZ":"en-NZ",{dateStyle:"full",timeStyle:"short",timeZone:"Pacific/Auckland"}).format(new Date(e.starts_at))}</span>{e.location_text&&<span>⌖ {e.location_text}</span>}<span>🍽️ {t("Food delivered to event","Еда с доставкой на мероприятие")}</span></div></div>
  <div className={styles.eventIntroMedia}>{e.cover_image_url&&<div className={styles.cover}><img src={e.cover_image_url} alt={label(e.title_en,e.title_ru,ru)}/></div>}
