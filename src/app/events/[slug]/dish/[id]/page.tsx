@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import {useEffect,useMemo,useState} from "react";
-import {useParams,useRouter} from "next/navigation";
+import {useParams} from "next/navigation";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {useBasket} from "@/components/cart/BasketProvider";
 import type {CustomerDish,EventMenuData} from "@/lib/customer-types";
 import {dollars,label} from "@/lib/customer-types";
 import styles from "./product.module.css";
-import shopStyles from "../../shop.module.css";
+import {useCartDrawer} from "@/components/cart/CartDrawerContext";
 import {customerPriceCents} from "@/lib/customer-pricing";
 function startingSelection(dish:CustomerDish):Record<string,string[]>{
  const selection:Record<string,string[]>={};
@@ -19,9 +19,9 @@ function startingSelection(dish:CustomerDish):Record<string,string[]>{
  return selection;
 }
 export default function ProductPage(){
- const {slug,id}=useParams<{slug:string;id:string}>(),router=useRouter();
+ const {slug,id}=useParams<{slug:string;id:string}>();
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,r:string)=>ru?r:en;
- const {add,count,subtotal}=useBasket();
+ const {add}=useBasket(),{openBasket}=useCartDrawer();
  const [data,setData]=useState<EventMenuData|null>(null),[dish,setDish]=useState<CustomerDish|null>(null),[error,setError]=useState(""),[loading,setLoading]=useState(true);
  const [photo,setPhoto]=useState(0),[quantity,setQuantity]=useState(1),[selected,setSelected]=useState<Record<string,string[]>>({}),[added,setAdded]=useState(false);
  useEffect(()=>{if(!slug||!id)return;const ac=new AbortController();fetch(`/api/events/${encodeURIComponent(slug)}/dishes`,{signal:ac.signal}).then(async r=>{const body=await r.json();if(!r.ok)throw Error(body.error||"Product unavailable");return body as EventMenuData}).then(x=>{setData(x);const item=x.dishes.find(d=>d.menu_item_id===id)??null;setDish(item);setSelected(item?startingSelection(item):{});setAdded(false);}).catch(e=>{if(!ac.signal.aborted)setError(e.message)}).finally(()=>{if(!ac.signal.aborted)setLoading(false)});return ()=>ac.abort()},[slug,id]);
@@ -31,13 +31,9 @@ export default function ProductPage(){
  function toggle(group:string,value:string,max:number){setSelected(old=>{const current=old[group]??[];return {...old,[group]:max===1?[value]:current.includes(value)?current.filter(x=>x!==value):current.length<max?[...current,value]:current}})}
  function addToBasket(){if(!dish||!data||!valid)return;setError("");const options=dish.options.flatMap(group=>(selected[group.id]??[]).map(v=>{const option=group.values.find(x=>x.id===v);return option?`${label(group.label_en,group.label_ru,ru)}: ${label(option.label_en,option.label_ru,ru)}`:""})).filter(Boolean).join(" · ");
  const result=add({dishId:dish.menu_item_id,eventId:data.event.id,eventSlug:data.event.slug,eventName:label(data.event.title_en,data.event.title_ru,ru),name:label(dish.title_en,dish.title_ru,ru),chef:dish.vendor_name,photo:dish.images[0]??null,unitPriceCents:unitPrice,optionIds:chosen.map(v=>v.id),optionSummary:options,quantity});
- if(result){setAdded(true);router.push("/basket")} }
+ if(result){setAdded(true);openBasket()} }
  return <main className={styles.page}>
- <Link href="/basket" className={shopStyles.floatingCart} aria-label={t("View cart with ","Корзина: ")+count+t(" items"," товаров")}>
-  <span className={shopStyles.cartIcon} aria-hidden="true">🛒{count>0&&<span className={shopStyles.cartBadge}>{count}</span>}</span>
-  <span className={shopStyles.cartText}><strong>{t("View cart","Корзина")}</strong><small>{count>0?dollars(subtotal):t("Your basket","Ваш заказ")}</small></span>
-  <span className={shopStyles.cartArrow} aria-hidden="true">›</span>
- </Link><div className={styles.wrap}><Link href={`/events/${slug}`} className={styles.back}>← {t("Back to event menu","К меню события")}</Link>
+<div className={styles.wrap}><Link href={`/events/${slug}`} className={styles.back}>← {t("Back to event menu","К меню события")}</Link>
  {loading&&<p role="status">{t("Loading dish…","Загружаем блюдо…")}</p>}{error&&<p role="alert" className={styles.error}>{error}</p>}
  {!loading&&!dish&&!error&&<p>{t("This dish is not available for this event.","Это блюдо недоступно для события.")}</p>}
  {dish&&data&&<><div className={styles.product}><div className={styles.gallery}><div className={styles.photo}>{dish.images.length?<img src={dish.images[Math.min(photo,dish.images.length-1)]} alt={label(dish.title_en,dish.title_ru,ru)}/>:<img src="/images/matryoshka-dish-placeholder.svg" alt=""/>}</div><div className={styles.thumbs}>{dish.images.map((src,i)=><button key={src} type="button" aria-label={`Photo ${i+1}`} aria-pressed={photo===i} onClick={()=>setPhoto(i)}><img src={src} alt={`Photo ${i+1}`}/></button>)}</div></div>
