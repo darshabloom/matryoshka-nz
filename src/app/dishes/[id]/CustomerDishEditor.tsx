@@ -1,5 +1,5 @@
-import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 "use client";
+import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 import {useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
@@ -8,7 +8,7 @@ import {useLanguage} from "@/components/i18n/LanguageProvider";
 import {customerPriceCents} from "@/lib/customer-pricing";
 import styles from "./editor.module.css";
 type Translation={lang:string;name:string;description:string|null};
-type Image={id:string;image_url:string;sort_order:number};
+type Image={id:string;image_url:string;sort_order:number;position_x:number;position_y:number};
 type Vendor={id:string;display_name:string;slug:string;hero_image_url:string|null};
 type Event={id:string;title_en:string;title_ru:string|null};
 type Option={id:string;label_en:string;menu_item_option_values:{id:string;label_en:string;price_delta_cents:number;sort_order:number}[]};
@@ -84,11 +84,18 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
    const {error:up}=await db.storage.from("dish-photos").upload(key,optimised,{contentType:optimised.type,upsert:false});
    if(up){setError(up.message);break}
    const url=db.storage.from("dish-photos").getPublicUrl(key).data.publicUrl;
-   const {data:photo,error:save}=await db.from("menu_item_images").insert({menu_item_id:dish.id,image_url:url,sort_order:photos.length}).select("id,image_url,sort_order").single();
+   const {data:photo,error:save}=await db.from("menu_item_images").insert({menu_item_id:dish.id,image_url:url,sort_order:photos.length}).select("id,image_url,sort_order,position_x,position_y").single();
    if(save){setError(save.message);await db.storage.from("dish-photos").remove([key]);break}
    setPhotos(old=>[...old,photo]);
   }
   setBusy(false);
+ }
+ async function savePosition(axis:"position_x"|"position_y",value:number){
+  const current=photos[active];if(!current||!canEdit)return;
+  setPhotos(old=>old.map(p=>p.id===current.id?{...p,[axis]:value}:p));
+  const db=createSupabaseBrowserClient();
+  const {error}=await db.from("menu_item_images").update({[axis]:value}).eq("id",current.id);
+  if(error)setError(error.message);
  }
  async function removePhoto(id:string){
   const photo=photos.find(p=>p.id===id);if(!photo)return;
@@ -108,9 +115,18 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
    <button className={styles.doneButton} type="button" disabled={busy||!canEdit} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button>
   </div>
   <div className={styles.product}>
-   <section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} alt={ru?nameRu:nameEn}/>:<div className={styles.placeholder}>✿<small>{t("Add a dish photo","Добавьте фото блюда")}</small></div>}</div>
+   <section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} style={{objectFit:"cover",objectPosition:`${photos[Math.min(active,photos.length-1)].position_x??50}% ${photos[Math.min(active,photos.length-1)].position_y??50}%`}} alt={ru?nameRu:nameEn}/>:<div className={styles.placeholder}>✿<small>{t("Add a dish photo","Добавьте фото блюда")}</small></div>}</div>
     <div className={styles.thumbs}>{photos.map((p,i)=><div key={p.id} className={styles.thumb}><button type="button" className={styles.thumbPhoto} onClick={()=>setActive(i)}><img src={p.image_url} alt={`Photo ${i+1}`}/></button>{canEdit&&<button type="button" className={styles.remove} disabled={busy} onClick={()=>void removePhoto(p.id)}>×</button>}</div>)}{canEdit&&photos.length<3&&<label className={styles.addPhoto}>＋<small>{t("Photo","Фото")}</small><input hidden multiple type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{void upload(e.target.files);e.target.value=""}}/></label>}</div>
-    <p className={styles.hint}>{t("Up to 3 photos, 5 MB each.","До 3 фото по 5 МБ.")}</p>
+    {canEdit&&photos[active]&&<div style={{padding:13,background:"#fff",border:"1px solid #ddc6b8",borderRadius:10,marginTop:12}}>
+    <strong>{t("Photo framing","Кадрирование фото")}</strong>
+    <p className={styles.hint}>{t("Move the visible centre of this image. Changes save automatically.","Переместите центр фотографии. Изменения сохраняются автоматически.")}</p>
+    {(["position_x","position_y"] as const).map(axis=><label key={axis} style={{display:"grid",gap:5,marginTop:10}}>
+    {axis==="position_x"?t("Horizontal position","По горизонтали"):t("Vertical position","По вертикали")} · {photos[active][axis]??50}%
+    <input type="range" min="0" max="100" step="1" value={photos[active][axis]??50} onChange={e=>void savePosition(axis,Number(e.target.value))}/>
+    </label>)}
+    <button type="button" onClick={()=>{void savePosition("position_x",50);void savePosition("position_y",50)}}>{t("Reset to centre","По центру")}</button>
+   </div>}
+    <p className={styles.hint}>{t("Up to 3 photos, automatically optimised.","До 3 фотографий с автоматической оптимизацией.")}</p>
    </section>
    <section className={styles.details}>
     <div className={styles.chef}>
