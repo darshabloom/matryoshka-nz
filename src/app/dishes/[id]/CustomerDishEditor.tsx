@@ -12,9 +12,9 @@ type Image={id:string;image_url:string;sort_order:number;position_x:number;posit
 type Vendor={id:string;display_name:string;slug:string;hero_image_url:string|null};
 type Event={id:string;title_en:string;title_ru:string|null};
 type Option={id:string;label_en:string;menu_item_option_values:{id:string;label_en:string;price_delta_cents:number;sort_order:number}[]};
-type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;ingredients_text:string|null;ingredients_en:string|null;ingredients_ru:string|null;allergen_statement:string|null;cross_contact_statement:string|null;portion_label:string|null;allergen_review_complete:boolean;menu_item_translations:Translation[];menu_item_images:Image[]};
+type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;ingredients_text:string|null;ingredients_en:string|null;ingredients_ru:string|null;allergen_statement:string|null;cross_contact_statement:string|null;portion_label:string|null;category_id:string|null;allergen_review_complete:boolean;menu_item_translations:Translation[];menu_item_images:Image[]};
 type Size={size:string;price:string};
-export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,initialEventId}:{dish:Dish;isAdmin:boolean;options:Option[];vendors:Vendor[];events:Event[];initialEventId:string}){
+export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,initialEventId,categories,initialCapacity}:{dish:Dish;isAdmin:boolean;options:Option[];vendors:Vendor[];events:Event[];initialEventId:string;categories:{id:string;name_en:string;name_ru:string}[];initialCapacity:number|null}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
  const router=useRouter();
  const en=dish.menu_item_translations.find(x=>x.lang==="en"),rus=dish.menu_item_translations.find(x=>x.lang==="ru");
@@ -24,6 +24,10 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
  const [descriptionRu,setDescriptionRu]=useState(rus?.description??"");
  const [chefId,setChefId]=useState(dish.vendor_id??"");
  const [eventId,setEventId]=useState(initialEventId);
+ const [categoryId,setCategoryId]=useState(dish.category_id??"");
+ const [categoryNameEn,setCategoryNameEn]=useState(""),[categoryNameRu,setCategoryNameRu]=useState("");
+ const [availableCategories,setAvailableCategories]=useState(categories);
+ const [capacity,setCapacity]=useState(initialCapacity===null?"":String(initialCapacity));
  const initialGroup=options.find(g=>g.label_en==="Size"||g.label_en==="Weight");
  const [sizes,setSizes]=useState<Size[]>(()=>{
   const options=(initialGroup?.menu_item_option_values??[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
@@ -61,7 +65,16 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
     ingredientsEn,ingredientsRu,ingredients:ingredientsEn,allergens,crossContact,portion:"",allergenConfirmed:confirmed
    })});
    const result=await response.json();if(!response.ok)throw Error(message(result));
+   const client=createSupabaseBrowserClient();
+   const {error:categoryError}=await client.rpc("assign_dish_category",{p_dish:dish.id,p_category:categoryId||null});
+   if(categoryError)throw Error(categoryError.message);
    await api("/api/dishes/size-prices",{dishId:dish.id,sizes});
+   if(isAdmin&&eventId){
+    const cap=capacity.trim()===""?null:Number(capacity);
+    if(cap!==null&&(!Number.isInteger(cap)||cap<1||cap>100000))throw Error("Quantity limit must be a positive number or unlimited.");
+    const response=await fetch("/api/admin/event-menu",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId,dishId:dish.id,capacity:cap})});
+    if(!response.ok&&response.status!==404)throw Error("Unable to save event quantity limit.");
+   }
    if(isAdmin&&!draftOnly){
     await api("/api/admin/dishes/quick-finish",{dishId:dish.id,vendorId:chefId||null,eventId:eventId||null,action:"finish"});
    }
@@ -144,6 +157,18 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
       <span className={styles.status}>{dish.approval_status==="approved"?t("Approved","Одобрено"):t("Draft","Черновик")}</span>
     </div>
     {isAdmin&&<label className={styles.compactLabel}>{t("Add to event when done","Добавить к событию")}<select value={eventId} onChange={e=>setEventId(e.target.value)}><option value="">{t("No event selected","Событие не выбрано")}</option>{events.map(e=><option key={e.id} value={e.id}>{ru?e.title_ru||e.title_en:e.title_en}</option>)}</select></label>}
+    <section className={styles.safetyEditor}>
+     <h2>{t("Category","Категория")}</h2>
+     <label>{t("Dish category","Категория блюда")}<select disabled={!canEdit} value={categoryId} onChange={e=>setCategoryId(e.target.value)}><option value="">{t("Uncategorised","Без категории")}</option>{availableCategories.map(c=><option value={c.id} key={c.id}>{ru?c.name_ru:c.name_en}</option>)}</select></label>
+     {isAdmin&&<details><summary>{t("Manage categories","Управлять категориями")}</summary>
+      <div className={styles.languageGrid}><input placeholder="English category" value={categoryNameEn} onChange={e=>setCategoryNameEn(e.target.value)}/><input placeholder="Категория на русском" value={categoryNameRu} onChange={e=>setCategoryNameRu(e.target.value)}/></div>
+      <button type="button" disabled={busy||!categoryNameEn.trim()||!categoryNameRu.trim()} onClick={async()=>{
+       const db=createSupabaseBrowserClient();const {data,error}=await db.from("dish_categories").insert({name_en:categoryNameEn.trim(),name_ru:categoryNameRu.trim()}).select("id,name_en,name_ru").single();
+       if(error){setError(error.message);return;}setAvailableCategories(old=>[...old,data]);setCategoryId(data.id);setCategoryNameEn("");setCategoryNameRu("");
+      }}>{t("Add category","Добавить категорию")}</button>
+     </details>}
+    </section>
+    {isAdmin&&eventId&&<section className={styles.safetyEditor}><h2>{t("Event quantity limit","Лимит количества на событие")}</h2><label>{t("Maximum available (leave blank for unlimited)","Максимальное количество (пустое поле — без ограничения)")}<input type="number" min="1" max="100000" placeholder="Unlimited" value={capacity} onChange={e=>setCapacity(e.target.value)}/></label></section>}
     <div className={styles.languageGrid}>
      <label className={styles.compactLabel}>{t("English name","Название на английском")}<input disabled={!canEdit} maxLength={160} value={nameEn} onChange={e=>setNameEn(e.target.value)}/></label>
      <label className={styles.compactLabel}>{t("Russian name","Название на русском")}<input disabled={!canEdit} maxLength={160} value={nameRu} onChange={e=>setNameRu(e.target.value)}/></label>
