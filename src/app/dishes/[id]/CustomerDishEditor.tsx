@@ -27,7 +27,6 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
  const [categoryId,setCategoryId]=useState(dish.category_id??"");
  const [categoryNameEn,setCategoryNameEn]=useState(""),[categoryNameRu,setCategoryNameRu]=useState("");
  const [availableCategories,setAvailableCategories]=useState(categories);
- const [capacity,setCapacity]=useState(initialCapacity===null?"":String(initialCapacity));
  const initialGroup=options.find(g=>g.label_en==="Size"||g.label_en==="Weight");
  const [sizes,setSizes]=useState<Size[]>(()=>{
   const options=(initialGroup?.menu_item_option_values??[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
@@ -52,36 +51,16 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
   if(!canEdit)return;
   setBusy(true);setError("");setNotice("");
   try{
-   if(!nameEn.trim()||!nameRu.trim())throw Error(t("Enter both dish names.","Укажите название блюда на двух языках."));
-   if(sizes.some(s=>!s.size.trim()||s.price.trim()===""||!Number.isFinite(Number(s.price))||Number(s.price)<0)||
-     new Set(sizes.map(s=>s.size.trim().toLowerCase())).size!==sizes.length)
-    throw Error(t("Enter a different size and valid price on each row.","Укажите разные размеры и правильные цены."));
-   if(isAdmin&&chefId!==(dish.vendor_id??"")){
-    await api("/api/admin/dishes/quick-finish",{dishId:dish.id,vendorId:chefId||null,action:"assign"});
-   }
-   const lowest=Math.min(...sizes.map(s=>Number(s.price)));
-   const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    id:dish.id,action:"edit",name:nameEn,description:descriptionEn,language:"en",
-    nameEn,nameRu,descriptionEn,descriptionRu,price:String(lowest),
-    ingredientsEn,ingredientsRu,ingredients:ingredientsEn,allergens,crossContact,portion:"",allergenConfirmed:confirmed
-   })});
-   const result=await response.json();if(!response.ok)throw Error(message(result));
+   if(!nameEn.trim()||!nameRu.trim())throw Error(t("Enter both dish names.","Укажите названия на двух языках."));
    const client=createSupabaseBrowserClient();
-   const {error:categoryError}=await client.rpc("assign_dish_category",{p_dish:dish.id,p_category:categoryId||null});
-   if(categoryError)throw Error(categoryError.message);
-   await api("/api/dishes/size-prices",{dishId:dish.id,sizes});
-   if(isAdmin&&eventId){
-    const cap=capacity.trim()===""?null:Number(capacity);
-    if(cap!==null&&(!Number.isInteger(cap)||cap<1||cap>100000))throw Error("Quantity limit must be a positive number or unlimited.");
-    const response=await fetch("/api/admin/event-menu",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventId,dishId:dish.id,capacity:cap})});
-    if(!response.ok&&response.status!==404)throw Error("Unable to save event quantity limit.");
-   }
-   if(isAdmin&&!draftOnly){
-    await api("/api/admin/dishes/quick-finish",{dishId:dish.id,vendorId:chefId||null,eventId:eventId||null,action:"finish"});
-   }
+   const {error:saveError}=await client.rpc("save_dish_atomic",{p_dish:dish.id,p_payload:{
+    nameEn,nameRu,descriptionEn,descriptionRu,sizes,ingredientsEn,ingredientsRu,
+    confirmed,categoryId,vendorId:chefId,eventId,draftOnly
+   }});
+   if(saveError)throw Error(saveError.message);
    router.push(isAdmin&&eventId?`/admin/events/${eventId}?tab=menu`:isAdmin?"/admin?tab=food":"/chef-dashboard?tab=dishes");
    router.refresh();
-  }catch(e){setError(e instanceof Error?e.message:"Unable to save");setNotice(t("Your editor is still open so you can correct the issue.","Редактор открыт, чтобы вы могли исправить проблему."))}
+  }catch(e){setError(e instanceof Error?e.message:"Unable to save");setNotice(t("Changes were not saved. Please correct the issue and retry.","Изменения не сохранены. Исправьте ошибку и повторите."))}
   finally{setBusy(false)}
  }
  async function deleteDish(){
@@ -181,7 +160,6 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
       }}>{t("Add category","Добавить категорию")}</button>
      </details>}
     </section>
-    {isAdmin&&eventId&&<section className={styles.safetyEditor}><h2>{t("Event quantity limit","Лимит количества на событие")}</h2><label>{t("Maximum available (leave blank for unlimited)","Максимальное количество (пустое поле — без ограничения)")}<input type="number" min="1" max="100000" placeholder="Unlimited" value={capacity} onChange={e=>setCapacity(e.target.value)}/></label></section>}
     <div className={styles.languageGrid}>
      <label className={styles.compactLabel}>{t("English name","Название на английском")}<input disabled={!canEdit} maxLength={160} value={nameEn} onChange={e=>setNameEn(e.target.value)}/></label>
      <label className={styles.compactLabel}>{t("Russian name","Название на русском")}<input disabled={!canEdit} maxLength={160} value={nameRu} onChange={e=>setNameRu(e.target.value)}/></label>
