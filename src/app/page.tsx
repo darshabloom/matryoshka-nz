@@ -9,7 +9,7 @@ import EventMenuQuickAdd from "./events/[slug]/EventMenuQuickAdd";
 import {customerPriceCents} from "@/lib/customer-pricing";
 import styles from "./page.module.css";
 
-type Dish = {id:string;name_en:string;name_ru:string;description_en:string;description_ru:string;price_cents:number;chef:string;chef_slug:string;chef_photo:string|null;image:string|null;categories:{slug:string;label_en:string;label_ru:string|null}[];ready:boolean};
+type Dish = {id:string;name_en:string;name_ru:string;description_en:string;description_ru:string;price_cents:number;chef:string;chef_slug:string;chef_photo:string|null;image:string|null;image_position?:{x:number;y:number;zoom:number;mode:string}|null;categories:{slug:string;label_en:string;label_ru:string|null}[];ready:boolean};
 type ShopDish={dish:CustomerDish;event:EventMenuData["event"]};
 type PublicEvent = { id:string;slug:string; title_en:string;title_ru:string|null;starts_at:string;location_text?:string|null;cover_image_url?:string|null };
 const photos = {
@@ -91,7 +91,7 @@ export default function HomePage(){
    {busy?<p role="status" className={styles.empty}>{ru?"Загрузка меню…":"Loading menu…"}</p>:error?<p role="alert" className={styles.empty}>{ru?"Не удалось загрузить меню.":"Unable to load the menu."}</p>:filtered.length===0?<p className={styles.empty}>{q||category!=="all"?(ru?"Ничего не найдено.":"No matching dishes."):(ru?"Повара готовят меню. Блюда появятся после проверки.":"Our chefs are preparing the menu. Dishes appear after review.")}</p>:<div className={styles.dishGrid}>{filtered.map(d=>{
     const offer=shopDishes[d.id];const title=ru?d.name_ru||d.name_en:d.name_en||d.name_ru;
     return <article key={d.id} className={styles.dishCard}>
-     <div className={styles.dishImage}>{d.image?<img src={d.image} alt={title} loading="lazy"/>:<span aria-hidden="true">✿</span>}</div>
+     <div className={styles.dishImage}>{d.image?<img src={d.image} alt={title} loading="lazy" style={{objectFit:d.image_position?.mode==="contain"?"contain":"cover",objectPosition:`${d.image_position?.x??50}% ${d.image_position?.y??50}%`,transform:`scale(${(d.image_position?.zoom??100)/100})`,transformOrigin:`${d.image_position?.x??50}% ${d.image_position?.y??50}%`}}/>:<span aria-hidden="true">✿</span>}</div>
      <div className={styles.dishInfo}><Link href={`/chef/${d.chef_slug}`} className={styles.chefTag}>{d.chef_photo?<img src={d.chef_photo} alt=""/>:null}{d.chef}</Link>
       <h3>{title}</h3><p>{ru?d.description_ru||d.description_en:d.description_en||d.description_ru}</p>
       <div className={styles.dishBottom}><strong>{new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(d.price_cents)/100)}</strong><span>{ru?"От":"From"}</span></div>
