@@ -48,7 +48,7 @@
 .card:hover{transform:translateY(-3px);border-color:#d9ab94;box-shadow:0 15px 32px #57321b19}
 .card:focus-within{border-color:#bf7764}
 .imageFrame{position:relative;background:#ead8c9;overflow:hidden}
-.image{display:grid;place-items:center;width:100%;aspect-ratio:1.65/1;overflow:hidden;
+.image{display:grid;place-items:center;width:100%;aspect-ratio:1/1;overflow:hidden;
  background:linear-gradient(145deg,#ecd8cb,#f9ebe1);position:relative}
 .image:before{content:"";position:absolute;inset:0;opacity:.23;pointer-events:none;
  background:radial-gradient(circle at 0 100%,#fff 5%,transparent 55%)}
@@ -117,12 +117,12 @@
  .eventFacts{gap:5px}.eventFacts span{font-size:11px}
  .filters{padding:13px}.filters label{flex-basis:100%}
  .grid{gap:12px}.cardBody{padding:12px 11px}.cardTitle h3{font-size:17px}
- .image{aspect-ratio:1.65/1}.chefBadge{top:7px;left:7px;padding:3px 7px 3px 3px;gap:5px}
+ .image{aspect-ratio:1/1}.chefBadge{top:7px;left:7px;padding:3px 7px 3px 3px;gap:5px}
  .chefAvatar{width:27px;height:27px}.chefName strong{font-size:10px}
  .sectionHead h2{font-size:41px}.floatingCart{top:96px;right:12px;min-width:0;padding:10px 13px;gap:9px}
  .cartIcon{font-size:19px}.cartText strong{font-size:11px}.cartText small{font-size:10px}.cartArrow{font-size:17px}}
 @media(max-width:510px){.grid{grid-template-columns:1fr;gap:14px}
- .image{aspect-ratio:1.65/1}.cardBody{padding:15px}.cardTitle{min-height:auto}
+ .image{aspect-ratio:1/1}.cardBody{padding:15px}.cardTitle{min-height:auto}
  .cardTitle h3{font-size:20px}.quickActions{grid-template-columns:minmax(100px,1fr) minmax(145px,1.45fr)}
  .chefAvatar{width:32px;height:32px}.chefName strong{font-size:11px}
  .categoryHeading{font-size:28px}
@@ -208,7 +208,7 @@
  .categoryHeading{gap:9px;font-size:clamp(22px,5.6vw,27px);margin:18px 0 2px}
  .card{min-width:0;border-radius:12px;box-shadow:0 4px 12px #6e412210}
  .card:hover{transform:none}
- .image{aspect-ratio:1.65/1}
+ .image{aspect-ratio:1/1}
  .cardBody{padding:10px 9px 11px;min-width:0}
  .cardTitle{min-height:39px}
  .cardTitle h3{font-size:clamp(13px,3.65vw,16px);line-height:1.18}
