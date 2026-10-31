@@ -19,7 +19,7 @@ export default async function EventWorkspace({params,searchParams}:{params:Promi
  const [{data:event},{data:vendors},{data:dishes},{data:offers},{data:apps},{data:orders},ready]=await Promise.all([
  db.from("events").select("id,slug,title_en,title_ru,description_en,description_ru,starts_at,ends_at,location_text,external_ticket_url,ordering_opens_at,ordering_closes_at,is_published,ordering_enabled,chef_applications_open,chef_fulfilment_options,ticket_required,fulfilment_mode,cover_image_url,gallery_image_urls").eq("id",id).maybeSingle(),
  db.from("vendors").select("id,display_name").order("display_name"),
- db.from("menu_items").select("id,vendor_id,price_cents,approval_status,is_active,allergen_review_complete,ingredients_text,allergen_statement,menu_item_translations(lang,name)").order("created_at",{ascending:false}),
+ db.from("menu_items").select("id,vendor_id,price_cents,approval_status,is_active,allergen_review_complete,ingredients_text,allergen_statement,menu_item_translations(lang,name),menu_item_images(image_url,sort_order)").order("created_at",{ascending:false}),
  db.from("event_menu_items").select("menu_item_id,max_quantity,is_available").eq("event_id",id),
  db.from("chef_event_applications").select("id,vendor_id,status,message,fulfilment,review_note,events(title_en,title_ru),vendors(display_name)").eq("event_id",id),
  db.from("food_orders").select("id,email,created_at,status,payment_status,subtotal_cents,allergy_declaration,allergy_details,special_requests").eq("event_id",id).order("created_at",{ascending:false}).limit(100),
