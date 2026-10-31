@@ -33,7 +33,7 @@ export async function POST(req:Request){
  for(const it of items){
   const offer=(offers??[]).find((o:any)=>o.menu_item_id===it.dishId);
   const dish=(offer as any)?.menu_items;
-  if(!offer||(!offer.is_available&&!testCheckout)||!dish||!dish.is_active||dish.approval_status!=="approved"||!dish.allergen_review_complete||!dish.ingredients_text?.trim()||!permittedChefs.has(dish.vendor_id))return NextResponse.json({error:"One or more dishes are unavailable or still awaiting ingredient review. Please review your basket."},{status:409});
+  if(!offer||(!offer.is_available&&!testCheckout)||!dish||!dish.is_active||dish.approval_status!=="approved"||!permittedChefs.has(dish.vendor_id))return NextResponse.json({error:"One or more dishes are unavailable for this event. Please review your basket."},{status:409});
   if(offer.max_quantity!==null&&it.quantity>offer.max_quantity)return NextResponse.json({error:"Selected quantity exceeds the event limit"},{status:409});
   const options=(groups??[]).filter(g=>g.menu_item_id===it.dishId);let extra=0;let summary:string[]=[];
   const uniq=[...new Set(it.optionIds)];if(uniq.length!==it.optionIds.length)return NextResponse.json({error:"Duplicate options not allowed"},{status:400});
