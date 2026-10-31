@@ -1,5 +1,5 @@
-import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 "use client";
+import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 import {useEffect,useState} from "react";
 import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
