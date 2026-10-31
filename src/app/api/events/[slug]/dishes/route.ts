@@ -31,7 +31,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   // readiness: preview an incomplete dish, but never allow purchase.
   const eligible=(offers??[]).filter((o:any)=>o.menu_items&&chefIds.has(o.menu_items.vendor_id));
   const canOrder=(item:any)=>!!item.vendor_id&&chefIds.has(item.vendor_id)&&
-   !!item.allergen_review_complete&&!!item.ingredients_text?.trim()&&
+   
    item.is_active&&item.approval_status==="approved";
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
