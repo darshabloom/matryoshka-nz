@@ -33,7 +33,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
    !!item.allergen_statement?.trim()&&item.is_active&&item.approval_status==="approved";
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
-   db.from("menu_item_images").select("menu_item_id,image_url,sort_order").in("menu_item_id",ids).order("sort_order"),
+   db.from("menu_item_images").select("menu_item_id,image_url,sort_order,position_x,position_y").in("menu_item_id",ids).order("sort_order"),
    db.from("menu_item_options").select("id,menu_item_id,label_en,label_ru,required,min_select,max_select,sort_order").in("menu_item_id",ids).order("sort_order"),
    db.from("menu_item_categories").select("menu_item_id,food_categories(label_en,label_ru,slug)").in("menu_item_id",ids)
   ]):[{data:[]},{data:[]},{data:[]}];
@@ -51,6 +51,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     max_quantity:offer.max_quantity,
     categories:(cats.data??[]).filter((c:any)=>c.menu_item_id===item.id).map((c:any)=>c.food_categories).filter(Boolean),
     images:(images.data??[]).filter(x=>x.menu_item_id===item.id).map(x=>x.image_url).slice(0,3),
+    image_positions:(images.data??[]).filter(x=>x.menu_item_id===item.id).map(x=>({x:x.position_x??50,y:x.position_y??50})).slice(0,3),
     options:(groups.data??[]).filter(g=>g.menu_item_id===item.id).map(g=>({
       id:g.id,label_en:g.label_en,label_ru:g.label_ru,required:g.required,min_select:g.min_select,max_select:g.max_select,
       values:(values??[]).filter((v:any)=>v.option_id===g.id).map((v:any)=>({id:v.id,label_en:v.label_en,label_ru:v.label_ru,price_delta_cents:v.price_delta_cents}))
