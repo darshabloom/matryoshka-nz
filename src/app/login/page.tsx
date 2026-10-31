@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     return (
         <main style={{ maxWidth: 420, margin: "60px auto", padding: 24 }}>
-            <h1 style={{ fontSize: 28, marginBottom: 8 }}>Admin login</h1>
+            <h1 style={{ fontSize: 28, marginBottom: 8 }}>Sign in</h1>
             <p style={{ opacity: 0.8, marginBottom: 20 }}>
                 Enter your email. We’ll send a sign-in link.
             </p>
