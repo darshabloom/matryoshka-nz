@@ -17,11 +17,11 @@ export async function POST(req:Request){
  const qaPreview=process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="redesign/food-first-home"&&process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")===true;
  const db=testCheckout?serviceClient():qaPreview&&body.eventId==="23334f6b-00ee-445c-859f-b85347ce372c"?serviceClient():await createSupabaseServerClient(),now=new Date().toISOString();
  const {data:event}=await db.from("events").select("id,slug,title_en,title_ru,is_published,starts_at,ends_at,ordering_opens_at,ordering_closes_at,ticket_required,fulfilment_mode,ordering_enabled").eq("id",body.eventId).eq("is_published",true).gt("ends_at",now).maybeSingle();
- if(!event||(!testCheckout&&(!event.ordering_opens_at||!event.ordering_closes_at||event.ordering_closes_at>event.starts_at)))return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
- if(!testCheckout&&(event.ordering_opens_at>now||event.ordering_closes_at<=now))return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
+ if(!event||(!testCheckout&&!event.ordering_opens_at))return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
+ if(!testCheckout&&(event.ordering_opens_at>now||(event.ordering_closes_at&&event.ordering_closes_at<=now)))return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
  const {data:offers,error:offerErr}=await db.from("event_menu_items").select("menu_item_id,is_available,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,menu_item_translations(lang,name),vendors(display_name))").eq("event_id",event.id).in("menu_item_id",items.map(i=>i.dishId));
  if(offerErr)return NextResponse.json({error:"Could not check menu availability"},{status:500});
- const {data:acceptedChefs,error:chefsError}=await db.from("chef_event_applications")
+ const {data:acceptedChefs,error:chefsError}=await serviceClient().from("chef_event_applications")
   .select("vendor_id").eq("event_id",event.id).eq("status","approved");
  if(chefsError)return NextResponse.json({error:"Unable to confirm participating chefs"},{status:503});
  const permittedChefs=new Set((acceptedChefs??[]).map(c=>c.vendor_id));
@@ -33,7 +33,7 @@ export async function POST(req:Request){
  for(const it of items){
   const offer=(offers??[]).find((o:any)=>o.menu_item_id===it.dishId);
   const dish=(offer as any)?.menu_items;
-  if(!offer||(!offer.is_available&&!testCheckout)||!dish||!dish.is_active||dish.approval_status!=="approved"||!dish.allergen_review_complete||!dish.ingredients_text?.trim()||!dish.allergen_statement?.trim()||!permittedChefs.has(dish.vendor_id))return NextResponse.json({error:"Some items are no longer available or have incomplete allergen information. Please review your basket."},{status:409});
+  if(!offer||(!offer.is_available&&!testCheckout)||!dish||!dish.is_active||dish.approval_status!=="approved"||!dish.allergen_review_complete||!dish.ingredients_text?.trim()||!permittedChefs.has(dish.vendor_id))return NextResponse.json({error:"One or more dishes are unavailable or still awaiting ingredient review. Please review your basket."},{status:409});
   if(offer.max_quantity!==null&&it.quantity>offer.max_quantity)return NextResponse.json({error:"Selected quantity exceeds the event limit"},{status:409});
   const options=(groups??[]).filter(g=>g.menu_item_id===it.dishId);let extra=0;let summary:string[]=[];
   const uniq=[...new Set(it.optionIds)];if(uniq.length!==it.optionIds.length)return NextResponse.json({error:"Duplicate options not allowed"},{status:400});
