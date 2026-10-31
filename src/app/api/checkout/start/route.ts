@@ -1,12 +1,17 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
-import {serviceClient,isCheckoutConfigured,checkTicket,verifyStripeMerchantAccount} from "@/lib/server/checkout-security";
+import {serviceClient,isCheckoutConfigured,isTestCheckoutAllowed,checkTicket,verifyStripeMerchantAccount} from "@/lib/server/checkout-security";
 import {POST as validateQuote} from "../quote/route";
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(req:Request){
  if(!isCheckoutConfigured())return NextResponse.json({error:"Secure checkout is being configured. No payment has been taken."},{status:503});
  let body:any;try{body=await req.json()}catch{return NextResponse.json({error:"Invalid request"},{status:400})}
  const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
+ if(process.env.CHECKOUT_ENABLED!=="true"){
+  const auth=await createSupabaseServerClient();
+  const {data:{user}}=await auth.auth.getUser();
+  if(!isTestCheckoutAllowed(email,user?.email))return NextResponse.json({error:"Checkout is not open for this account. No payment has been taken."},{status:403});
+ }
  const phone=typeof body.phone==="string"?body.phone.trim():"";
  if(phone.length<6||phone.length>32||!/^\+?[\d\s().-]+$/.test(phone))return NextResponse.json({error:"Enter a valid contact phone number"},{status:400});
  if(email.length<6||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:"Enter a valid booking email address"},{status:400});
