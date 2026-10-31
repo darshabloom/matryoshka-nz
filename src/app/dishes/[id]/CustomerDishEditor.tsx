@@ -12,7 +12,7 @@ type Image={id:string;image_url:string;sort_order:number;position_x:number;posit
 type Vendor={id:string;display_name:string;slug:string;hero_image_url:string|null};
 type Event={id:string;title_en:string;title_ru:string|null};
 type Option={id:string;label_en:string;menu_item_option_values:{id:string;label_en:string;price_delta_cents:number;sort_order:number}[]};
-type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;ingredients_text:string|null;allergen_statement:string|null;cross_contact_statement:string|null;portion_label:string|null;allergen_review_complete:boolean;menu_item_translations:Translation[];menu_item_images:Image[]};
+type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;ingredients_text:string|null;ingredients_en:string|null;ingredients_ru:string|null;allergen_statement:string|null;cross_contact_statement:string|null;portion_label:string|null;allergen_review_complete:boolean;menu_item_translations:Translation[];menu_item_images:Image[]};
 type Size={size:string;price:string};
 export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,initialEventId}:{dish:Dish;isAdmin:boolean;options:Option[];vendors:Vendor[];events:Event[];initialEventId:string}){
  const {lang}=useLanguage(),ru=lang==="ru",t=(en:string,russian:string)=>ru?russian:en;
@@ -29,7 +29,8 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
   const options=(initialGroup?.menu_item_option_values??[]).slice().sort((a,b)=>a.sort_order-b.sort_order);
   return options.length?options.map(x=>({size:x.label_en,price:((dish.price_cents+x.price_delta_cents)/100).toFixed(2)})):[{size:"",price:(dish.price_cents/100).toFixed(2)}];
  });
- const [ingredients,setIngredients]=useState(dish.ingredients_text??"");
+ const [ingredientsEn,setIngredientsEn]=useState(dish.ingredients_en??dish.ingredients_text??"");
+ const [ingredientsRu,setIngredientsRu]=useState(dish.ingredients_ru??"");
  const [allergens,setAllergens]=useState(dish.allergen_statement??"");
  const [crossContact,setCrossContact]=useState(dish.cross_contact_statement??"");
  const [confirmed,setConfirmed]=useState(dish.allergen_review_complete??false);
@@ -57,7 +58,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
    const response=await fetch("/api/dishes",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     id:dish.id,action:"edit",name:nameEn,description:descriptionEn,language:"en",
     nameEn,nameRu,descriptionEn,descriptionRu,price:String(lowest),
-    ingredients,allergens,crossContact,portion:"",allergenConfirmed:confirmed
+    ingredientsEn,ingredientsRu,ingredients:ingredientsEn,allergens,crossContact,portion:"",allergenConfirmed:confirmed
    })});
    const result=await response.json();if(!response.ok)throw Error(message(result));
    await api("/api/dishes/size-prices",{dishId:dish.id,sizes});
@@ -153,13 +154,13 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
       {sizes.map((s,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} disabled={!canEdit} placeholder="300g / 1kg" maxLength={45} value={s.size} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,size:e.target.value}:p))}/><input aria-label={t("Price NZD","Цена NZD")} disabled={!canEdit} type="number" min="0" step=".01" placeholder="0.00" value={s.price} onChange={e=>setSizes(old=>old.map((p,j)=>j===i?{...p,price:e.target.value}:p))}/><button type="button" disabled={!canEdit||sizes.length===1} onClick={()=>setSizes(old=>old.filter((_,j)=>j!==i))} aria-label={t("Remove","Удалить")}>×</button><small style={{gridColumn:"1 / -1",fontSize:12,color:"#2d6840",fontWeight:750,marginBottom:5}}>{t("Customer sees","Покупатель видит")} {s.price!==""&&Number.isFinite(Number(s.price))?new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(Math.round(Number(s.price)*100))/100):"—"} (+10%)</small></div>)}
       {canEdit&&<button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(old=>[...old,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>}
     </section>
-    <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2>
+    <section className={styles.safetyEditor}><h2>{t("Ingredients","Состав")}</h2>
      <div className={styles.safetyGrid}>
-      <label>{t("Ingredients","Состав")}<textarea rows={2} disabled={!canEdit} value={ingredients} onChange={e=>{setIngredients(e.target.value);setConfirmed(false)}}/></label>
-      <label>{t("Allergens (or explicitly none)","Аллергены (или явно нет)")}<textarea rows={2} disabled={!canEdit} value={allergens} onChange={e=>{setAllergens(e.target.value);setConfirmed(false)}}/></label>
+      <label>Ingredients English<textarea rows={3} disabled={!canEdit} value={ingredientsEn} onChange={e=>{setIngredientsEn(e.target.value);setConfirmed(false)}}/></label>
+      <label>Ингредиенты на русском<textarea rows={3} disabled={!canEdit} value={ingredientsRu} onChange={e=>{setIngredientsRu(e.target.value);setConfirmed(false)}}/></label>
      </div>
-     <label>{t("Cross-contact information","Перекрёстный контакт")}<input disabled={!canEdit} value={crossContact} onChange={e=>{setCrossContact(e.target.value);setConfirmed(false)}}/></label>
-     <label className={styles.safetyCheck}><input type="checkbox" disabled={!canEdit} checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("Ingredients and allergen details checked and accurate.","Состав и сведения об аллергенах проверены и точны.")}</label>
+     <p className={styles.hint}>{t("List all ingredients and clearly identify ingredients that may cause allergies.","Укажите все ингредиенты, включая те, которые могут вызвать аллергию.")}</p>
+     <label className={styles.safetyCheck}><input type="checkbox" disabled={!canEdit} checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("I have checked that both ingredient lists are complete and accurate.","Я проверил(а), что оба списка ингредиентов полные и точные.")}</label>
     </section>
     {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
     <div className={styles.editActions}>
