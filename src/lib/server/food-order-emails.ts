@@ -87,7 +87,7 @@ export async function dispatchPaidFoodEmails(orderId:string):Promise<{sent:numbe
    ${d.recipient_kind==="chef"
     ?`<h2>${htmlSafe(ownRef!.reference)} — ${htmlSafe(chefName)}</h2><ul>${linesHtml(selected)}</ul>${allergies}<p><strong>General request:</strong> ${htmlSafe(order.special_requests||"None")}</p>`
     :`<h2>Chef orders</h2><ul>${chefDetails}</ul>${allergies}<p><strong>General request:</strong> ${htmlSafe(order.special_requests||"None")}</p>`}
-   <p>Food is provided at the event. Please keep your food-order reference.</p>
+   <p>Food is delivered to the event. Please keep your food-order reference.</p>
    ${d.recipient_kind==="customer"?`<p><strong>Amount paid: NZ$ ${(order.subtotal_cents/100).toFixed(2)}</strong></p><p>Your food order receipt is attached as a PDF.</p>`:""}
    </div>`;
   try{
