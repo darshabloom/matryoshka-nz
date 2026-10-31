@@ -8,7 +8,7 @@ export default async function Page({params,searchParams}:{params:Promise<{id:str
  if(!user)redirect("/sign-in");
  const {data:admin}=await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();
  const {data:dish}=await db.from("menu_items")
-  .select("id,vendor_id,price_cents,approval_status,ingredients_text,allergen_statement,cross_contact_statement,portion_label,allergen_review_complete,menu_item_translations(lang,name,description),menu_item_images(id,image_url,sort_order)")
+  .select("id,vendor_id,price_cents,approval_status,ingredients_text,allergen_statement,cross_contact_statement,portion_label,allergen_review_complete,menu_item_translations(lang,name,description),menu_item_images(id,image_url,sort_order,position_x,position_y)")
   .eq("id",id).maybeSingle();
  if(!dish)notFound();
  if(!admin){
