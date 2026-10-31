@@ -29,7 +29,14 @@ export async function GET(request: Request) {
         }
     );
 
-    await supabase.auth.exchangeCodeForSession(code);
-
-    return NextResponse.redirect(`${origin}/admin`);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) return NextResponse.redirect(`${origin}/login?error=auth`);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.redirect(`${origin}/login`);
+    const { data: admin } = await supabase.from("site_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+    if (admin) return NextResponse.redirect(`${origin}/admin`);
+    const { data: membership } = await supabase.from("vendor_users").select("vendor_id, vendors(slug)").eq("user_id", user.id).limit(1).maybeSingle();
+    const vendor = membership?.vendors as unknown as {slug:string}|null;
+    if (vendor?.slug) return NextResponse.redirect(`${origin}/chef/${encodeURIComponent(vendor.slug)}`);
+    return NextResponse.redirect(`${origin}/`);
 }
