@@ -15,6 +15,7 @@ export default function EventFoodPage(){
  const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
  const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
  const [linkedTicketRef,setLinkedTicketRef]=useState("");
+ const [ticketArrival,setTicketArrival]=useState(false);
  const [descriptionExpanded,setDescriptionExpanded]=useState(false);
 
  useEffect(()=>{const controller=new AbortController();if(!slug)return;
@@ -31,6 +32,7 @@ export default function EventFoodPage(){
   try{
    const param=new URLSearchParams(window.location.search).get("ticket_ref")?.trim().toUpperCase()??"";
    const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+e.id)??"";
+   setTicketArrival(/^YMR-[A-Z0-9-]{5,80}$/.test(param));
    const ref=/^YMR-[A-Z0-9-]{5,80}$/.test(param)?param:saved;
    if(/^YMR-[A-Z0-9-]{5,80}$/.test(ref)){
     sessionStorage.setItem("matryoshka:ticket_ref:"+e.id,ref);
@@ -59,7 +61,7 @@ export default function EventFoodPage(){
   </div>
   <div className={styles.eventIntroMedia}>
    <div className={styles.cover}><img src={e.cover_image_url||e.gallery_image_urls?.[0]||"/images/matryoshka-new-year-event-placeholder.svg"} alt={e.cover_image_url||e.gallery_image_urls?.length?t("Event artwork","Изображение мероприятия"):t("Festive New Year's Eve illustration","Праздничная новогодняя иллюстрация")}/></div>
-   {e.external_ticket_url&&e.slug==="novogodnik27"&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
+   {e.external_ticket_url&&e.slug==="novogodnik27"&&!ticketArrival&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
   </div>
   <div className={styles.eventDescription}>
    <p className={descriptionExpanded?styles.descriptionExpanded:styles.descriptionCollapsed}>{label(e.description_en,e.description_ru,ru)}</p>
