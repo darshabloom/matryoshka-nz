@@ -60,7 +60,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     }))
    };
   });
-  const orderingOpen=event.is_published&&event.ordering_enabled&&(!event.ordering_opens_at||new Date(event.ordering_opens_at)<=new Date())&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
+  const orderingOpen=event.is_published&&!!event.ordering_opens_at&&!!event.ordering_closes_at&&new Date(event.ordering_opens_at)<=new Date()&&new Date(event.ordering_closes_at)>new Date()&&new Date(event.ordering_closes_at)<=new Date(event.starts_at);
   return NextResponse.json({event:{...event,ordering_open:orderingOpen},dishes},{headers:{"Cache-Control":"no-store"}});
  }catch(e){console.error("Event menu error",e);return NextResponse.json({error:"Unable to load event menu"},{status:500})}
 }
