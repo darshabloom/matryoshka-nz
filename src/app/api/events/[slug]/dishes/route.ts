@@ -21,7 +21,9 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   if(oe)throw oe;
   // A previously approved dish must disappear if its chef is no longer
   // accepted for this event. Database reservations enforce the same rule.
-  const {data:accepted,error:acceptedError}=await db.from("chef_event_applications")
+  // Chef applications are private under RLS. Look up approved vendor IDs
+  // server-side; expose only filtered public menu items, never applications.
+  const {data:accepted,error:acceptedError}=await serviceClient().from("chef_event_applications")
    .select("vendor_id").eq("event_id",event.id).eq("status","approved");
   if(acceptedError)throw acceptedError;
   const chefIds=new Set((accepted??[]).map(x=>x.vendor_id));
