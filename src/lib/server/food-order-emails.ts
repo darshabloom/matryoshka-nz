@@ -51,18 +51,18 @@ export async function dispatchPaidFoodEmails(orderId:string):Promise<{sent:numbe
   }
   const ownRef=refs.find(r=>r.vendor_id===d.vendor_id);
   if(d.recipient_kind==="chef"&&!ownRef){
-   await db.from("food_order_email_deliveries").update({status:"failed",last_error:"Chef reference missing",updated_at:new Date().toISOString()}).eq("id",d.id);
+   await db.from("food_order_email_deliveries").update({status:"failed",last_error:"Chef assignment missing",updated_at:new Date().toISOString()}).eq("id",d.id);
    result.failed++;continue;
   }
   const selected=d.recipient_kind==="chef"?allLines.filter(x=>x.vendor_id===d.vendor_id):allLines;
   const chefDetails=refs.map(r=>{
    const vendor=r.vendors as unknown as {display_name:string}|null;
-   return `<li><strong>${htmlSafe(r.reference)} — ${htmlSafe(vendor?.display_name||"Chef")}</strong><ul>${linesHtml(allLines.filter(x=>x.vendor_id===r.vendor_id))}</ul></li>`;
+   return `<li><strong>${htmlSafe(vendor?.display_name||"Chef")}</strong><ul>${linesHtml(allLines.filter(x=>x.vendor_id===r.vendor_id))}</ul></li>`;
   }).join("");
   const allergies=order.allergy_declaration==="declared"?`<p><strong>ALLERGY DECLARED:</strong> ${htmlSafe(order.allergy_details)}</p>`:"<p>No allergies declared.</p>";
   const chefName=(ownRef?.vendors as unknown as {display_name:string}|null)?.display_name||"Chef";
   const title=d.recipient_kind==="chef"
-   ?`Kitchen order ${ownRef!.reference} — ${order.master_order_reference}`
+   ?`Kitchen food order ${order.master_order_reference}`
    :`Food order confirmed — ${order.master_order_reference}`;
   const pdfAttachment=d.recipient_kind==="customer"?{
    filename:`Matryoshka-${order.master_order_reference}.pdf`,
@@ -72,7 +72,7 @@ export async function dispatchPaidFoodEmails(orderId:string):Promise<{sent:numbe
     totalCents:order.subtotal_cents,
     chefs:refs.map(r=>{
      const vendor=r.vendors as unknown as {display_name:string}|null;
-     return {reference:r.reference,name:vendor?.display_name||"Chef",
+     return {name:vendor?.display_name||"Chef",
       items:allLines.filter(x=>x.vendor_id===r.vendor_id).map(x=>({
        name:x.dish_name_snapshot,quantity:x.quantity,
        unitPriceCents:x.unit_price_cents,lineTotalCents:x.line_total_cents
@@ -82,10 +82,10 @@ export async function dispatchPaidFoodEmails(orderId:string):Promise<{sent:numbe
   }:null;
   const body=`<div style="font:15px Arial,sans-serif;max-width:640px;color:#463028">
    <h1 style="color:#96352e">Matryoshka food order</h1>
-   <p><strong>Master reference: ${htmlSafe(order.master_order_reference)}</strong></p>
+   <p><strong>Food order number: ${htmlSafe(order.master_order_reference)}</strong></p>
    <p>${htmlSafe((order.events as unknown as {title_en:string}|null)?.title_en||"Event")}</p>
    ${d.recipient_kind==="chef"
-    ?`<h2>${htmlSafe(ownRef!.reference)} — ${htmlSafe(chefName)}</h2><ul>${linesHtml(selected)}</ul>${allergies}<p><strong>General request:</strong> ${htmlSafe(order.special_requests||"None")}</p>`
+    ?`<h2>${htmlSafe(chefName)}</h2><ul>${linesHtml(selected)}</ul>${allergies}<p><strong>General request:</strong> ${htmlSafe(order.special_requests||"None")}</p>`
     :`<h2>Chef orders</h2><ul>${chefDetails}</ul>${allergies}<p><strong>General request:</strong> ${htmlSafe(order.special_requests||"None")}</p>`}
    <p>Food is delivered to the event. Please keep your food-order reference.</p>
    ${d.recipient_kind==="customer"?`<p><strong>Amount paid: NZ$ ${(order.subtotal_cents/100).toFixed(2)}</strong></p><p>Your food order receipt is attached as a PDF.</p>`:""}
