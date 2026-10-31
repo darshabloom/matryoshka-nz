@@ -1,3 +1,4 @@
+import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 "use client";
 import {useState} from "react";
 import Link from "next/link";
@@ -74,12 +75,13 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
   setBusy(true);setError("");
   const db=createSupabaseBrowserClient();
   for(const file of Array.from(files)){
-   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5242880){
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
     setError(t("Use JPG, PNG or WebP under 5 MB.","Используйте JPG, PNG или WebP до 5 МБ."));break;
    }
-   const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+   const optimised=await optimiseDishPhoto(file);
+   const ext="webp";
    const key=`${dish.id}/${crypto.randomUUID()}.${ext}`;
-   const {error:up}=await db.storage.from("dish-photos").upload(key,file,{contentType:file.type,upsert:false});
+   const {error:up}=await db.storage.from("dish-photos").upload(key,optimised,{contentType:optimised.type,upsert:false});
    if(up){setError(up.message);break}
    const url=db.storage.from("dish-photos").getPublicUrl(key).data.publicUrl;
    const {data:photo,error:save}=await db.from("menu_item_images").insert({menu_item_id:dish.id,image_url:url,sort_order:photos.length}).select("id,image_url,sort_order").single();
