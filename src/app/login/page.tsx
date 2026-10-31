@@ -12,6 +12,13 @@ export default function LoginPage() {
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [error, setError] = useState<string>("");
 
+    async function signInWithGoogle() {
+        setStatus("sending");
+        setError("");
+        const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${location.origin}/auth/callback` } });
+        if (error) { setStatus("error"); setError(error.message); }
+    }
+
     async function signIn(e: React.FormEvent) {
         e.preventDefault();
         setStatus("sending");
@@ -39,6 +46,8 @@ export default function LoginPage() {
             <p style={{ opacity: 0.8, marginBottom: 20 }}>
                 Enter your email. We’ll send a sign-in link.
             </p>
+
+            <button type="button" onClick={signInWithGoogle} disabled={status === "sending"} style={{width:"100%",padding:14,borderRadius:10,border:"1px solid #aaa",background:"white",color:"#111",cursor:"pointer",marginBottom:16}}>Continue with Google</button>
 
             <form onSubmit={signIn} style={{ display: "grid", gap: 12 }}>
                 <input
