@@ -1,3 +1,4 @@
+import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
@@ -41,7 +42,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
    await api("/api/dishes/size-prices","POST",{dishId:id,sizes});
    const sb=createSupabaseBrowserClient();
    for(let i=0;i<photos.length;i++){
-    const file=photos[i];
+    const file=await optimiseDishPhoto(photos[i]);
     const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
     const key=`${id}/${crypto.randomUUID()}.${ext}`;
     const {error:uploadError}=await sb.storage.from("dish-photos").upload(key,file,{contentType:file.type,upsert:false});
@@ -60,7 +61,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
   <div className={styles.top}><Link href={eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food"}>← {t("Dishes","Блюда")}</Link><strong>{t("New dish","Новое блюдо")}</strong><button type="button" className={styles.doneButton} onClick={()=>void save(false)} disabled={busy}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button></div>
   <div className={styles.product}><section className={styles.gallery}>
    <div className={styles.heroPhoto}>{preview?<img src={preview} alt={t("Dish photo","Фото блюда")}/>:<div className={styles.placeholder}>✿<small>{t("Dish photo","Фото блюда")}</small></div>}</div>
-   <label className={styles.addPhoto} style={{width:"100%",height:65,marginTop:10}}>＋ {t("Choose photos","Выбрать фото")}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={e=>{const files=Array.from(e.target.files??[]).filter(f=>f.size<=5242880&&["image/jpeg","image/png","image/webp"].includes(f.type)).slice(0,3);setPhotos(files)}}/></label>
+   <label className={styles.addPhoto} style={{width:"100%",height:65,marginTop:10}}>＋ {t("Choose photos","Выбрать фото")}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={e=>{const files=Array.from(e.target.files??[]).filter(f=>["image/jpeg","image/png","image/webp"].includes(f.type)).slice(0,3);setPhotos(files)}}/></label>
    <p className={styles.hint}>{t("Up to 3 JPG, PNG or WebP photos, 5 MB each.","До 3 фото JPG, PNG или WebP, по 5 МБ.")}</p>
   </section><section className={styles.details}>
    <div className={styles.chef}>{chef?.hero_image_url?<img className={styles.avatar} alt={chef.display_name} src={chef.hero_image_url}/>:<span className={styles.avatar}>{(chef?.display_name??"M")[0]}</span>}
