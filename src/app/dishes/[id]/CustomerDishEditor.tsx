@@ -40,6 +40,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
  const [confirmed,setConfirmed]=useState(dish.allergen_review_complete??false);
  const [photos,setPhotos]=useState([...dish.menu_item_images].sort((a,b)=>a.sort_order-b.sort_order));
  const [active,setActive]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [confirmDelete,setConfirmDelete]=useState(false);
  const canEdit=isAdmin||["draft","changes_requested"].includes(dish.approval_status);
  const chef=vendors.find(c=>c.id===chefId);
  function message(data:any){return String(data?.error??"Unable to save");}
@@ -81,6 +82,18 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
    router.push(isAdmin&&eventId?`/admin/events/${eventId}?tab=menu`:isAdmin?"/admin?tab=food":"/chef-dashboard?tab=dishes");
    router.refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to save");setNotice(t("Your editor is still open so you can correct the issue.","Редактор открыт, чтобы вы могли исправить проблему."))}
+  finally{setBusy(false)}
+ }
+ async function deleteDish(){
+  if(!isAdmin||busy||!confirmDelete)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const response=await fetch("/api/admin/dishes/delete",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({dishId:dish.id})});
+   const result=await response.json();
+   if(!response.ok)throw Error(message(result));
+   router.push(eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food");
+   router.refresh();
+  }catch(e){setError(e instanceof Error?e.message:"Unable to delete dish");setConfirmDelete(false)}
   finally{setBusy(false)}
  }
  async function upload(files:FileList|null){
@@ -192,6 +205,16 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
       {canEdit&&(!isAdmin||dish.approval_status!=="approved")&&<button type="button" className={styles.saveDraft} disabled={busy} onClick={()=>void done(true)}>{t("Save draft","Сохранить черновик")}</button>}
       {canEdit&&<button type="button" className={styles.submitApproval} disabled={busy} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("Publish","Опубликовать"):t("✓ Done","✓ Готово")}</button>}
     </div>
+    {isAdmin&&<section className={styles.deleteDishSection}>
+      <h2>{t("Delete dish","Удалить блюдо")}</h2>
+      <p>{t("Remove this dish from the catalogue and all event menus. Existing customer order history will be retained.","Убрать блюдо из каталога и меню всех мероприятий. История существующих заказов сохранится.")}</p>
+      {!confirmDelete?<button type="button" disabled={busy} className={styles.deleteDishButton} onClick={()=>setConfirmDelete(true)}>{t("Delete dish","Удалить блюдо")}</button>:
+      <div className={styles.deleteDishConfirm} role="group" aria-label={t("Confirm deletion","Подтвердить удаление")}>
+        <strong>{t("Delete this dish from Matryoshka?","Удалить это блюдо из Matryoshka?")}</strong>
+        <div><button type="button" className={styles.deleteDishButton} disabled={busy} onClick={()=>void deleteDish()}>{busy?t("Deleting…","Удаление…"):t("Yes, delete dish","Да, удалить")}</button>
+        <button type="button" disabled={busy} onClick={()=>setConfirmDelete(false)}>{t("Cancel","Отмена")}</button></div>
+      </div>}
+    </section>}
    </section>
   </div>
  </div></main>;
