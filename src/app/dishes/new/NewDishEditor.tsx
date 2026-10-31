@@ -15,7 +15,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
  const [nameEn,setNameEn]=useState(""),[nameRu,setNameRu]=useState("");
  const [descriptionEn,setDescriptionEn]=useState(""),[descriptionRu,setDescriptionRu]=useState("");
  const [sizes,setSizes]=useState<Size[]>([{size:"",price:""}]);
- const [ingredients,setIngredients]=useState(""),[allergens,setAllergens]=useState(""),[crossContact,setCrossContact]=useState(""),[confirmed,setConfirmed]=useState(false);
+ const [ingredientsEn,setIngredientsEn]=useState(""),[ingredientsRu,setIngredientsRu]=useState(""),[confirmed,setConfirmed]=useState(false);
  const [photos,setPhotos]=useState<File[]>([]),[createdId,setCreatedId]=useState("");
  const [preview,setPreview]=useState("");
  useEffect(()=>{if(!photos[0]){setPreview("");return};const url=URL.createObjectURL(photos[0]);setPreview(url);return()=>URL.revokeObjectURL(url)},[photos]);
@@ -38,7 +38,7 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
     const created=await api("/api/dishes","POST",{name:nameEn,description:descriptionEn,language:"en",price:String(price),vendor_id:chefId||null});
     id=created.id;setCreatedId(id);
    }
-   await api("/api/dishes","PATCH",{id,action:"edit",name:nameEn,description:descriptionEn,language:"en",nameEn,nameRu,descriptionEn,descriptionRu,price:String(price),ingredients,allergens,crossContact,portion:"",allergenConfirmed:confirmed});
+   await api("/api/dishes","PATCH",{id,action:"edit",name:nameEn,description:descriptionEn,language:"en",nameEn,nameRu,descriptionEn,descriptionRu,price:String(price),ingredientsEn,ingredientsRu,ingredients:ingredientsEn,allergens:"",crossContact:"",portion:"",allergenConfirmed:confirmed});
    await api("/api/dishes/size-prices","POST",{dishId:id,sizes});
    const sb=createSupabaseBrowserClient();
    for(let i=0;i<photos.length;i++){
@@ -78,11 +78,11 @@ export default function NewDishEditor({vendors,events,initialChefId,initialEvent
     {sizes.map((row,i)=><div key={i} className={styles.sizeRow}><input aria-label={t("Size","Размер")} placeholder="300g / 1kg" value={row.size} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,size:e.target.value}:x))}/><input aria-label={t("Price","Цена")} type="number" min="0" step=".01" placeholder="0.00" value={row.price} onChange={e=>setSizes(v=>v.map((x,j)=>j===i?{...x,price:e.target.value}:x))}/><button type="button" disabled={sizes.length===1} onClick={()=>setSizes(v=>v.filter((_,j)=>j!==i))}>×</button><small style={{gridColumn:"1 / -1",fontSize:12,color:"#2d6840",fontWeight:750,marginBottom:5}}>{t("Customer sees","Покупатель видит")} {row.price!==""&&Number.isFinite(Number(row.price))?new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD"}).format(customerPriceCents(Math.round(Number(row.price)*100))/100):"—"} (+10%)</small></div>)}
     <button type="button" className={styles.addSize} disabled={sizes.length>=12} onClick={()=>setSizes(v=>[...v,{size:"",price:""}])}>＋ {t("Add size","Добавить размер")}</button>
    </section>
-   <section className={styles.safetyEditor}><h2>{t("Ingredients & allergens","Состав и аллергены")}</h2><div className={styles.safetyGrid}>
-    <label>{t("Ingredients","Состав")}<textarea rows={2} value={ingredients} onChange={e=>{setIngredients(e.target.value);setConfirmed(false)}}/></label>
-    <label>{t("Allergens (or explicitly none)","Аллергены (или явно нет)")}<textarea rows={2} value={allergens} onChange={e=>{setAllergens(e.target.value);setConfirmed(false)}}/></label>
-   </div><label>{t("Cross-contact information","Перекрёстный контакт")}<input value={crossContact} onChange={e=>{setCrossContact(e.target.value);setConfirmed(false)}}/></label>
-   <label className={styles.safetyCheck}><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("I confirm that the food-safety information is accurate.","Подтверждаю точность сведений о составе и аллергенах.")}</label></section>
+   <section className={styles.safetyEditor}><h2>{t("Ingredients","Состав")}</h2><div className={styles.safetyGrid}>
+    <label>Ingredients English<textarea rows={3} value={ingredientsEn} onChange={e=>{setIngredientsEn(e.target.value);setConfirmed(false)}}/></label>
+    <label>Ингредиенты на русском<textarea rows={3} value={ingredientsRu} onChange={e=>{setIngredientsRu(e.target.value);setConfirmed(false)}}/></label>
+   </div><p className={styles.hint}>{t("Include all ingredients and identify ingredients that may cause allergies.","Укажите все ингредиенты, включая те, которые могут вызвать аллергию.")}</p>
+   <label className={styles.safetyCheck}><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>{t("Both ingredient lists are complete and accurate.","Оба списка ингредиентов полные и точные.")}</label></section>
    {error&&<p role="alert" className={styles.error}>{error}{createdId&&<> · <Link href={`/dishes/${createdId}`}>{t("Open saved draft","Открыть сохранённый черновик")}</Link></>}</p>}
    <div className={styles.editActions}><button type="button" disabled={busy} className={styles.saveDraft} onClick={()=>void save(true)}>{t("Save draft","Сохранить черновик")}</button><button type="button" disabled={busy} className={styles.submitApproval} onClick={()=>void save(false)}>{busy?t("Saving…","Сохраняем…"):t("✓ Done · Approve","✓ Готово · Одобрить")}</button></div>
   </section></div>
