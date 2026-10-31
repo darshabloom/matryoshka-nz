@@ -32,7 +32,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   const eligible=(offers??[]).filter((o:any)=>o.menu_items&&chefIds.has(o.menu_items.vendor_id));
   const canOrder=(item:any)=>!!item.vendor_id&&chefIds.has(item.vendor_id)&&
    !!item.allergen_review_complete&&!!item.ingredients_text?.trim()&&
-   !!item.allergen_statement?.trim()&&item.is_active&&item.approval_status==="approved";
+   item.is_active&&item.approval_status==="approved";
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
    db.from("menu_item_images").select("menu_item_id,image_url,sort_order,position_x,position_y,zoom_percent,crop_mode").in("menu_item_id",ids).order("sort_order"),
@@ -60,7 +60,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     }))
    };
   });
-  const orderingOpen=event.is_published&&!!event.ordering_opens_at&&!!event.ordering_closes_at&&new Date(event.ordering_opens_at)<=new Date()&&new Date(event.ordering_closes_at)>new Date()&&new Date(event.ordering_closes_at)<=new Date(event.starts_at);
+  const orderingOpen=event.is_published&&!!event.ordering_opens_at&&new Date(event.ordering_opens_at)<=new Date()&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
   return NextResponse.json({event:{...event,ordering_open:orderingOpen},dishes},{headers:{"Cache-Control":"no-store"}});
  }catch(e){console.error("Event menu error",e);return NextResponse.json({error:"Unable to load event menu"},{status:500})}
 }
