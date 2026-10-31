@@ -14,7 +14,7 @@ function validate(raw:any){
  const valid=(v:any)=>typeof v==="string"&&!Number.isNaN(Date.parse(v));
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||slug.length>90||!title||title.length>200||!valid(raw.starts_at)||!valid(raw.ends_at)||Date.parse(raw.starts_at)>=Date.parse(raw.ends_at))return null;
  if((raw.ordering_opens_at&&!valid(raw.ordering_opens_at))||(raw.ordering_closes_at&&!valid(raw.ordering_closes_at)))return null;
- if(raw.ordering_opens_at&&raw.ordering_closes_at&&Date.parse(raw.ordering_opens_at)>=Date.parse(raw.ordering_closes_at))return null;
+ if(raw.ordering_opens_at&&raw.ordering_closes_at&&(Date.parse(raw.ordering_opens_at)>=Date.parse(raw.ordering_closes_at)||Date.parse(raw.ordering_closes_at)>Date.parse(raw.starts_at)))return null;
  const txt=(v:any,n=4000)=>typeof v==="string"?v.trim().slice(0,n)||null:null;
  return {slug,title_en:title,title_ru:txt(raw.title_ru,200),description_en:txt(raw.description_en),description_ru:txt(raw.description_ru),
  starts_at:raw.starts_at,ends_at:raw.ends_at,ordering_opens_at:raw.ordering_opens_at||null,ordering_closes_at:raw.ordering_closes_at||null,
