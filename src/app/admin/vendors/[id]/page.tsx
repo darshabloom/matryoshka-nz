@@ -1,3 +1,4 @@
+import { GoogleChefLink } from "@/components/admin/GoogleChefLink";
 import { redirect } from "next/navigation";
 import { createSupabaseServerReadonlyClient } from "@/lib/supabase/server-readonly";
 
@@ -13,6 +14,10 @@ export default async function AdminVendorPage({
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) redirect("/login");
 
+    const { data: admin } = await supabase.from("site_admins").select("user_id").eq("user_id", auth.user.id).maybeSingle();
+    if (!admin) redirect("/");
+
+    const { data: linkedAccounts } = await supabase.from("vendor_users").select("user_id, role").eq("vendor_id", id);
     const { data: vendor, error } = await supabase
         .from("vendors")
         .select(`
@@ -73,6 +78,8 @@ export default async function AdminVendorPage({
             </p>
 
             <hr style={{ margin: "24px 0" }} />
+
+            <GoogleChefLink vendorId={id} linkedCount={linkedAccounts?.length ?? 0} />
 
             <h2>Menu items</h2>
 
