@@ -48,6 +48,10 @@ export async function PATCH(req:Request){
     });
     if(second)return NextResponse.json({error:"One language saved; could not save second description"},{status:503});
    }
+   if(typeof x.ingredientsEn==="string"&&typeof x.ingredientsRu==="string"){
+    const {error:ingredientsError}=await db.rpc("save_dish_ingredients_bilingual",{p_id:item.id,p_en:x.ingredientsEn,p_ru:x.ingredientsRu});
+    if(ingredientsError)return NextResponse.json({error:"Dish saved, but bilingual ingredients could not be saved"},{status:503});
+   }
    return NextResponse.json({ok:true});
   }
   const {error:up}=await db.from("menu_items").update({price_cents:cents,ingredients_text:String(x.ingredients??"").slice(0,4000),allergen_statement:String(x.allergens??"").slice(0,2000),cross_contact_statement:String(x.crossContact??"").slice(0,2000),portion_label:String(x.portion??"").slice(0,150),allergen_review_complete:x.allergenConfirmed===true,
@@ -59,7 +63,12 @@ export async function PATCH(req:Request){
   if(pauseError)return NextResponse.json({error:"Draft saved but event listings need review"},{status:503});
   const translations=bilingual?bilingualRows.map(row=>({menu_item_id:item.id,...row})):[{menu_item_id:item.id,lang,name,description}];
   const {error:tr}=await db.from("menu_item_translations").upsert(translations,{onConflict:"menu_item_id,lang"});
-  return tr?NextResponse.json({error:"Details saved, but translation could not be saved"},{status:500}):NextResponse.json({ok:true});
+  if(tr)return NextResponse.json({error:"Details saved, but translation could not be saved"},{status:500});
+  if(typeof x.ingredientsEn==="string"&&typeof x.ingredientsRu==="string"){
+   const {error:ingredientsError}=await db.rpc("save_dish_ingredients_bilingual",{p_id:item.id,p_en:x.ingredientsEn,p_ru:x.ingredientsRu});
+   if(ingredientsError)return NextResponse.json({error:"Dish saved, but bilingual ingredients could not be saved"},{status:503});
+  }
+  return NextResponse.json({ok:true});
  }
  if(x.action==="submit"){
   if(admin)return NextResponse.json({error:"Admin can approve directly"},{status:400});
