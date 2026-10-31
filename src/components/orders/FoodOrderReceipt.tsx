@@ -3,7 +3,7 @@ import styles from "./FoodOrderReceipt.module.css";
 
 export type ChefReceipt={
  reference:string;vendorId:string;chef:string;
- items:{name:string;quantity:number;options:unknown;note:string}[];
+ items:{name:string;quantity:number;unitPriceCents:number;lineTotalCents:number;options:unknown;note:string}[];
 };
 export type PaidFoodReceipt={
  id:string;paymentStatus:string;status:string;paidAt:string|null;
@@ -14,7 +14,8 @@ export type PaidFoodReceipt={
 
 export function FoodOrderReceipt({receipt}:{receipt:PaidFoodReceipt}){
  const paid=receipt.paymentStatus==="paid";
- const total=(Number(receipt.totalCents??0)/100).toLocaleString("en-NZ",{style:"currency",currency:"NZD"});
+ const money=(cents:number)=>(cents/100).toLocaleString("en-NZ",{style:"currency",currency:"NZD"});
+ const total=money(Number(receipt.totalCents??0));
  return <article className={styles.receipt} aria-label="Matryoshka food order receipt">
   <header className={styles.header}>
    <div className={styles.brand}>✿ MATRYOSHKA <span>HOMEMADE FOOD</span></div>
@@ -35,12 +36,12 @@ export function FoodOrderReceipt({receipt}:{receipt:PaidFoodReceipt}){
      <strong>{chef.reference}</strong>
     </div>
     {chef.items.map((item,i)=><div className={styles.item} key={i}>
-     <span>{item.quantity} × {item.name}{item.note&&<em>Note: {item.note}</em>}</span>
+     <span>{item.quantity} × {item.name}<small className={styles.priceDetails}>{money(item.unitPriceCents)} each</small>{item.note&&<em>Note: {item.note}</em>}</span><strong className={styles.lineTotal}>{money(item.lineTotalCents)}</strong>
     </div>)}
    </section>)}
   </div>
   <footer className={styles.footer}>
-   <strong>Paid: {total}</strong>
+   <div className={styles.paymentTotal}><span>Total paid</span><strong>{total}</strong></div>
    <p>Present the relevant chef reference when collecting your food at the event.</p>
    <small>This is a Matryoshka food-order confirmation, not a Yumorilnik admission ticket.</small>
   </footer>
