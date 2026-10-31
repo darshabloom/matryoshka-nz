@@ -27,7 +27,7 @@ export default function EventFoodPage(){
  const orderedDishes=useMemo(()=>[...dishes].sort((a,b)=>{const ai=categories.findIndex(c=>c.slug===a.categories[0]?.slug),bi=categories.findIndex(c=>c.slug===b.categories[0]?.slug);return ai-bi}),[dishes,categories]);
  const e=data?.event,open=e?.ordering_open??false;
  useEffect(()=>{
-  if(!e?.id||e.slug!=="novogodnik26")return;
+  if(!e?.id||e.slug!=="novogodnik27")return;
   try{
    const param=new URLSearchParams(window.location.search).get("ticket_ref")?.trim().toUpperCase()??"";
    const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+e.id)??"";
@@ -43,7 +43,7 @@ export default function EventFoodPage(){
  <div className={styles.wrap}>
  <Link className={styles.back} href="/events">← {t("All events","Все события")}</Link>
  {busy&&<p role="status">{t("Loading event food…","Загружаем меню…")}</p>}{error&&<p role="alert" className={styles.alert}>{error}</p>}
- {e&&<>{e.slug==="novogodnik26"&&linkedTicketRef&&<aside className={styles.bookingReferenceNote} role="status">
+ {e&&<>{e.slug==="novogodnik27"&&linkedTicketRef&&<aside className={styles.bookingReferenceNote} role="status">
    <span>✓ {t("Event ticket reference","Номер билета на мероприятие")}: <strong>{linkedTicketRef}</strong></span>
    <span className={styles.bookingReferenceExplainer}>{t("Your booking reference is ready for food checkout. Use the email of any adult on the paid booking.","Номер билета перенесён. При оформлении заказа используйте email взрослого из оплаченного бронирования.")}</span>
   </aside>}<section className={styles.heading}>
@@ -59,7 +59,7 @@ export default function EventFoodPage(){
   </div>
   <div className={styles.eventIntroMedia}>
    <div className={styles.cover}><img src={e.cover_image_url||e.gallery_image_urls?.[0]||"/images/matryoshka-new-year-event-placeholder.svg"} alt={e.cover_image_url||e.gallery_image_urls?.length?t("Event artwork","Изображение мероприятия"):t("Festive New Year's Eve illustration","Праздничная новогодняя иллюстрация")}/></div>
-   {e.external_ticket_url&&e.slug==="novogodnik26"&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
+   {e.external_ticket_url&&e.slug==="novogodnik27"&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
   </div>
   <div className={styles.eventDescription}>
    <p className={descriptionExpanded?styles.descriptionExpanded:styles.descriptionCollapsed}>{label(e.description_en,e.description_ru,ru)}</p>
