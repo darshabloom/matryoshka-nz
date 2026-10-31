@@ -127,7 +127,7 @@
  .chefAvatar{width:32px;height:32px}.chefName strong{font-size:11px}
  .categoryHeading{font-size:28px}
  .floatingCart{top:104px}}
-@media(prefers-reduced-motion:reduce){.card,.card:hover,.image img,.floatingCart,.floatingCart:hover,.quickButton{transition:none;transform:none}}
+@media(prefers-reduced-motion:reduce){.card,.card:hover,.floatingCart,.floatingCart:hover,.quickButton{transition:none;transform:none}.image img{transition:none}}
 
 
 /* Smaller menu title; poster replaces the prior ordering-status callout. */
