@@ -1,7 +1,7 @@
 /** Compact one- or multi-page PDF receipt. Uses standard PDF fonts, so unsupported
  * glyphs are transliterated to printable Latin equivalents. No external PDF service. */
 type PdfLine={name:string;quantity:number;unitPriceCents:number;lineTotalCents:number};
-export type EmailPdfOrder={masterReference:string;eventTitle:string;totalCents:number;chefs:{reference:string;name:string;items:PdfLine[]}[]};
+export type EmailPdfOrder={masterReference:string;eventTitle:string;totalCents:number;chefs:{name:string;items:PdfLine[]}[]};
 const currency=(n:number)=>"NZ$ "+(n/100).toFixed(2);
 const translit:Record<string,string>={
  а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"yo",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"shch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya"
@@ -22,7 +22,7 @@ function pdfPage(order:EmailPdfOrder,sections:string[][],index:number,count:numb
  text(48,782,22,"MATRYOSHKA",true);
  text(48,760,9,"HOMEMADE FOOD  |  FOOD ORDER RECEIPT");
  line(746);
- text(48,725,12,"MASTER FOOD ORDER NUMBER",true);
+ text(48,725,12,"FOOD ORDER NUMBER",true);
  text(48,692,27,order.masterReference,true);
  text(48,671,12,order.eventTitle);
  line(655);
@@ -35,14 +35,14 @@ function pdfPage(order:EmailPdfOrder,sections:string[][],index:number,count:numb
  line(104);
  text(48,82,13,"TOTAL PAID",true);
  text(440,82,13,currency(order.totalCents),true);
- text(48,55,9,"Paid food order confirmation. Keep your master and chef references.");
+ text(48,55,9,"Paid food order confirmation. Keep your food order number.");
  text(48,35,8,`Page ${index+1} of ${count}`);
  return commands.join("\n")+"\n";
 }
 export function generateFoodReceiptPdf(order:EmailPdfOrder):Buffer{
  const rows:string[]=[];
  for(const chef of order.chefs){
-  rows.push("# "+chef.reference+" - "+chef.name);
+  rows.push("# "+chef.name);
   for(const item of chef.items){
    const n=latin(item.name);const chunks=n.match(/.{1,68}(?:\s|$)|.{1,68}/g)??[n];
    rows.push(`~ ${item.quantity} x ${chunks[0].trim()}`);
