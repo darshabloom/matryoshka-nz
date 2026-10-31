@@ -86,7 +86,7 @@ export default function EventFoodPage(){
  <div className={styles.cardBody}>
   <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} className={styles.cardTitle}><h3>{label(d.title_en,d.title_ru,ru)}</h3></Link>
   {label(d.description_en,d.description_ru,ru)&&<p className={styles.cardDescription}>{label(d.description_en,d.description_ru,ru)}</p>}
-  <div className={styles.cardBottom}><strong>{d.options.some(g=>g.max_select===1&&g.values.length>1)?t("From ","От "):""}{dollars(customerPriceCents(d.price_cents+d.options.filter(g=>g.max_select===1&&g.values.length===1).reduce((sum,g)=>sum+g.values[0].price_delta_cents,0))}</strong></div>
+  <div className={styles.cardBottom}><strong>{d.options.some(g=>g.max_select===1&&g.values.length>1)?t("From ","От "):""}{dollars(customerPriceCents(d.price_cents+d.options.filter(g=>g.max_select===1&&g.values.length===1).reduce((sum,g)=>sum+g.values[0].price_delta_cents,0)))}</strong></div>
   <EventMenuQuickAdd dish={d} event={e}/>
  </div></article></Fragment>)}</div>}
  </section></>}
