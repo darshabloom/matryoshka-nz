@@ -27,7 +27,7 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   const chefIds=new Set((accepted??[]).map(x=>x.vendor_id));
   // Organiser-controlled event visibility is distinct from food checkout
   // readiness: preview an incomplete dish, but never allow purchase.
-  const eligible=(offers??[]).filter((o:any)=>o.menu_items);
+  const eligible=(offers??[]).filter((o:any)=>o.menu_items&&chefIds.has(o.menu_items.vendor_id));
   const canOrder=(item:any)=>!!item.vendor_id&&chefIds.has(item.vendor_id)&&
    !!item.allergen_review_complete&&!!item.ingredients_text?.trim()&&
    !!item.allergen_statement?.trim()&&item.is_active&&item.approval_status==="approved";
