@@ -14,8 +14,8 @@ export default function GoogleChefLink({vendorId}:{vendorId:string}){
  async function link(e:React.FormEvent){
   e.preventDefault();setBusy(true);setError("");setMessage("");
   const db=createSupabaseBrowserClient();
-  const {data,error:e}=await db.rpc("admin_manage_chef_google",{p_vendor_id:vendorId,p_action:"invite",p_email:email.trim()});
-  if(e)setError(e.message);
+  const {data,error:linkError}=await db.rpc("admin_manage_chef_google",{p_vendor_id:vendorId,p_action:"invite",p_email:email.trim()});
+  if(linkError)setError(linkError.message);
   else{setMessage(data==="connected"?(ru?"Google-аккаунт подключён.":"Google account connected."):(ru?"Приглашение сохранено. Аккаунт подключится при первом входе через Google.":"Invitation saved. The account will link automatically on first Google sign-in."));await reload();}
   setBusy(false);
  }
