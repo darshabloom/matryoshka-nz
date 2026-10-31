@@ -22,18 +22,18 @@ export function FoodOrderReceipt({receipt}:{receipt:PaidFoodReceipt}){
    <div className={styles.type}>FOOD ORDER CONFIRMATION</div>
   </header>
   <section className={styles.master}>
-   <small>MASTER FOOD ORDER NUMBER</small>
+   <small>FOOD ORDER NUMBER</small>
    <strong>{paid?receipt.masterReference||"Preparing reference…":"Awaiting payment"}</strong>
    <p>{receipt.event?.title_en||"Event food order"}</p>
    {receipt.event?.starts_at&&<p>{new Intl.DateTimeFormat("en-NZ",{timeZone:"Pacific/Auckland",dateStyle:"full",timeStyle:"short"}).format(new Date(receipt.event.starts_at))}</p>}
    {receipt.event?.location_text&&<p>{receipt.event.location_text}</p>}
   </section>
   <div className={styles.sections}>
-   <h2>Chef order numbers</h2>
+   <h2>Items by chef</h2>
    {receipt.chefOrders.map((chef)=><section key={chef.vendorId} className={styles.chef}>
     <div className={styles.chefHeading}>
      <div><small>PREPARED BY</small><h3>{chef.chef}</h3></div>
-     <strong>{chef.reference}</strong>
+
     </div>
     {chef.items.map((item,i)=><div className={styles.item} key={i}>
      <span>{item.quantity} × {item.name}<small className={styles.priceDetails}>{money(item.unitPriceCents)} each</small>{item.note&&<em>Note: {item.note}</em>}</span><strong className={styles.lineTotal}>{money(item.lineTotalCents)}</strong>
@@ -42,7 +42,7 @@ export function FoodOrderReceipt({receipt}:{receipt:PaidFoodReceipt}){
   </div>
   <footer className={styles.footer}>
    <div className={styles.paymentTotal}><span>Total paid</span><strong>{total}</strong></div>
-   <p>Present the relevant chef reference when collecting your food at the event.</p>
+   <p>Quote your food order number when collecting your food at the event.</p>
    <small>This is a Matryoshka food-order confirmation, not a Yumorilnik admission ticket.</small>
   </footer>
  </article>;
