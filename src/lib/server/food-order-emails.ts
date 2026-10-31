@@ -38,6 +38,7 @@ export async function dispatchPaidFoodEmails(orderId:string):Promise<{sent:numbe
   if(claimError||!claim){result.skipped++;continue;}
   let recipient:string|null=null;
   if(d.recipient_kind==="customer")recipient=order.email;
+  else if(d.recipient_kind==="admin")recipient=process.env.FOOD_ORDER_ADMIN_EMAIL??null;
   else if(d.recipient_user_id){
    const user=await db.auth.admin.getUserById(d.recipient_user_id);
    recipient=user.data.user?.email??null;
