@@ -113,7 +113,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
  return <main className={styles.page}><div className={styles.wrap}>
   <div className={styles.top}><Link href={isAdmin?eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food":"/chef-dashboard?tab=dishes"}>← {t("Dishes","Блюда")}</Link>
    <span>{t("Edit dish","Редактирование блюда")}</span>
-   <button className={styles.doneButton} type="button" disabled={busy||!canEdit} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):t("✓ Done","✓ Готово")}</button>
+   <button className={styles.doneButton} type="button" disabled={busy||!canEdit} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("Publish","Опубликовать"):t("✓ Done","✓ Готово")}</button>
   </div>
   <div className={styles.product}>
    <section className={styles.gallery}><div className={styles.heroPhoto}>{photos.length?<img src={photos[Math.min(active,photos.length-1)].image_url} style={{objectFit:photos[Math.min(active,photos.length-1)].crop_mode==="contain"?"contain":"cover",objectPosition:`${photos[Math.min(active,photos.length-1)].position_x??50}% ${photos[Math.min(active,photos.length-1)].position_y??50}%`,transform:`translate(${(50-(photos[Math.min(active,photos.length-1)].position_x??50))*0.5}%, ${(50-(photos[Math.min(active,photos.length-1)].position_y??50))*0.5}%) scale(${(photos[Math.min(active,photos.length-1)].zoom_percent??100)/100})`,transformOrigin:"center center"}} alt={ru?nameRu:nameEn}/>:<div className={styles.placeholder}>✿<small>{t("Add a dish photo","Добавьте фото блюда")}</small></div>}</div>
@@ -164,8 +164,8 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
     </section>
     {error&&<p role="alert" className={styles.error}>{error}</p>}{notice&&<p role="status" className={styles.success}>{notice}</p>}
     <div className={styles.editActions}>
-      {canEdit&&<button type="button" className={styles.saveDraft} disabled={busy} onClick={()=>void done(true)}>{t("Save draft","Сохранить черновик")}</button>}
-      {canEdit&&<button type="button" className={styles.submitApproval} disabled={busy} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("✓ Done · Approve","✓ Готово · Одобрить"):t("✓ Done","✓ Готово")}</button>}
+      {canEdit&&(!isAdmin||dish.approval_status!=="approved")&&<button type="button" className={styles.saveDraft} disabled={busy} onClick={()=>void done(true)}>{t("Save draft","Сохранить черновик")}</button>}
+      {canEdit&&<button type="button" className={styles.submitApproval} disabled={busy} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("Publish","Опубликовать"):t("✓ Done","✓ Готово")}</button>}
     </div>
    </section>
   </div>
