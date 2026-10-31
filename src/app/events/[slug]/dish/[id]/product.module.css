@@ -7,15 +7,15 @@
 .back{display:inline-block;color:#932e29;text-decoration:none;font-size:13px;font-weight:800}
 .back:hover{text-decoration:underline}
 .product{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:46px;margin-top:28px;align-items:start}
-.photo{aspect-ratio:4/4.5;max-height:620px;border-radius:18px;background:linear-gradient(145deg,#edd9c9,#f8e9de);
+.photo{aspect-ratio:1/1;max-height:620px;border-radius:18px;background:linear-gradient(145deg,#edd9c9,#f8e9de);
  border:1px solid #e6d3c4;overflow:hidden;display:grid;place-items:center;box-shadow:0 12px 40px #6f46221a}
-.photo img{width:100%;height:100%;object-fit:cover}
+.photo img{width:100%;height:100%;object-fit:contain;object-position:center center}
 .photo span{font:700 116px Georgia,serif;color:#be8272}
 .thumbs{display:flex;gap:10px;margin-top:14px}
 .thumbs button{height:83px;width:88px;overflow:hidden;padding:0;border:2px solid transparent;
  border-radius:11px;background:#eadccc;cursor:pointer}
 .thumbs button[aria-pressed=true]{border-color:#a64136}
-.thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs img{width:100%;height:100%;object-fit:contain;object-position:center center}
 .detail{background:#fffaf5e8;border:1px solid #edddce;border-radius:17px;padding:28px 30px 31px;box-shadow:0 8px 30px #6a442113}
 .chef{display:flex;align-items:center;gap:10px;font-size:13px;margin:0 0 24px}
 .avatar{display:grid;place-items:center;flex:none;border-radius:50%;height:42px;width:42px;overflow:hidden;border:2px solid #fff;
@@ -55,5 +55,9 @@
 .foodSafety p{font-size:14px;color:#675448;line-height:1.7;white-space:pre-wrap}
 .safetyNote{background:#fff2e6;border-left:3px solid #b86752;padding:15px 19px;margin-top:20px}
 .error{padding:13px;border-radius:9px;background:#ffebe7;color:#b22920}
-@media(max-width:850px){.product{grid-template-columns:1fr;gap:22px}.photo{aspect-ratio:5/4;max-height:480px}}
+@media(max-width:850px){.product{grid-template-columns:1fr;gap:22px}.photo{aspect-ratio:1/1;max-height:480px}}
 @media(max-width:600px){.page{padding:24px 13px 68px}.detail{padding:22px 17px}.detail h1{font-size:34px}.foodSafety{padding:20px 15px}.foodSafety h2{font-size:25px}.safetyColumns{grid-template-columns:1fr;gap:16px}.purchase{gap:8px}}
+
+/* Same viewport geometry as the square dish editor preview. */
+.photo{position:relative;display:block;aspect-ratio:1/1;max-height:none}
+.photo>img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none}

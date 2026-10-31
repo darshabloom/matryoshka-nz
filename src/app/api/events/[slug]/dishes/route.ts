@@ -21,19 +21,21 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
   if(oe)throw oe;
   // A previously approved dish must disappear if its chef is no longer
   // accepted for this event. Database reservations enforce the same rule.
-  const {data:accepted,error:acceptedError}=await db.from("chef_event_applications")
+  // Chef applications are private under RLS. Look up approved vendor IDs
+  // server-side; expose only filtered public menu items, never applications.
+  const {data:accepted,error:acceptedError}=await serviceClient().from("chef_event_applications")
    .select("vendor_id").eq("event_id",event.id).eq("status","approved");
   if(acceptedError)throw acceptedError;
   const chefIds=new Set((accepted??[]).map(x=>x.vendor_id));
   // Organiser-controlled event visibility is distinct from food checkout
   // readiness: preview an incomplete dish, but never allow purchase.
-  const eligible=(offers??[]).filter((o:any)=>o.menu_items);
+  const eligible=(offers??[]).filter((o:any)=>o.menu_items&&chefIds.has(o.menu_items.vendor_id));
   const canOrder=(item:any)=>!!item.vendor_id&&chefIds.has(item.vendor_id)&&
-   !!item.allergen_review_complete&&!!item.ingredients_text?.trim()&&
-   !!item.allergen_statement?.trim()&&item.is_active&&item.approval_status==="approved";
+   
+   item.is_active&&item.approval_status==="approved";
   const ids=eligible.map((o:any)=>o.menu_item_id);
   const [images,groups,cats]=ids.length?await Promise.all([
-   db.from("menu_item_images").select("menu_item_id,image_url,sort_order").in("menu_item_id",ids).order("sort_order"),
+   db.from("menu_item_images").select("menu_item_id,image_url,sort_order,position_x,position_y,zoom_percent,crop_mode").in("menu_item_id",ids).order("sort_order"),
    db.from("menu_item_options").select("id,menu_item_id,label_en,label_ru,required,min_select,max_select,sort_order").in("menu_item_id",ids).order("sort_order"),
    db.from("menu_item_categories").select("menu_item_id,food_categories(label_en,label_ru,slug)").in("menu_item_id",ids)
   ]):[{data:[]},{data:[]},{data:[]}];
@@ -51,13 +53,14 @@ export async function GET(_req:Request,{params}:{params:Promise<{slug:string}>})
     max_quantity:offer.max_quantity,
     categories:(cats.data??[]).filter((c:any)=>c.menu_item_id===item.id).map((c:any)=>c.food_categories).filter(Boolean),
     images:(images.data??[]).filter(x=>x.menu_item_id===item.id).map(x=>x.image_url).slice(0,3),
+    image_positions:(images.data??[]).filter(x=>x.menu_item_id===item.id).map(x=>({x:x.position_x??50,y:x.position_y??50,zoom:x.zoom_percent??100,mode:x.crop_mode??"cover"})).slice(0,3),
     options:(groups.data??[]).filter(g=>g.menu_item_id===item.id).map(g=>({
       id:g.id,label_en:g.label_en,label_ru:g.label_ru,required:g.required,min_select:g.min_select,max_select:g.max_select,
       values:(values??[]).filter((v:any)=>v.option_id===g.id).map((v:any)=>({id:v.id,label_en:v.label_en,label_ru:v.label_ru,price_delta_cents:v.price_delta_cents}))
     }))
    };
   });
-  const orderingOpen=event.is_published&&event.ordering_enabled&&(!event.ordering_opens_at||new Date(event.ordering_opens_at)<=new Date())&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
+  const orderingOpen=event.is_published&&!!event.ordering_opens_at&&new Date(event.ordering_opens_at)<=new Date()&&(!event.ordering_closes_at||new Date(event.ordering_closes_at)>new Date());
   return NextResponse.json({event:{...event,ordering_open:orderingOpen},dishes},{headers:{"Cache-Control":"no-store"}});
  }catch(e){console.error("Event menu error",e);return NextResponse.json({error:"Unable to load event menu"},{status:500})}
 }

@@ -8,10 +8,11 @@ export default async function NewDishPage({searchParams}:{searchParams:Promise<{
  if(!user)redirect("/sign-in");
  const {data:admin}=await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();
  if(!admin)redirect("/chef-dashboard");
- const [v,e,params]=await Promise.all([
+ const [v,e,params,categories]=await Promise.all([
   db.from("vendors").select("id,display_name,hero_image_url").order("display_name"),
   db.from("events").select("id,title_en,title_ru").gt("ends_at",new Date().toISOString()).order("starts_at"),
-  searchParams
+  searchParams,
+  db.from("dish_categories").select("id,name_en,name_ru").eq("is_active",true).order("sort_order")
  ]);
- return <NewDishEditor vendors={v.data??[]} events={e.data??[]} initialChefId={params.chef??""} initialEventId={params.event??""}/>;
+ return <NewDishEditor vendors={v.data??[]} events={e.data??[]} initialChefId={params.chef??""} initialEventId={params.event??""} categories={categories.data??[]}/>;
 }

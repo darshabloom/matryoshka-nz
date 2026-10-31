@@ -11,18 +11,18 @@ export async function GET(req:Request){
  // The Stripe session ID is an unguessable receipt token provided only
  // to the customer by the successful checkout redirect. Never expose
  // contact details, ticket credentials or unpaid order lines here.
- const chefs:{reference:string;vendorId:string;chef:string;items:{name:string;quantity:number;options:unknown;note:string}[]}[]=[];
+ const chefs:{reference:string;vendorId:string;chef:string;items:{name:string;quantity:number;unitPriceCents:number;lineTotalCents:number;options:unknown;note:string}[]}[]=[];
  if(data.payment_status==="paid"){
   const [refs,lines]=await Promise.all([
    db.from("food_order_chef_refs").select("reference,vendor_id,vendors(display_name)").eq("order_id",data.id).order("order_number"),
-   db.from("food_order_lines").select("vendor_id,dish_name_snapshot,quantity,option_snapshot,dish_note").eq("order_id",data.id)
+   db.from("food_order_lines").select("vendor_id,dish_name_snapshot,quantity,unit_price_cents,line_total_cents,option_snapshot,dish_note").eq("order_id",data.id)
   ]);
   if(refs.error||lines.error)return NextResponse.json({error:"Unable to prepare verified food receipt"},{status:503});
   for(const row of refs.data??[]){
    const v=row.vendors as unknown as {display_name:string}|null;
    chefs.push({reference:row.reference,vendorId:row.vendor_id,chef:v?.display_name||"Chef",
     items:(lines.data??[]).filter(x=>x.vendor_id===row.vendor_id).map(x=>({
-     name:x.dish_name_snapshot,quantity:x.quantity,options:x.option_snapshot,note:x.dish_note||""
+     name:x.dish_name_snapshot,quantity:x.quantity,unitPriceCents:x.unit_price_cents,lineTotalCents:x.line_total_cents,options:x.option_snapshot,note:x.dish_note||""
     }))});
   }
  }

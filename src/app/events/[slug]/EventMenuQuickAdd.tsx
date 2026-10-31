@@ -11,10 +11,10 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
  const [quantity,setQuantity]=useState(1);
  const [selected,setSelected]=useState<Record<string,string[]>>({});
  const [notice,setNotice]=useState("");
- const chosen=useMemo(()=>dish.options.flatMap(group=>(selected[group.id]??[])
+ const chosen=useMemo(()=>dish.options.flatMap(group=>(selected[group.id]??(group.values.length===1&&group.max_select===1?[group.values[0].id]:[]))
   .map(id=>group.values.find(v=>v.id===id)).filter((v):v is NonNullable<typeof v>=>!!v)),[dish.options,selected]);
  const ready=dish.options.every(group=>{
-  const n=(selected[group.id]??[]).length;
+  const n=(selected[group.id]??(group.values.length===1&&group.max_select===1?[group.values[0].id]:[])).length;
   const size=/^(size|weight|размер|вес)$/i.test(group.label_en.trim())||/^(размер|вес)$/i.test((group.label_ru??"").trim());
   return n>=Math.max(group.min_select,(group.required||size)?1:0)&&n<=group.max_select;
  });
@@ -31,7 +31,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
  }
  function addDish(){
   if(!canAdd||quantity<1||quantity>limit)return;
-  const summary=dish.options.flatMap(group=>(selected[group.id]??[])
+  const summary=dish.options.flatMap(group=>(selected[group.id]??(group.values.length===1&&group.max_select===1?[group.values[0].id]:[]))
    .map(id=>group.values.find(v=>v.id===id))
    .filter((v):v is NonNullable<typeof v>=>!!v)
    .map(v=>label(group.label_en,group.label_ru,ru)+": "+label(v.label_en,v.label_ru,ru))).join(" · ");
@@ -42,7 +42,7 @@ export default function EventMenuQuickAdd({dish,event}:{dish:CustomerDish;event:
   setNotice(ok?t("✓ Added to basket","✓ Добавлено в корзину"):t("Could not add this dish","Не удалось добавить блюдо"));
  }
  return <div className={styles.quickAdd}>
-  {dish.options.map(group=>{const isSize=/^(size|weight|размер|вес)$/i.test(group.label_en.trim())||/^(размер|вес)$/i.test((group.label_ru??"").trim());return <fieldset key={group.id} className={styles.quickOptions}>
+  {dish.options.filter(group=>!(group.max_select===1&&group.values.length===1)).map(group=>{const isSize=/^(size|weight|размер|вес)$/i.test(group.label_en.trim())||/^(размер|вес)$/i.test((group.label_ru??"").trim());return <fieldset key={group.id} className={styles.quickOptions}>
    {!isSize&&<legend>{label(group.label_en,group.label_ru,ru)}{(group.required||group.min_select>0)?" *":""}</legend>}
    {group.max_select===1?<select className={styles.quickSelect} aria-label={label(group.label_en,group.label_ru,ru)} required={isSize||group.required||group.min_select>0} value={(selected[group.id]??[])[0]??""} onChange={e=>{setSelected(old=>({...old,[group.id]:e.target.value?[e.target.value]:[]}));setNotice("");}}>
     <option value="">{isSize?t("Please choose a size","Пожалуйста, выберите размер"):t("Choose an option","Выберите вариант")}</option>
