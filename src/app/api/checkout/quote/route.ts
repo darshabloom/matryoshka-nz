@@ -17,8 +17,8 @@ export async function POST(req:Request){
  const qaPreview=process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="redesign/food-first-home"&&process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")===true;
  const db=testCheckout?serviceClient():qaPreview&&body.eventId==="23334f6b-00ee-445c-859f-b85347ce372c"?serviceClient():await createSupabaseServerClient(),now=new Date().toISOString();
  const {data:event}=await db.from("events").select("id,slug,title_en,title_ru,is_published,starts_at,ends_at,ordering_opens_at,ordering_closes_at,ticket_required,fulfilment_mode,ordering_enabled").eq("id",body.eventId).eq("is_published",true).gt("ends_at",now).maybeSingle();
- if(!event||(!event.ordering_enabled&&!testCheckout))return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
- if(!testCheckout&&(event.ordering_opens_at&&event.ordering_opens_at>now||event.ordering_closes_at&&event.ordering_closes_at<=now))return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
+ if(!event||(!testCheckout&&(!event.ordering_opens_at||!event.ordering_closes_at||event.ordering_closes_at>event.starts_at)))return NextResponse.json({error:"Food ordering is not open for this event"},{status:409});
+ if(!testCheckout&&(event.ordering_opens_at>now||event.ordering_closes_at<=now))return NextResponse.json({error:"Food ordering is currently closed"},{status:409});
  const {data:offers,error:offerErr}=await db.from("event_menu_items").select("menu_item_id,is_available,max_quantity,menu_items!inner(id,vendor_id,price_cents,is_active,approval_status,allergen_review_complete,ingredients_text,allergen_statement,menu_item_translations(lang,name),vendors(display_name))").eq("event_id",event.id).in("menu_item_id",items.map(i=>i.dishId));
  if(offerErr)return NextResponse.json({error:"Could not check menu availability"},{status:500});
  const {data:acceptedChefs,error:chefsError}=await db.from("chef_event_applications")
