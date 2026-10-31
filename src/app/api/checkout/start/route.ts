@@ -38,7 +38,8 @@ export async function POST(req:Request){
  }
  try{await verifyStripeMerchantAccount()}catch{return NextResponse.json({error:"The approved Stripe merchant account is not ready. No payment has been taken."},{status:503})}
  const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();
- const {data:orderId,error:reserveError}=await service.rpc("reserve_food_order",{
+ const restrictedTest=process.env.CHECKOUT_ENABLED!=="true"&&isTestCheckoutAllowed(email,user?.email)&&body.eventId==="3b7d5371-926e-408b-a4b7-af69f27b42cf"&&body.items.length===1&&body.items[0]?.dishId==="7f0f8639-dd8c-4aae-963a-a8bea61bced0"&&body.items[0]?.quantity===1;
+ const {data:orderId,error:reserveError}=await service.rpc(restrictedTest?"reserve_restricted_test_food_order":"reserve_food_order",{
   p_event_id:body.eventId,p_user_id:user?.id??null,p_email:email,p_booking_id:bookingId,
   p_allergy_declaration:body.allergyDeclaration,p_allergy_details:body.allergyDeclaration==="declared"?body.allergyDetails.trim():"",p_special_requests:specialRequests,
   p_items:body.items,p_idempotency_key:body.idempotencyKey
