@@ -2,13 +2,15 @@
 import {dishReadinessIssues,dishReadyForEvent} from "@/lib/menu-readiness";
 import {customerPriceCents} from "@/lib/customer-pricing";
 import {useState} from "react";
+import {useSearchParams} from "next/navigation";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 type Dish={id:string;vendor_id:string|null;price_cents:number;approval_status:string;is_active:boolean;allergen_review_complete:boolean;ingredients_text:string|null;allergen_statement:string|null;menu_item_translations:{name:string;lang:string}[]};
 type Vendor={id:string;display_name:string};
 type Offer={menu_item_id:string;max_quantity:number|null;is_available:boolean};
 export default function EventMenuManager({eventId,dishes,vendors,initialOffers,acceptedChefIds}:{eventId:string;dishes:Dish[];vendors:Vendor[];initialOffers:Offer[];acceptedChefIds:string[]}){
- const [offers,setOffers]=useState(initialOffers),[adding,setAdding]=useState(false),[selected,setSelected]=useState<string[]>([]),[query,setQuery]=useState(""),[chef,setChef]=useState("all"),[busy,setBusy]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState(""),[caps,setCaps]=useState<Record<string,string>>({});
+ const chefFilter=useSearchParams().get("chef");
+ const [offers,setOffers]=useState(initialOffers),[adding,setAdding]=useState(false),[selected,setSelected]=useState<string[]>([]),[query,setQuery]=useState(""),[chef,setChef]=useState(()=>chefFilter&&vendors.some(v=>v.id===chefFilter)?chefFilter:"all"),[busy,setBusy]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState(""),[caps,setCaps]=useState<Record<string,string>>({});
  const router=useRouter(),included=new Set(offers.map(x=>x.menu_item_id)),shown=adding?dishes.filter(d=>!included.has(d.id)):dishes.filter(d=>included.has(d.id));
  const filtered=shown.filter(d=>(chef==="all"||chef==="unassigned"&&!d.vendor_id||d.vendor_id===chef)&&[d.menu_item_translations?.[0]?.name,vendors.find(v=>v.id===d.vendor_id)?.display_name].join(" ").toLowerCase().includes(query.toLowerCase()));
  const name=(d:Dish)=>d.menu_item_translations?.find(t=>t.lang==="en")?.name||d.menu_item_translations?.[0]?.name||"Untitled dish";
