@@ -40,7 +40,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
  const [photos,setPhotos]=useState([...dish.menu_item_images].sort((a,b)=>a.sort_order-b.sort_order));
  const [active,setActive]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [confirmDelete,setConfirmDelete]=useState(false);
- const canEdit=isAdmin||["draft","changes_requested"].includes(dish.approval_status);
+ const canEdit=true;
  const chef=vendors.find(c=>c.id===chefId);
  function message(data:any){return String(data?.error??"Unable to save");}
  async function api(url:string,body:unknown){
