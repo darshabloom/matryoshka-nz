@@ -86,14 +86,13 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
     setError(t("Use JPG, PNG or WebP under 5 MB.","Используйте JPG, PNG или WebP до 5 МБ."));break;
    }
    const optimised=await optimiseDishPhoto(file);
-   const ext="webp";
-   const key=`${dish.id}/${crypto.randomUUID()}.${ext}`;
-   const {error:up}=await db.storage.from("dish-photos").upload(key,optimised,{contentType:optimised.type,upsert:false});
-   if(up){setError(up.message);break}
-   const url=db.storage.from("dish-photos").getPublicUrl(key).data.publicUrl;
-   const {data:photo,error:save}=await db.from("menu_item_images").insert({menu_item_id:dish.id,image_url:url,sort_order:photos.length}).select("id,image_url,sort_order,position_x,position_y,zoom_percent,crop_mode").single();
-   if(save){setError(save.message);await db.storage.from("dish-photos").remove([key]);break}
-   setPhotos(old=>[...old,photo]);
+   const form=new FormData();
+   form.append("dishId",dish.id);
+   form.append("photo",optimised);
+   const response=await fetch("/api/dishes/photo",{method:"POST",body:form});
+   const result=await response.json();
+   if(!response.ok)throw Error(result.error??"Photo upload failed");
+   setPhotos(old=>[...old,result.photo]);
   }
   } catch(e) { setError(e instanceof Error?e.message:t("Unable to process photo.","Не удалось обработать фото.")); }
   finally { setBusy(false); }
