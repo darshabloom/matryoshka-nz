@@ -64,13 +64,13 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
   finally{setBusy(false)}
  }
  async function deleteDish(){
-  if(!isAdmin||busy||!confirmDelete)return;
+  if(busy||!confirmDelete)return;
   setBusy(true);setError("");setNotice("");
   try{
    const response=await fetch("/api/admin/dishes/delete",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({dishId:dish.id})});
    const result=await response.json();
    if(!response.ok)throw Error(message(result));
-   router.push(eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food");
+   router.push(isAdmin?(eventId?`/admin/events/${eventId}?tab=menu`:"/admin?tab=food"):"/chef-dashboard?tab=dishes");
    router.refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to delete dish");setConfirmDelete(false)}
   finally{setBusy(false)}
@@ -80,6 +80,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
   if(photos.length+files.length>3){setError(t("Maximum 3 photos.","Не более трёх фото."));return}
   setBusy(true);setError("");
   const db=createSupabaseBrowserClient();
+  try {
   for(const file of Array.from(files)){
    if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
     setError(t("Use JPG, PNG or WebP under 5 MB.","Используйте JPG, PNG или WebP до 5 МБ."));break;
@@ -94,7 +95,8 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
    if(save){setError(save.message);await db.storage.from("dish-photos").remove([key]);break}
    setPhotos(old=>[...old,photo]);
   }
-  setBusy(false);
+  } catch(e) { setError(e instanceof Error?e.message:t("Unable to process photo.","Не удалось обработать фото.")); }
+  finally { setBusy(false); }
  }
  async function savePosition(axis:"position_x"|"position_y"|"zoom_percent"|"crop_mode",value:number|string){
   const current=photos[active];if(!current||!canEdit)return;
@@ -183,7 +185,7 @@ export default function CustomerDishEditor({dish,isAdmin,options,vendors,events,
       {canEdit&&(!isAdmin||dish.approval_status!=="approved")&&<button type="button" className={styles.saveDraft} disabled={busy} onClick={()=>void done(true)}>{t("Save draft","Сохранить черновик")}</button>}
       {canEdit&&<button type="button" className={styles.submitApproval} disabled={busy} onClick={()=>void done(false)}>{busy?t("Saving…","Сохраняем…"):isAdmin?t("Publish","Опубликовать"):t("✓ Done","✓ Готово")}</button>}
     </div>
-    {isAdmin&&<section className={styles.deleteDishSection}>
+    {<section className={styles.deleteDishSection}>
       <h2>{t("Delete dish","Удалить блюдо")}</h2>
       <p>{t("Remove this dish from the catalogue and all event menus. Existing customer order history will be retained.","Убрать блюдо из каталога и меню всех мероприятий. История существующих заказов сохранится.")}</p>
       {!confirmDelete?<button type="button" disabled={busy} className={styles.deleteDishButton} onClick={()=>setConfirmDelete(true)}>{t("Delete dish","Удалить блюдо")}</button>:
