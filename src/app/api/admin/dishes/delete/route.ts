@@ -23,7 +23,7 @@ export async function DELETE(request:Request){
  const {data:ordered,error:ordersError}=await service.from("food_order_lines").select("id").eq("menu_item_id",id).limit(1);
  if(ordersError)return NextResponse.json({error:"Unable to check order history"},{status:503});
  if(ordered?.length){
-  const {error:pauseError}=await service.from("menu_items").update({is_active:false,approval_status:"draft"}).eq("id",id);
+  const {error:pauseError}=await service.from("menu_items").update({is_active:false,approval_status:"draft",archived_at:new Date().toISOString()}).eq("id",id);
   if(pauseError)return NextResponse.json({error:"Unable to remove dish from sale"},{status:503});
   const {error:menuError}=await service.from("event_menu_items").delete().eq("menu_item_id",id);
   if(menuError)return NextResponse.json({error:"Dish paused but event links could not be removed"},{status:503});
