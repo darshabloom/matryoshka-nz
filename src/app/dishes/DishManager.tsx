@@ -1,6 +1,7 @@
 "use client";
 import {useState,useEffect} from "react";
 import {useSearchParams} from "next/navigation";
+import {optimiseDishPhoto} from "@/lib/optimise-dish-photo";
 import Link from "next/link";
 import {useLanguage} from "@/components/i18n/LanguageProvider";
 import styles from "./dishes.module.css";
@@ -15,6 +16,8 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
  const [selection,setSelection]=useState(false),[selected,setSelected]=useState<string[]>([]);
  const [event,setEvent]=useState(searchParams.get("event")??""),[vendor,setVendor]=useState(isAdmin?"":vendors[0]?.id??"");
  const [name,setName]=useState(""),[description,setDescription]=useState(""),[language,setLanguage]=useState<"en"|"ru">(ru?"ru":"en"),[price,setPrice]=useState("");
+ const [newPhotos,setNewPhotos]=useState<File[]>([]);
+ const [createdDishId,setCreatedDishId]=useState<string|null>(null);
  const [editing,setEditing]=useState<string|null>(null);const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(initialError),[notice,setNotice]=useState("");
  const previewImage=(d:Dish)=>[...(d.menu_item_images??[])].sort((a,b)=>(a.sort_order??0)-(b.sort_order??0))[0];
  const displayName=(d:Dish)=>d.menu_item_translations.find(x=>x.lang===lang)?.name||d.menu_item_translations[0]?.name||t("Unnamed dish","Блюдо без названия");
@@ -30,13 +33,26 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
   }catch(e){setError(e instanceof Error?e.message:"Could not save");return false}finally{setBusy(false)}
  }
  function edit(d:Dish){setEditing(d.id);const tr=d.menu_item_translations.find(x=>x.lang===lang)||d.menu_item_translations[0];setName(tr?.name||"");setDescription(tr?.description||"");setLanguage(tr?.lang==="ru"?"ru":"en");setPrice((d.price_cents/100).toFixed(2));setVendor(d.vendor_id??"");setOpen(true);}
- function beginNew(){setEditing(null);setName("");setDescription("");setPrice("");setOpen(true);}
+ function beginNew(){setEditing(null);setName("");setDescription("");setPrice("");setNewPhotos([]);setCreatedDishId(null);setOpen(true);}
  async function create(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");
   try{
-   const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vendor_id:isAdmin?null:vendor,name,description,language,price})});
-   const result=await response.json();if(!response.ok||!result.id)throw Error(result.error||"Could not create dish");
-   window.location.assign(`/dishes/${result.id}`);
-  }catch(e){setError(e instanceof Error?e.message:"Could not create dish");setBusy(false)}
+   let id=createdDishId;
+   if(!id){
+    const response=await fetch("/api/dishes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vendor_id:isAdmin?null:vendor,name,description,language,price})});
+    const result=await response.json();
+    if(!response.ok||!result.id)throw Error(result.error||"Could not create dish");
+    id=result.id;setCreatedDishId(id);
+   }
+   for(const photo of newPhotos){
+    const prepared=await optimiseDishPhoto(photo);
+    const form=new FormData();form.set("dishId",id!);form.set("photo",prepared);
+    const response=await fetch("/api/dishes/photo",{method:"POST",body:form});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||"Could not upload photo");
+    setNewPhotos(old=>old.filter(f=>f!==photo));
+   }
+   window.location.assign(`/dishes/${id}`);
+  }catch(e){setError((e instanceof Error?e.message:"Could not create dish")+(createdDishId?t(" — your draft is saved; retry the photo upload."," — черновик сохранён; повторите загрузку фото."):""));setBusy(false)}
  }
  async function review(d:Dish,status:"approved"|"changes_requested"){
   const note=status==="changes_requested"?window.prompt(t("What should the chef change?","Что повару нужно изменить?")):"";
@@ -71,7 +87,7 @@ export default function DishManager({isAdmin,vendors,dishes:initial,events,inclu
  </div></article>)}</div>}
  {selection&&<div className={styles.bulk}><strong>{selected.length} {t("selected","выбрано")}</strong><button disabled={!selected.length} className={styles.cancelButton} onClick={()=>setSelected(visible.map(d=>d.id))}>{t("Select all","Выбрать всё")}</button><button disabled={!selected.length||!event||busy} className={styles.mainButton} onClick={()=>void bulk("include")}>{t("Include in event","Добавить к событию")}</button><button disabled={!selected.length||!event||busy} className={styles.cancelButton} onClick={()=>void bulk("remove")}>{t("Remove from event","Убрать из события")}</button></div>}
  {open&&<div className={styles.overlay}><div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="create-dish"><div className={styles.dialogHeader}><h2 id="create-dish">{editing?t("Edit dish","Редактировать блюдо"):t("Add a dish","Добавить блюдо")}</h2><button onClick={()=>setOpen(false)} aria-label="Close">×</button></div>
- <form onSubmit={create} className={styles.form}><label>{t("Dish name","Название блюда")}<input required maxLength={160} value={name} onChange={e=>setName(e.target.value)}/></label><label>{t("Writing language","Язык описания")}<select value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label><label>{t("Description","Описание")}<textarea rows={4} value={description} onChange={e=>setDescription(e.target.value)}/></label><label>{t("Price (NZD)","Цена (NZD)")}<input required type="number" min="0" step="0.01" value={price} onChange={e=>setPrice(e.target.value)}/></label><p>{t("Chefs save drafts and submit them to Marina for approval. Marina can create dishes without a chef, then assign them after the chef joins. The chef must accept before the dish can be approved.","Повар сохраняет черновик и отправляет его Марине на одобрение.")}</p><button disabled={busy||(!isAdmin&&!vendor)} className={styles.mainButton}>{busy?t("Saving…","Сохранение…"):t(editing?"Save changes":"Save dish",editing?"Сохранить изменения":"Сохранить блюдо")}</button></form>
+ <form onSubmit={create} className={styles.form}><label>{t("Dish name","Название блюда")}<input required maxLength={160} value={name} onChange={e=>setName(e.target.value)}/></label><label>{t("Writing language","Язык описания")}<select value={language} onChange={e=>setLanguage(e.target.value as "en"|"ru")}><option value="en">English</option><option value="ru">Русский</option></select></label><label>{t("Description","Описание")}<textarea rows={4} value={description} onChange={e=>setDescription(e.target.value)}/></label><label>{t("Price (NZD)","Цена (NZD)")}<input required type="number" min="0" step="0.01" value={price} onChange={e=>setPrice(e.target.value)}/></label><label>{t("Dish photos (up to 3)","Фото блюда (до 3)")}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} onChange={e=>{const files=Array.from(e.target.files??[]);if(files.length>3){setError(t("Choose up to 3 photos.","Выберите до 3 фотографий."));return;}setError("");setNewPhotos(files);}}/>{newPhotos.length>0&&<small>{newPhotos.length} {t("photo(s) selected","фото выбрано")}</small>}</label><p>{t("Chefs save drafts and submit them to Marina for approval. Marina can create dishes without a chef, then assign them after the chef joins. The chef must accept before the dish can be approved.","Повар сохраняет черновик и отправляет его Марине на одобрение.")}</p><button disabled={busy||(!isAdmin&&!vendor)} className={styles.mainButton}>{busy?t("Saving…","Сохранение…"):t(editing?"Save changes":"Save dish",editing?"Сохранить изменения":"Сохранить блюдо")}</button></form>
  </div></div>}
  </div></main>;
 }
