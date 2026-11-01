@@ -15,6 +15,7 @@ export default function EventFoodPage(){
  const [data,setData]=useState<EventMenuData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState("");
  const [search,setSearch]=useState(""),[chef,setChef]=useState("all"),[category,setCategory]=useState("all");
  const [linkedTicketRef,setLinkedTicketRef]=useState("");
+ const [ticketArrival,setTicketArrival]=useState(false);
  const [descriptionExpanded,setDescriptionExpanded]=useState(false);
 
  useEffect(()=>{const controller=new AbortController();if(!slug)return;
@@ -27,10 +28,11 @@ export default function EventFoodPage(){
  const orderedDishes=useMemo(()=>[...dishes].sort((a,b)=>{const ai=categories.findIndex(c=>c.slug===a.categories[0]?.slug),bi=categories.findIndex(c=>c.slug===b.categories[0]?.slug);return ai-bi}),[dishes,categories]);
  const e=data?.event,open=e?.ordering_open??false;
  useEffect(()=>{
-  if(!e?.id||e.slug!=="novogodnik26")return;
+  if(!e?.id||e.slug!=="novogodnik27")return;
   try{
    const param=new URLSearchParams(window.location.search).get("ticket_ref")?.trim().toUpperCase()??"";
    const saved=sessionStorage.getItem("matryoshka:ticket_ref:"+e.id)??"";
+   setTicketArrival(/^YMR-[A-Z0-9-]{5,80}$/.test(param));
    const ref=/^YMR-[A-Z0-9-]{5,80}$/.test(param)?param:saved;
    if(/^YMR-[A-Z0-9-]{5,80}$/.test(ref)){
     sessionStorage.setItem("matryoshka:ticket_ref:"+e.id,ref);
@@ -43,7 +45,7 @@ export default function EventFoodPage(){
  <div className={styles.wrap}>
  <Link className={styles.back} href="/events">← {t("All events","Все события")}</Link>
  {busy&&<p role="status">{t("Loading event food…","Загружаем меню…")}</p>}{error&&<p role="alert" className={styles.alert}>{error}</p>}
- {e&&<>{e.slug==="novogodnik26"&&linkedTicketRef&&<aside className={styles.bookingReferenceNote} role="status">
+ {e&&<>{e.slug==="novogodnik27"&&linkedTicketRef&&<aside className={styles.bookingReferenceNote} role="status">
    <span>✓ {t("Event ticket reference","Номер билета на мероприятие")}: <strong>{linkedTicketRef}</strong></span>
    <span className={styles.bookingReferenceExplainer}>{t("Your booking reference is ready for food checkout. Use the email of any adult on the paid booking.","Номер билета перенесён. При оформлении заказа используйте email взрослого из оплаченного бронирования.")}</span>
   </aside>}<section className={styles.heading}>
@@ -59,7 +61,7 @@ export default function EventFoodPage(){
   </div>
   <div className={styles.eventIntroMedia}>
    <div className={styles.cover}><img src={e.cover_image_url||e.gallery_image_urls?.[0]||"/images/matryoshka-new-year-event-placeholder.svg"} alt={e.cover_image_url||e.gallery_image_urls?.length?t("Event artwork","Изображение мероприятия"):t("Festive New Year's Eve illustration","Праздничная новогодняя иллюстрация")}/></div>
-   {e.external_ticket_url&&e.slug==="novogodnik26"&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
+   {e.external_ticket_url&&e.slug==="novogodnik27"&&!ticketArrival&&<a className={styles.ticketButton} href={e.external_ticket_url} target="_blank" rel="noopener noreferrer">{t("Book event tickets ↗","Купить билеты ↗")}</a>}
   </div>
   <div className={styles.eventDescription}>
    <p className={descriptionExpanded?styles.descriptionExpanded:styles.descriptionCollapsed}>{label(e.description_en,e.description_ru,ru)}</p>
@@ -75,7 +77,7 @@ export default function EventFoodPage(){
  <div className={styles.filters}><label>{t("Search food","Поиск блюд")}<input type="search" value={search} onChange={x=>setSearch(x.target.value)} placeholder={t("Dish or chef…","Блюдо или повар…")}/></label><label>{t("Category","Категория")}<select value={category} onChange={x=>setCategory(x.target.value)}><option value="all">{t("All categories","Все категории")}</option>{categories.map(c=><option key={c.slug} value={c.slug}>{label(c.label_en,c.label_ru,ru)}</option>)}</select></label><label>{t("Chef","Повар")}<select value={chef} onChange={x=>setChef(x.target.value)}><option value="all">{t("All chefs","Все повара")}</option>{chefs.map(c=><option key={c} value={c}>{c}</option>)}</select></label></div>
  {dishes.length===0?<div className={styles.empty}>{data.dishes.length?t("No dishes match those filters.","По вашему запросу блюд не найдено."):t("The chefs are preparing this menu. Check back later.","Повара готовят меню. Загляните позже.")}</div>:<div className={styles.grid}>{orderedDishes.map((d:CustomerDish,i)=><Fragment key={d.menu_item_id}>{(i===0||orderedDishes[i-1].categories[0]?.slug!==d.categories[0]?.slug)&&<h3 className={styles.categoryHeading}><span>{d.categories[0]?label(d.categories[0].label_en,d.categories[0].label_ru,ru):t("Other dishes","Другие блюда")}</span></h3>}<article className={styles.card}>
  <div className={styles.imageFrame}>
-  <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} className={styles.image} aria-label={t("View details: ","Подробнее: ")+label(d.title_en,d.title_ru,ru)}>{d.images[0]?<img loading="lazy" src={d.images[0]} alt={label(d.title_en,d.title_ru,ru)}/>:<img src="/images/matryoshka-dish-placeholder.svg" alt="" loading="lazy"/>}</Link>
+  <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} className={styles.image} aria-label={t("View details: ","Подробнее: ")+label(d.title_en,d.title_ru,ru)}>{d.images[0]?<img loading="lazy" src={d.images[0]} style={{objectFit:d.image_positions?.[0]?.mode==="contain"?"contain":"cover",objectPosition:`${d.image_positions?.[0]?.x??50}% ${d.image_positions?.[0]?.y??50}%`,transform:`translate(${(50-(d.image_positions?.[0]?.x??50))*0.5}%, ${(50-(d.image_positions?.[0]?.y??50))*0.5}%) scale(${(d.image_positions?.[0]?.zoom??100)/100})`,transformOrigin:"center center"}} alt={label(d.title_en,d.title_ru,ru)}/>:<img src="/images/matryoshka-dish-placeholder.svg" alt="" loading="lazy"/>}</Link>
   <div className={styles.chefBadge} title={d.vendor_name}>
    <span className={styles.chefAvatar}>{d.vendor_photo?<img src={d.vendor_photo} alt="" loading="lazy"/>:<span aria-hidden="true">{d.vendor_name?.trim().charAt(0)||"✿"}</span>}</span>
    <span className={styles.chefName}><small>{t("By","От")}</small><strong>{d.vendor_name}</strong></span>
@@ -84,7 +86,7 @@ export default function EventFoodPage(){
  <div className={styles.cardBody}>
   <Link href={`/events/${encodeURIComponent(e.slug)}/dish/${d.menu_item_id}`} className={styles.cardTitle}><h3>{label(d.title_en,d.title_ru,ru)}</h3></Link>
   {label(d.description_en,d.description_ru,ru)&&<p className={styles.cardDescription}>{label(d.description_en,d.description_ru,ru)}</p>}
-  <div className={styles.cardBottom}><strong>{t("From ","От ")}{dollars(customerPriceCents(d.price_cents))}</strong></div>
+  <div className={styles.cardBottom}><strong>{d.options.some(g=>g.max_select===1&&g.values.length>1)?t("From ","От "):""}{dollars(customerPriceCents(d.price_cents+d.options.filter(g=>g.max_select===1&&g.values.length===1).reduce((sum,g)=>sum+g.values[0].price_delta_cents,0)))}</strong></div>
   <EventMenuQuickAdd dish={d} event={e}/>
  </div></article></Fragment>)}</div>}
  </section></>}

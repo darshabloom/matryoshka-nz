@@ -5,6 +5,14 @@ export function serviceClient(){
  if(!key||!url)throw Error("Secure database access is not configured");
  return createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
 }
+export function isTestCheckoutAllowed(email:string,authenticatedEmail:string|undefined){
+ return process.env.VERCEL_ENV==="production" &&
+  process.env.TEST_CHECKOUT_ENABLED==="true" &&
+  process.env.CHECKOUT_ENABLED!=="true" &&
+  !!process.env.TEST_CHECKOUT_EMAIL &&
+  email.toLowerCase()===process.env.TEST_CHECKOUT_EMAIL.trim().toLowerCase() &&
+  authenticatedEmail?.toLowerCase()===email.toLowerCase();
+}
 export function isCheckoutConfigured(){
  // A Preview deployment must never initiate real charges, even if a live key is mistakenly configured.
  const secret=process.env.STRIPE_SECRET_KEY;
@@ -18,7 +26,7 @@ export function isCheckoutConfigured(){
   /^acct_[A-Za-z0-9]+$/.test(expected)&&
   !["acct_1SXo5CPIwTIma6Ev","acct_1UVPo4AcPL3j1y7u"].includes(expected)
  );
- return safeStripeKey&&liveAccountConfigured&&process.env.CHECKOUT_ENABLED==="true"&&!!secret&&!!process.env.STRIPE_WEBHOOK_SECRET&&!!process.env.SUPABASE_SERVICE_ROLE_KEY&&!!process.env.TICKET_HASH_PEPPER&&!!process.env.NEXT_PUBLIC_SITE_URL;
+ return safeStripeKey&&liveAccountConfigured&&(process.env.CHECKOUT_ENABLED==="true"||(process.env.TEST_CHECKOUT_ENABLED==="true"&&!!process.env.TEST_CHECKOUT_EMAIL))&&!!secret&&!!process.env.STRIPE_WEBHOOK_SECRET&&!!process.env.SUPABASE_SERVICE_ROLE_KEY&&!!process.env.TICKET_HASH_PEPPER&&!!process.env.NEXT_PUBLIC_SITE_URL;
 }
 export async function checkTicket(db:ReturnType<typeof serviceClient>,eventId:string,email:string,reference:string){
  if(!process.env.TICKET_HASH_PEPPER)throw Error("Ticket verification not configured");

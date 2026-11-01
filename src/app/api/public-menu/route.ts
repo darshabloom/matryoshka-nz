@@ -2,13 +2,13 @@ import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 export const dynamic="force-dynamic";
 type Translation={lang:string;name:string;description:string|null};
-type Image={image_url:string;sort_order:number};
+type Image={image_url:string;sort_order:number;position_x:number;position_y:number;zoom_percent:number;crop_mode:string};
 type Category={food_categories:{slug:string;label_en:string;label_ru:string|null}|null};
 export async function GET(){
  try{
   const db=await createSupabaseServerClient();
   const {data, error}=await db.from("menu_items")
-   .select("id,price_cents,ingredients_text,allergen_statement,allergen_review_complete,vendors!inner(display_name,slug,hero_image_url),menu_item_translations(lang,name,description),menu_item_images(image_url,sort_order),menu_item_categories(food_categories(slug,label_en,label_ru))")
+   .select("id,price_cents,ingredients_text,allergen_statement,allergen_review_complete,vendors!inner(display_name,slug,hero_image_url),menu_item_translations(lang,name,description),menu_item_images(image_url,sort_order,position_x,position_y,zoom_percent,crop_mode),menu_item_categories(food_categories(slug,label_en,label_ru))")
    .eq("approval_status","approved").eq("is_active",true).order("sort_order",{ascending:true});
   if(error)throw error;
   const dishes=(data??[]).flatMap((item:any)=>{
@@ -25,7 +25,7 @@ export async function GET(){
    return [{id:item.id,name_en:titleEn,name_ru:titleRu,
     description_en:en?.description??ru?.description??"",description_ru:ru?.description??en?.description??"",
     price_cents:item.price_cents,chef:vendor.display_name,chef_slug:vendor.slug,
-    chef_photo:vendor.hero_image_url??null,image:photos[0]?.image_url??null,
+    chef_photo:vendor.hero_image_url??null,image:photos[0]?.image_url??null,image_position:photos[0]?{x:photos[0].position_x??50,y:photos[0].position_y??50,zoom:photos[0].zoom_percent??100,mode:photos[0].crop_mode??'cover'}:null,
     categories,ready}];
   });
   return NextResponse.json({dishes},{headers:{"Cache-Control":"no-store"}});

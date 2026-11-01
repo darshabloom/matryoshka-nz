@@ -15,7 +15,7 @@ export default async function AdminPage({searchParams}:{searchParams:Promise<{ta
  const {data:admin}=await sb.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();if(!admin)redirect("/account");
  const [eventResult,dishResult,applicationResult,vendorResult,inclusionResult,orderResult]=await Promise.all([
  sb.from("events").select("id,slug,title_en,title_ru,description_en,description_ru,starts_at,ends_at,ordering_opens_at,ordering_closes_at,location_text,external_ticket_url,is_published,chef_applications_open,chef_fulfilment_options").order("starts_at",{ascending:false}),
- sb.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,created_at,menu_item_translations(lang,name,description)").order("created_at",{ascending:false}),
+ sb.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,created_at,menu_item_translations(lang,name,description),menu_item_images(id,image_url,sort_order,position_x,position_y,zoom_percent,crop_mode)").order("created_at",{ascending:false}),
  sb.from("chef_event_applications").select("id,vendor_id,event_id,status,message,fulfilment,review_note,created_at,events(title_en,title_ru),vendors(display_name)").order("created_at",{ascending:false}),
  sb.from("vendors").select("id,display_name").order("display_name"),
  sb.from("event_menu_items").select("event_id,menu_item_id"),

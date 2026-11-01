@@ -1,3 +1,4 @@
+import GoogleChefLink from "./GoogleChefLink";
 import Link from "next/link";
 import {redirect,notFound} from "next/navigation";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
@@ -19,6 +20,6 @@ export default async function ChefDetailPage({params}:{params:Promise<{id:string
  if(!chefResult.data)notFound();
  return <main className={styles.page}><div className={styles.container}>
  <Link href="/admin?tab=chefs" className="text-[#9d302a] underline">← Back to chefs</Link>
- <ChefPhotoUpload vendorId={id} name={chefResult.data.display_name} image={chefResult.data.hero_image_url}/><ChefDetailEditor chef={chefResult.data as any} dishes={(dishesResult.data??[]) as any} available={(availableResult.data??[]) as any}/>
+ <ChefPhotoUpload vendorId={id} name={chefResult.data.display_name} image={chefResult.data.hero_image_url}/><ChefDetailEditor chef={chefResult.data as any} dishes={(dishesResult.data??[]) as any} available={(availableResult.data??[]) as any} googleLink={<GoogleChefLink vendorId={id}/>}/>
  </div></main>;
 }

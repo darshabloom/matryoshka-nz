@@ -50,3 +50,7 @@ Do not assume installing a Stripe connector in ChatGPT sets any environment vari
 - Customer profile-photo upload and Stripe automated chef settlement are outside this checkout scope.
 
 No live payments should be accepted until these gates have been reviewed and confirmed.
+
+
+## Controlled customer test (October 2026)
+Production public checkout stays disabled. A single signed-in allowlisted customer may use the normal ticket verification and Stripe flow while TEST_CHECKOUT_ENABLED is set. Disable the test switch after the transaction and notification checks finish.

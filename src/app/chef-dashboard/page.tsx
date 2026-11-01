@@ -13,7 +13,7 @@ export default async function ChefDashboard({searchParams}:{searchParams:Promise
  const {data:member}=await db.from("vendor_users").select("vendor_id").eq("user_id",user.id).limit(1);
  if(!member?.length)redirect("/chef-onboarding");
  const vendorId=member[0].vendor_id;
- const [{data:dishes},{data:apps}]=await Promise.all([db.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,menu_item_translations(lang,name,description)").eq("vendor_id",vendorId).order("created_at",{ascending:false}),db.from("chef_event_applications").select("id,event_id,status,review_note").eq("vendor_id",vendorId)]);
+ const [{data:dishes},{data:apps}]=await Promise.all([db.from("menu_items").select("id,vendor_id,price_cents,approval_status,review_note,menu_item_translations(lang,name,description),menu_item_images(id,image_url,sort_order,position_x,position_y,zoom_percent,crop_mode)").eq("vendor_id",vendorId).is("archived_at",null).order("created_at",{ascending:false}),db.from("chef_event_applications").select("id,event_id,status,review_note").eq("vendor_id",vendorId)]);
  const n=dishes?.length??0,approved=dishes?.filter(d=>d.approval_status==="approved").length??0,participating=apps?.filter(a=>a.status==="approved").length??0;
  const pendingDishes=dishes?.filter(d=>d.approval_status==="pending").length??0;
  const drafts=dishes?.filter(d=>d.approval_status==="draft"||d.approval_status==="changes_requested").length??0;

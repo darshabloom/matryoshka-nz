@@ -14,9 +14,9 @@
 .chefHeading small{font-size:9px;letter-spacing:.1em;color:#89675d;font-weight:800}
 .chefHeading h3{font:bold 16px Georgia,serif;margin:4px 0;color:#412e29}
 .chefHeading>strong{font:bold 20px Arial,sans-serif;color:#a12e28;white-space:nowrap}
-.item{padding:9px 0;font-size:12px;line-height:1.5;border-bottom:1px dotted #ead7c9}
+.item{padding:9px 0;font-size:12px;line-height:1.5;border-bottom:1px dotted #ead7c9;display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
 .item:last-child{border:0}
-.item em{font-style:normal;color:#8c4435;display:block;margin:3px 0 0 16px;white-space:pre-line}
+.priceDetails{display:block;margin-top:4px;font-size:11px;color:#846b5e}.lineTotal{white-space:nowrap;font-size:12px;color:#59372d}.paymentTotal{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:360px;margin:0 auto 12px;padding:12px 0;border-top:1px solid #eddbd0;border-bottom:1px solid #eddbd0}.paymentTotal span{font-size:13px;font-weight:700}.item em{font-style:normal;color:#8c4435;display:block;margin:3px 0 0 16px;white-space:pre-line}
 .footer{padding:18px 20px;border-top:1px solid #eddbd0;text-align:center}
 .footer strong{color:#853128;font-size:15px}
 .footer p,.footer small{display:block;font-size:11px;line-height:1.5;color:#776055;margin:7px 0}
