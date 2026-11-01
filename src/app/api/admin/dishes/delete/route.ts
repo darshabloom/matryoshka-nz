@@ -7,14 +7,19 @@ export async function DELETE(request:Request){
  const {data:{user}}=await db.auth.getUser();
  if(!user)return NextResponse.json({error:"Sign in required"},{status:401});
  const {data:admin}=await db.from("site_admins").select("user_id").eq("user_id",user.id).maybeSingle();
- if(!admin)return NextResponse.json({error:"Only administrators may delete dishes"},{status:403});
+ 
  let id="";
  try{id=(await request.json()).dishId??""}catch{return NextResponse.json({error:"Invalid request"},{status:400})}
  if(!uuid.test(id))return NextResponse.json({error:"Invalid dish"},{status:400});
  const service=serviceClient();
- const {data:dish,error:dishError}=await service.from("menu_items").select("id").eq("id",id).maybeSingle();
+ const {data:dish,error:dishError}=await service.from("menu_items").select("id,vendor_id").eq("id",id).maybeSingle();
  if(dishError)return NextResponse.json({error:"Unable to check dish"},{status:503});
  if(!dish)return NextResponse.json({error:"Dish not found"},{status:404});
+ if(!admin){
+  const {data:membership,error:membershipError}=await db.from("vendor_users").select("vendor_id").eq("vendor_id",dish.vendor_id).eq("user_id",user.id).maybeSingle();
+  if(membershipError)return NextResponse.json({error:"Unable to check dish ownership"},{status:503});
+  if(!membership)return NextResponse.json({error:"You may only delete your own dishes"},{status:403});
+ }
  const {data:ordered,error:ordersError}=await service.from("food_order_lines").select("id").eq("menu_item_id",id).limit(1);
  if(ordersError)return NextResponse.json({error:"Unable to check order history"},{status:503});
  if(ordered?.length){
